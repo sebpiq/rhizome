@@ -1,8 +1,9 @@
-var EventEmitter = require('events').EventEmitter
-  , _ = require('underscore')
+var _ = require('underscore')
+  , async = require('async')
   , assert = require('assert')
   , osc = require('node-osc')
-  , server = require('../lib/server/server')
+  , wsServer = require('../lib/server/websockets')
+  , oscServer = require('../lib/server/osc')
   , client = require('../lib/client/client')
 
 // TODO : customize config
@@ -17,25 +18,59 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
   })
 }
 
+// Helper to create dummy connections from other clients
+var dummyConnections = function(count, done) {
+  async.series(_.range(count).map(function(i) {
+    return function(next) {
+      socket = new WebSocket(config.websocket.url)
+      _dummies.push(socket)
+      socket.addEventListener('open', function() { next() })
+    }
+  }), done)
+}
+_dummies = []
+
 
 describe('client <-> server', function() {
-  
-  before(function(done) {
-    server.start({port: config.server.port, done: done})
-  })
+
+  afterEach(function() { _dummies = [] })
 
   describe('start', function() {
     
+    beforeEach(function(done) {
+      config.websocket.usersLimit = 1
+      wsServer.start(config, {port: config.server.port, done: done})
+    })
+    afterEach(function(done) {
+      config.websocket.usersLimit = 10
+      wsServer.stop(done)
+    })
+    afterEach(function(done) { client.stop(done) })
+
     it('should open a socket connection to the server', function(done) {
-      assert.equal(server.sockets, 0)
+      assert.equal(wsServer.sockets, 0)
       assert.equal(client.userId, null)
       client.start({
         done: function(err) {
           if (err) throw err
-          assert.equal(server.sockets.length, 1)
+          assert.equal(wsServer.sockets.length, 1)
           assert.equal(client.userId, 0)
           done()
-        }
+        }, retry: 0
+      })
+    })
+
+    it('should reject connection if server is full', function(done) {
+      assert.equal(wsServer.sockets, 0)
+      assert.equal(client.userId, null)
+      async.series([
+        function(next) { dummyConnections(1, next) },
+        function(next) { client.start({ done: next }) }
+      ], function(err) {
+        assert.ok(err)
+        assert.equal(wsServer.sockets.length, 1)
+        assert.equal(client.userId, null)
+        done()
       })
     })
 
@@ -43,15 +78,18 @@ describe('client <-> server', function() {
 
   describe('listen', function() {
     
-    beforeEach(function(done) { client.start({done: done}) })
+    beforeEach(function(done) { wsServer.start(config, {port: config.server.port, done: done}) })
+    beforeEach(function(done) { client.start({done: done, retry: 0}) })
+    before(function(done) { oscServer.start(config, done) })
+    afterEach(function(done) { wsServer.stop(done) })
 
     it('should receive messages from the specified address', function(done) {
-      assert.equal(server.namespaces.has('/place1'), false)
+      assert.equal(wsServer.nsTree.has('/place1'), false)
       
       var listend = function(err) {
         if (err) throw err
-        assert.equal(server.namespaces.has('/place1'), true)
-        assert.equal(server.namespaces.get('/place1').data.sockets.length, 1)
+        assert.equal(wsServer.nsTree.has('/place1'), true)
+        assert.equal(wsServer.nsTree.get('/place1').data.sockets.length, 1)
         oscClient.send('/place2', 44)
         oscClient.send('/place1', 1, 2, 3)
       }
@@ -65,7 +103,7 @@ describe('client <-> server', function() {
       client.listen({address: '/place1', handler: handler, done: listend})
     })
 
-    it('shouldn\'t cause problem if listening twice', function(done) {
+    it('shouldn\'t cause problem if listening twice same place', function(done) {
       var answered = 0
 
       var handler = function() {}          
@@ -73,7 +111,7 @@ describe('client <-> server', function() {
       var listend = function(err) {
         if (err) throw err
         answered++
-        assert.equal(server.namespaces.get('/place1').data.sockets.length, 1)
+        assert.equal(wsServer.nsTree.get('/place1').data.sockets.length, 1)
         if (answered === 2) done()
       }
 
@@ -107,6 +145,83 @@ describe('client <-> server', function() {
       }
 
       client.listen({address: '/a', handler: handler, done: listend})
+    })
+
+  })
+
+  describe('disconnections, server', function() {
+
+    beforeEach(function(done) { wsServer.start(config, {port: config.server.port, done: done}) })
+    afterEach(function(done) { wsServer.stop(done) })
+
+    it('should forget the socket', function(done) {
+      var socket, socketsBefore
+      assert.equal(wsServer.sockets.length, 0)
+      async.series([
+        function(next) { dummyConnections(2, next) },
+        function(next) {
+          socketsBefore = wsServer.sockets.slice(0)
+          client.start({done: next, retry: 0})
+        },
+        function(next) {
+          socket = _.difference(wsServer.sockets, socketsBefore)[0]
+          client.listen({ address: '/someAddr', handler: function() {}, done: function(err) {
+            assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 1)
+            next(err)
+          }}) 
+        },
+        function(next) {
+          assert.equal(wsServer.sockets.length, 3)
+          client.stop(next)
+        }
+      ], function(err) {
+        if (err) throw err
+        assert.equal(wsServer.sockets.length, 2)
+        assert.equal(wsServer.sockets.indexOf(socket), -1)
+        assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 0)
+        done()
+      })
+    })
+
+  })
+
+  describe('disconnections, client', function() {
+
+    beforeEach(function(done) { wsServer.start(config, {port: config.server.port, done: done}) })
+    afterEach(function(done) { wsServer.stop(done) })
+
+    it('should retry connection', function(done) {
+      assert.equal(wsServer.sockets.length, 0)
+      async.series([
+        function(next) { client.start({ done: next, retry: 100 }) },
+        function(next) { client.listen({ address: '/someAddr', handler: function() {}, done: next}) },
+        function(next) {
+          assert.equal(wsServer.sockets.length, 1)
+          assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 1)
+          assert.equal(client.userId, 0)
+
+          wsServer.forget(wsServer.sockets[0])
+
+          assert.equal(wsServer.sockets.length, 0)
+          assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 0)
+          setTimeout(next, 50)
+        },
+        function(next) {
+          // userId should be null 
+          assert.equal(client.userId, null)
+          setTimeout(next, 200)
+        },
+        function(next) {
+          // the reconnection should have happened by then, and all things restored
+          assert.equal(wsServer.sockets.length, 1)
+          assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 1)
+          assert.equal(client.userId, 0)
+          next()
+        }
+      ], function(err) {
+        if (err) throw err
+        done()
+      })
     })
 
   })
