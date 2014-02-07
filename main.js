@@ -1,29 +1,24 @@
 var path = require('path')
+  , fs = require('fs')
+  , spawn = require('child_process').spawn
   , debug = require('debug')('mmhl.app')
   , async = require('async')
   , express = require('express')
   , app = express()
   , server = require('http').createServer(app)
-  , wsServer = require('./websocket')
-  , config = require('../config')
-  , frontendPath = path.normalize(path.join(__dirname, '..', 'frontend'))
+  , wsServer = require('./lib/server/websockets')
+  , oscServer = require('./lib/server/osc')
+  , config = require('./config')
+  , buildDir = path.join(__dirname, 'build')
+
+config.server.instance = server
 
 app.set('port', config.server.port)
-app.set('views', path.join(frontendPath, 'templates'))
-app.set('view engine', 'hbs')
-app.set('view options', {layout: false})
 app.use(express.logger('dev'))
 app.use(express.bodyParser())
 app.use(express.methodOverride())
-/*app.use(express.cookieParser())
-app.use(express.session({
-  store: config.site.sessionStore,
-  secret: config.site.cookieSecret
-}))
-app.use(passport.initialize())
-app.use(passport.authenticate('basic', { session: false }))*/
 app.use(app.router)
-app.use(express.static(path.join(frontendPath, 'assets')))
+app.use('/rhizome', express.static(buildDir))
 
 
 // add some locals that we can use in the templates
@@ -31,38 +26,39 @@ app.locals.static = config.static
 
 
 // Declare views
-app.get('/controllers', function(req, res) {
-  res.render('controllers', {
-    config: JSON.stringify({})
-  })
-})
-
-app.get('/diffusion', function(req, res) {
-  res.render('diffusion', {
-    config: JSON.stringify({})
-  })
-})
-
 app.get('/trace', function(req, res) {
   res.render('trace', {
     config: JSON.stringify({})
   })
 })
 
-if (config.env === 'dev') {
-  app.get('/tests', function(req, res) {
-    res.render('tests', {
-      config: JSON.stringify({})
-    })
-  })
-}
-
 
 // Start servers
 async.parallel([
 
   function(next) {
-    wsServer.startServer({server: server}, function() { next() })
+    async.waterfall([
+      function(next) { fs.exists(buildDir, function(exists) { next(null, exists) }) },
+      function(exists, next) {
+        if (!exists) fs.mkdir(buildDir, next)
+        else next()
+      },
+      function(next) {
+        var grunt  = spawn('grunt')
+        grunt.on('close', function (code, signal) {
+          if (code === 0) next()
+          else next(new Error('grunt terminated with error'))
+        })
+      }
+    ])
+  },
+
+  function(next) {
+    wsServer.start(config, next)
+  },
+
+  function(next) {
+    oscServer.start(config, next)
   },
 
   function(next) {
