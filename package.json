@@ -1,0 +1,24 @@
+{
+  "name": "rhizome",
+  "version": "0.1.0",
+  "author": "Sebastien Piquemal <sebpiq@gmail.com>",
+  "dependencies" : {
+    "underscore": "1.5.x",
+    "debug": "0.7.x",
+    "ws": "0.4.x",
+    "express": "3.3.x",
+    "async": "0.2.x",
+    "hbs": "2.3.x",
+    "node-osc": "0.2.x"
+  },
+  "devDependencies": {
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.6"
+  },
+  "scripts": {
+    "test": "mocha --recursive",
+    "coverage": "istanbul cover _mocha -- test --reporter spec --recursive"
+  }
+}
