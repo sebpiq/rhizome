@@ -19,18 +19,27 @@
 var path = require('path')
   , fs = require('fs')
   , spawn = require('child_process').spawn
+  , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
   , async = require('async')
   , express = require('express')
-  , app = express()
-  , server = require('http').createServer(app)
   , wsServer = require('./lib/server/websockets')
   , oscServer = require('./lib/server/osc')
-  , config = require('./config')
+
+if (process.argv.length !== 3) {
+  console.log('usage : rhizome <config.js>')
+  process.exit(1)
+}
+
+var app = express()
+  , server = require('http').createServer(app)
   , buildDir = path.join(__dirname, 'build')
   , gruntExecPath = path.join(__dirname, 'node_modules', 'grunt-cli', 'bin', 'grunt')
   , gruntFilePath = path.join(__dirname, 'Gruntfile.js')
-
+  , configFilePath = path.join(process.cwd(), process.argv[2])
+  , config = {}
+require('./default-config.js')(config)
+require(configFilePath)(config)
 config.server.instance = server
 
 app.set('port', config.server.port)
@@ -40,18 +49,12 @@ app.use(express.methodOverride())
 app.use(app.router)
 app.use('/rhizome', express.static(buildDir))
 
-
-// add some locals that we can use in the templates
-app.locals.static = config.static
-
-
-// Declare views
-app.get('/trace', function(req, res) {
-  res.render('trace', {
-    config: JSON.stringify({})
-  })
+// Serve the users pages
+config.server.pages.forEach(function(page) {
+  if (page.rootUrl.search('/rhizome.*') !== -1)
+    throw new Error(' the page with url \'/rhizome\' is reserved')
+  app.use(page.rootUrl, express.static(page.dirName))
 })
-
 
 // Start servers
 async.parallel([
@@ -73,13 +76,9 @@ async.parallel([
     ], next)
   },
 
-  function(next) {
-    wsServer.start(config, next)
-  },
+  function(next) { wsServer.start(config, next) },
 
-  function(next) {
-    oscServer.start(config, next)
-  },
+  function(next) { oscServer.start(config, next) },
 
   function(next) {
     server.listen(app.get('port'), function() {

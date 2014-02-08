@@ -6,9 +6,11 @@ var _ = require('underscore')
   , oscServer = require('../lib/server/osc')
   , client = require('../lib/client/client')
 
-// TODO : customize config
-var config = require('../config')
-  , oscClient = new osc.Client(config.server.hostname, config.osc.portIn)
+var config = {
+    server: { port: 8000, rootUrl: '/', usersLimit: 40 },
+    osc: { port: 9000, hostname: 'localhost', clients: [] }
+  }
+  , oscClient = new osc.Client(config.server.hostname, config.osc.port)
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 var WebSocket = require('ws')
@@ -22,7 +24,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 var dummyConnections = function(count, done) {
   async.series(_.range(count).map(function(i) {
     return function(next) {
-      socket = new WebSocket(config.websocket.url)
+      socket = new WebSocket('ws://localhost:' + config.server.port)
       _dummies.push(socket)
       socket.addEventListener('open', function() { next() })
     }
@@ -38,11 +40,11 @@ describe('client <-> server', function() {
   describe('start', function() {
     
     beforeEach(function(done) {
-      config.websocket.usersLimit = 1
+      config.server.usersLimit = 1
       wsServer.start(config, done)
     })
     afterEach(function(done) {
-      config.websocket.usersLimit = 10
+      config.server.usersLimit = 10
       wsServer.stop(done)
     })
     afterEach(function(done) { client.stop(done) })
