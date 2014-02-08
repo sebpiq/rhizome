@@ -5,7 +5,7 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/*! <%= pkg.name %> | <%= grunt.template.today("yyyy-mm-dd") %> | <%= pkg.author %> */\n'
       },
       build: {
         src: 'build/rhizome.js',

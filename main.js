@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*
  * Copyright 2014, Sébastien Piquemal <sebpiq@gmail.com>
  *
@@ -18,7 +19,7 @@
 var path = require('path')
   , fs = require('fs')
   , spawn = require('child_process').spawn
-  , debug = require('debug')('mmhl.app')
+  , debug = require('debug')('rhizome.main')
   , async = require('async')
   , express = require('express')
   , app = express()
@@ -27,6 +28,8 @@ var path = require('path')
   , oscServer = require('./lib/server/osc')
   , config = require('./config')
   , buildDir = path.join(__dirname, 'build')
+  , gruntExecPath = path.join(__dirname, 'node_modules', 'grunt-cli', 'bin', 'grunt')
+  , gruntFilePath = path.join(__dirname, 'Gruntfile.js')
 
 config.server.instance = server
 
@@ -55,19 +58,19 @@ async.parallel([
 
   function(next) {
     async.waterfall([
-      function(next) { fs.exists(buildDir, function(exists) { next(null, exists) }) },
-      function(exists, next) {
-        if (!exists) fs.mkdir(buildDir, next)
-        else next()
+      function(next2) { fs.exists(buildDir, function(exists) { next2(null, exists) }) },
+      function(exists, next2) {
+        if (!exists) fs.mkdir(buildDir, next2)
+        else next2()
       },
-      function(next) {
-        var grunt  = spawn('grunt')
+      function(next2) {
+        var grunt  = spawn(gruntExecPath, ['--gruntfile', gruntFilePath])
         grunt.on('close', function (code, signal) {
-          if (code === 0) next()
-          else next(new Error('grunt terminated with error'))
+          if (code === 0) next2()
+          else next2(new Error('grunt terminated with error'))
         })
       }
-    ])
+    ], next)
   },
 
   function(next) {
@@ -87,5 +90,5 @@ async.parallel([
 
 ], function(err) {
   if (err) throw err
-  debug('ready to roll')
+  console.log('----- rhizome ready -----')
 })

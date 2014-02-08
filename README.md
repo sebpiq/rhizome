@@ -1,4 +1,6 @@
-TODO
-------
+Activate logging
+------------------
 
-save context
+```
+export DEBUG=rhizome.*
+```
