@@ -36,6 +36,7 @@ _dummies = []
 describe('client <-> server', function() {
 
   afterEach(function() { _dummies = [] })
+  before(function(done) { oscServer.start(config, done) })
 
   describe('start', function() {
     
@@ -80,7 +81,6 @@ describe('client <-> server', function() {
     
     beforeEach(function(done) { wsServer.start(config, done) })
     beforeEach(function(done) { client.start({ retry: 0 }, done) })
-    before(function(done) { oscServer.start(config, done) })
     afterEach(function(done) { wsServer.stop(done) })
 
     it('should receive messages from the specified address', function(done) {
@@ -145,6 +145,52 @@ describe('client <-> server', function() {
       }
 
       client.listen('/a', handler, listend)
+    })
+
+  })
+
+  describe('message', function() {
+    
+    beforeEach(function(done) {
+      config.osc.clients = [
+        { ip: 'localhost', port: 9005 },
+        { ip: 'localhost', port: 9010 }
+      ]
+      wsServer.start(config, done)
+    })
+    beforeEach(function(done) { client.start({ retry: 0 }, done) })
+    afterEach(function(done) {
+      wsServer.stop(done)
+    })
+
+    it('should receive messages from the specified address', function(done) {
+      var oscTrace1 = new osc.Server(9005, 'localhost')
+        , oscTrace2 = new osc.Server(9010, 'localhost')
+        , received = []
+
+      var assertions = function() {
+        received = _.sortBy(received, function(r) { return '' + r[0] + r[1][0] })
+        assert.deepEqual(received, [
+          [1, ['/bla', 1, 2, 3]],
+          [1, ['/blo', 'oui', 'non']],
+          [2, ['/bla', 1, 2, 3]],
+          [2, ['/blo', 'oui', 'non']]
+        ])
+        done()
+      }
+
+      oscTrace1.on('message', function (msg, rinfo) {
+        received.push([1, msg])
+        if (received.length === 4) assertions()
+      })
+
+      oscTrace2.on('message', function (msg, rinfo) {
+        received.push([2, msg])
+        if (received.length === 4) assertions()
+      })
+
+      client.message('/bla', [1, 2, 3])
+      client.message('/blo', ['oui', 'non'])
     })
 
   })

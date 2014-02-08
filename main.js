@@ -53,7 +53,8 @@ app.use('/rhizome', express.static(buildDir))
 config.server.pages.forEach(function(page) {
   if (page.rootUrl.search('/rhizome.*') !== -1)
     throw new Error(' the page with url \'/rhizome\' is reserved')
-  app.use(page.rootUrl, express.static(page.dirName))
+  var dirName = path.join(process.cwd(), page.dirName)
+  app.use(page.rootUrl, express.static(dirName))
 })
 
 // Start servers
