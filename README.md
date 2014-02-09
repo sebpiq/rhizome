@@ -26,7 +26,7 @@ The simplest and nicest way to do this is probably by installing [nvm](https://g
 
 ##### 2) Install rhizome
 
-Open a terminal, and simply run `npm install -g rhizome`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
+Open a terminal, and simply run `npm install -g rhizome-server`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
 
 
 ##### 3) Implement your thing 
