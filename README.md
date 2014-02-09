@@ -1,23 +1,15 @@
 [![Build Status](https://travis-ci.org/sebpiq/rhizome.png)](https://travis-ci.org/sebpiq/rhizome)
 
+rhizome
+=========
+
 **rhizome** is a web server for participative performances and installations.
 
+**rhizome** is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**. **rhizome** it can also serve static content **(1)** (HTML, JavaScript files, images ...), 
 
-![Alt text](https://raw2.github.com/sebpiq/rhizome/master/images/schema.png)
+![rhizome](https://raw2.github.com/sebpiq/rhizome/master/images/schema.png)
 
-**(1)** a participant wants to join in with her tablet. She open her web browser and connects to the web page.
-
-**(2)** the installation sends messages through **OSC** to the rhizome server. Those messages are transmitted to all the participants, and handled by the web page.
-
-**(3)** the web page can also send messages via **websocket** to the rhizome server. Those messages will be transmitted to the installation via OSC. 
-
-
-So what does rhizome do precisely ?
--------------------------------------
-
-Firstly, **rhizome** is a web server that can serve static content (HTML, JavaScript files, images ...). Secondly it is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets.
-
-So basically **rhizome** provides you with a solid architecture for communication between a web page and a setup that supports OSC. But of course, you still have to implement what's on both ends of the chain :
+**rhizome** provides you with a solid architecture for communication between a web page and a setup that supports OSC. But of course, you still have to implement what's on both ends of the chain :
 
 - *the installation / performance setup*. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...).
 
