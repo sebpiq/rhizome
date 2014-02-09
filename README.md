@@ -5,11 +5,13 @@ rhizome
 
 **rhizome** is a web server for participative performances and installations.
 
-**rhizome** is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**. **rhizome** it can also serve static content **(1)** (HTML, JavaScript files, images ...), 
+**rhizome** is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**.
+
+**rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...). 
 
 ![rhizome](https://raw2.github.com/sebpiq/rhizome/master/images/schema.png)
 
-**rhizome** provides you with a solid architecture for communication between a web page and a setup that supports OSC. But of course, you still have to implement what's on both ends of the chain :
+While **rhizome** provides you with a solid architecture for communication, you still have to implement what's on both ends of the chain :
 
 - *the installation / performance setup*. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...).
 
@@ -56,3 +58,8 @@ For contributors
 ```
 export DEBUG=rhizome.*
 ```
+
+Changelog
+-----------
+
+- 0.0.1 Initial release
