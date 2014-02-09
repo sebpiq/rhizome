@@ -15,37 +15,34 @@
 So what does rhizome do precisely ?
 -------------------------------------
 
-**rhizome** does two things for you. Firstly it is a web server that can serve static content (web page, JavaScript files, images ...). Secondly it provides an easy API for transmitting messages **OSC <-> web page**, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets (in fact pretty much any device that has a web browser).
+Firstly, **rhizome** is a web server that can serve static content (HTML, JavaScript files, images ...). Secondly it is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets.
 
-So **rhizome** provides you with a solid architecture for communication between a web page and a setup that supports OSC. But of course, you still have to implement what's on both ends of the chain :
+So basically **rhizome** provides you with a solid architecture for communication between a web page and a setup that supports OSC. But of course, you still have to implement what's on both ends of the chain :
 
-1. the installation / performance setup. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...)
-2. the web page. It should be implemented with JavaScript and HTML. However, **rhizome** comes with a JavaScript file that provides an easy API for messaging with the server. So you shouldn't have to worry about the communication part. Instead, focus on implementing a nice user interface / cool visuals / cool sounds.
+- *the installation / performance setup*. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...).
+
+- *the web page*. It should be implemented with **JavaScript** and **HTML**. **rhizome** comes with a JavaScript client handling all the communication for you. So you shouldn't have to worry about this, and instead, focus on implementing a nice user interface / cool visuals / cool sounds.
 
 
 Getting started
 -----------------
 
-#### Installing *Node.js* and *npm*
+##### 1) Install Node.js and npm
 
-The simplest way to do this (in my opinion) is by using [nvm](https://github.com/creationix/nvm).
-
-An alternative way is to download an installer directly from [Node.js website](http://nodejs.org/download/).
+The simplest and nicest way to do this is probably by installing [nvm](https://github.com/creationix/nvm). You can also download an installer directly from [Node.js website](http://nodejs.org/download/).
 
 
-#### Installing *rhizome*
+##### 2) Install rhizome
 
-Open a terminal, and simply run `npm install -g rhizome`.
-
-If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
+Open a terminal, and simply run `npm install -g rhizome`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
 
 
-#### Implementing stuff
+##### 3) Implement your thing 
 
 More documentation will come soon. But for the moment, you can check-out the [example](https://github.com/sebpiq/rhizome/tree/master/example).
 
 
-#### That's it!
+##### 4) That's it!
 
 Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues). 
 
