@@ -50,7 +50,7 @@
           logMessage('#upperCanvas', 'SENT : [' + address + ' ' + args.toString() + ']')
         })
 
-        // `rhizome.listen` binds a function to an address. Everytime a message is sent to that address, or a subaddress
+        // `rhizome.listen` binds a function to an address. Everytime an OSC message is sent to that address, or a subaddress
         // the function inside will be called.
         rhizome.listen('/color', function(address, args) {
           var userId = args[0]

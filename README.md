@@ -59,6 +59,27 @@ For contributors
 export DEBUG=rhizome.*
 ```
 
+#### Running tests and code coverage
+
+You need to install *mocha* for running the tests and *istanbul* for the test coverage : 
+
+```
+npm install -g mocha
+npm install -g istanbul
+```
+
+Then from the root folder of the project, run tests like so :
+
+```
+mocha --recursive
+```
+
+And generate a coverage report like so :
+
+```
+istanbul cover _mocha -- test --recursive
+```
+
 Changelog
 -----------
 
