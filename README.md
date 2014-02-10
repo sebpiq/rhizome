@@ -83,4 +83,5 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
-- 0.0.1 Initial release
+- 0.1.1 Fixed bugs with retry. Added `client.status()`
+- 0.1.0 Initial release
