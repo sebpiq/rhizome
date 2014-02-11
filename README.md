@@ -38,11 +38,13 @@ More documentation will come soon. But for the moment, you can check-out the [ex
 
 ##### 4) That's it!
 
-Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues). 
+Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
+
+Also, if you would like to share your projects realized with **rhizome**, please contact me, or add them directly in the gallery!
 
 
-Real life projects
-----------------------
+Gallery
+-----------
 
 **rhizome** was used to realize the following projects :
 

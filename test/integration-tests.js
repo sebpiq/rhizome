@@ -57,7 +57,7 @@ describe('client <-> server', function() {
     
     beforeEach(function(done) {
       config.server.usersLimit = 1
-      client.config.retry = 0
+      client.config.reconnect = 0
       wsServer.start(config, done)
     })
     afterEach(function() { config.server.usersLimit = 10 })
@@ -97,7 +97,7 @@ describe('client <-> server', function() {
   describe('listen', function() {
     
     beforeEach(function(done) {
-      client.config.retry = 0
+      client.config.reconnect = 0
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(done) }
@@ -180,7 +180,7 @@ describe('client <-> server', function() {
       wsServer.start(config, done)
     })
     beforeEach(function(done) {
-      client.config.retry = 0
+      client.config.reconnect = 0
       client.start(done)
     })
 
@@ -219,7 +219,7 @@ describe('client <-> server', function() {
   describe('disconnections, server', function() {
 
     beforeEach(function(done) {
-      client.config.retry = 0
+      client.config.reconnect = 0
       wsServer.start(config, done)
     })
 
@@ -254,7 +254,7 @@ describe('client <-> server', function() {
   describe('disconnections, client', function() {
 
     beforeEach(function(done) {
-      client.config.retry = 1 // Just so that retry is not null and therefore it is handled
+      client.config.reconnect = 1 // Just so that reconnect is not null and therefore it is handled
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(next) },
@@ -272,8 +272,8 @@ describe('client <-> server', function() {
       assert.equal(client.status(), 'stopped')
     }
 
-    it('should retry connection', function(done) {
-      client.config.retry = 50
+    it('should reconnect', function(done) {
+      client.config.reconnect = 50
       assertConnected()
       async.series([
         function(next) {
@@ -292,7 +292,7 @@ describe('client <-> server', function() {
     })
 
     it('should work as well when retrying several times', function(done) {
-      client.config.retry = 50
+      client.config.reconnect = 50
       assertConnected()
       async.series([
         function(next) {
