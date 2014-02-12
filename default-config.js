@@ -20,7 +20,10 @@ module.exports = function(config) {
       //    { rootUrl: '/bananas', dirName: './bananas_files' },
       //    { rootUrl: '/oranges', dirName: './oranges_files' }
       // ]
-      pages: []
+      pages: [],
+
+      // Directory where blobs received from the web client are saved
+      blobsDirName: '/tmp'
     },
 
     // Configuration for OSC server and clients 

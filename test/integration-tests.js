@@ -1,4 +1,5 @@
 var _ = require('underscore')
+  , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
   , osc = require('node-osc')
@@ -7,7 +8,7 @@ var _ = require('underscore')
   , client = require('../lib/client/client')
 
 var config = {
-    server: { port: 8000, rootUrl: '/', usersLimit: 40 },
+    server: { port: 8000, rootUrl: '/', usersLimit: 40, blobsDirName: '/tmp' },
     osc: { port: 9000, hostname: 'localhost', clients: [] }
   }
   , oscClient = new osc.Client(config.server.hostname, config.osc.port)
@@ -192,11 +193,11 @@ describe('client <-> server', function() {
         { ip: 'localhost', port: 9005 },
         { ip: 'localhost', port: 9010 }
       ]
-      wsServer.start(config, done)
-    })
-    beforeEach(function(done) {
       client.config.reconnect = 0
-      client.start(done)
+      async.series([
+        function(next) { wsServer.start(config, next) },
+        function(next) { client.start(done) }
+      ], done)
     })
 
     it('should receive messages from the specified address', function(done) {
@@ -227,6 +228,43 @@ describe('client <-> server', function() {
 
       client.message('/bla', [1, 2, 3])
       client.message('/blo', ['oui', 'non'])
+    })
+
+  })
+
+  describe('blob', function() {
+
+    beforeEach(function(done) {
+      config.osc.clients = [
+        { ip: 'localhost', port: 9005 },
+        { ip: 'localhost', port: 9010 }
+      ]
+      client.config.reconnect = 0
+      async.series([
+        function(next) { wsServer.start(config, next) },
+        function(next) { client.start(done) }
+      ], done)
+    })
+
+    it('should save blobs and send an osc message with the given address', function(done) {
+      var blob = new Buffer('blobby')
+
+      var oscTrace = new osc.Server(9005, 'localhost')
+        , received = []
+
+      oscTrace.on('message', function (msg, rinfo) {
+        var address = msg[0]
+          , userId = msg[1]
+          , filepath = msg[2]
+        assert.equal(userId, client.userId)
+        assert.equal(address, '/bla')
+        fs.readFile(filepath, function(err, data) {
+          assert.equal(data.toString(), 'blobby')
+          done()
+        })
+      })
+
+      client.blob('/bla', blob)
     })
 
   })
