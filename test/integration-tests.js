@@ -81,12 +81,27 @@ describe('client <-> server', function() {
       assert.equal(client.userId, null)
       async.series([
         function(next) { dummyConnections(1, next) },
-        function(next) { client.start(next) },
-        function(next) { setTimeout(next, 500) }
+        function(next) { client.start(next) }
       ], function(err) {
         assert.ok(err)
-        assert.equal(client.status(), 'started')
+        assert.equal(client.status(), 'stopped')
         assert.equal(_.last(wsServer.sockets()).readyState, WebSocket.CLOSING)
+        assert.equal(client.userId, null)
+        done()
+      })
+    })
+
+    it('should throw an error if the server is not responding', function(done) {
+      assert.equal(client.status(), 'stopped')
+      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(client.userId, null)
+      async.series([
+        function(next) { wsServer.stop(next) },
+        function(next) { setTimeout(next, 50) },
+        function(next) { client.start(next) }
+      ], function(err) {
+        assert.ok(err)
+        assert.equal(client.status(), 'stopped')
         assert.equal(client.userId, null)
         done()
       })
