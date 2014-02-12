@@ -267,6 +267,57 @@ describe('client <-> server', function() {
       client.blob('/bla', blob)
     })
 
+    it('should handle things correctly when chain sending blobs', function(done) {
+      var blob1 = new Buffer('blobba')
+        , blob2 = new Buffer('blobbo')
+        , blob3 = new Buffer('blobbu')
+        , blob4 = new Buffer('blobbi')
+
+      var oscTrace1 = new osc.Server(9005, 'localhost')
+        , oscTrace2 = new osc.Server(9010, 'localhost')
+        , received = []
+
+      var assertions = function() {
+        assert.deepEqual(received, [
+          [1, '/bla', client.userId, 'blobba'],
+          [2, '/bla', client.userId, 'blobba'],
+          [1, '/blo', client.userId, 'blobbo'],
+          [2, '/blo', client.userId, 'blobbo'],
+          [1, '/blu', client.userId, 'blobbu'],
+          [2, '/blu', client.userId, 'blobbu'],
+          [1, '/bli', client.userId, 'blobbi'],
+          [2, '/bli', client.userId, 'blobbi'],
+        ])
+      }
+
+      oscTrace1.on('message', function (msg, rinfo) {
+        var address = msg[0], userId = msg[1], filepath = msg[2]
+        fs.readFile(filepath, function(err, data) {
+          received.push([1, address, userId, data.toString()])
+          if (received.length === 8) {
+            assertions()
+            done()
+          }
+        })
+      })
+
+      oscTrace2.on('message', function (msg, rinfo) {
+        var address = msg[0], userId = msg[1], filepath = msg[2]
+        fs.readFile(filepath, function(err, data) {
+          received.push([2, address, userId, data.toString()])
+          if (received.length === 8) {
+            assertions()
+            done()
+          }
+        })
+      })
+
+      client.blob('/bla', blob1)
+      client.blob('/blo', blob2)
+      client.blob('/blu', blob3)
+      client.blob('/bli', blob4)
+    })
+
   })
 
   describe('disconnections, server', function() {
