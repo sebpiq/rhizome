@@ -2,6 +2,12 @@
   "name": "rhizome-server",
   "version": "0.1.1",
   "author": "Sebastien Piquemal <sebpiq@gmail.com>",
+  "description": "Web server for participative art performances and installations.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebpiq/rhizome.git"
+  },
+  "keywords": [ "art", "osc", "websocket" ],
   "dependencies" : {
     "underscore": "1.5.x",
     "debug": "0.7.x",
@@ -26,5 +32,6 @@
   "scripts": {
     "test": "mocha --recursive",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive"
-  }
+  },
+  "license": "GPL"
 }

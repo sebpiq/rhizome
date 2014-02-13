@@ -40,7 +40,7 @@ var dummyConnections = function(count, done) {
 }
 _dummies = []
 
-describe('client <-> server', function() {
+describe('web client <-> server', function() {
 
   before(function(done) { oscServer.start(config, done) })
   beforeEach(function(done) {
@@ -92,7 +92,7 @@ describe('client <-> server', function() {
       })
     })
 
-    it('should throw an error if the server is not responding', function(done) {
+    it('should return an error if the server is not responding', function(done) {
       assert.equal(client.status(), 'stopped')
       assert.equal(wsServer.sockets().length, 0)
       assert.equal(client.userId, null)
@@ -182,6 +182,25 @@ describe('client <-> server', function() {
       }
 
       client.listen('/a', handler, listend)
+    })
+
+    it('should throw an error if the address is not valid', function(done) {
+      handler = function() {}
+      client.start(function(err) {
+        if (err) throw err
+        assert.throws(function() { client.listen('bla', handler) })
+        assert.throws(function() { client.listen('/blob', handler) })
+        done()
+      })
+    })
+
+    it('should throw an error if the client isn\'t started', function(done) {
+      handler = function() {}
+      client.stop(function(err) {
+        if (err) throw err
+        assert.throws(function() { client.listen('/bla', handler) })
+        done()
+      })
     })
 
   })

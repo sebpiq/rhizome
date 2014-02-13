@@ -2,8 +2,38 @@ var _ = require('underscore')
   , assert = require('assert')
   , createNsTree = require('../lib/shared').createNsTree
   , normalizeAddress = require('../lib/shared').normalizeAddress
+  , validateAddress = require('../lib/shared').validateAddress
 
-describe('Tree', function() {
+describe('normalizeAddress', function() {
+
+  it('should remove trailing slash', function() {
+    assert.equal(normalizeAddress('/'), '/')
+    assert.equal(normalizeAddress('/bla'), '/bla')
+    assert.equal(normalizeAddress('/bla/blo'), '/bla/blo')
+    assert.equal(normalizeAddress('/bla/'), '/bla')
+    assert.equal(normalizeAddress('/bla/blo/'), '/bla/blo')
+  })
+
+})
+
+describe('validateAddress', function() {
+  
+  it('should forbid reserved namespaces', function() {
+    assert.equal(validateAddress('/bla'), null)
+    assert.equal(validateAddress('/'), null)
+    assert.equal(validateAddress('/bla/blob/tre'), null)
+
+    // Should start with /
+    assert.ok(_.isString(validateAddress('bla')))
+
+    // /blob is a reserved namespace
+    assert.ok(_.isString(validateAddress('/blob')))
+    assert.ok(_.isString(validateAddress('/blob/1')))
+  })
+
+})
+
+describe('NsTree', function() {
 
   var meths = {
     createData: function() {
@@ -68,7 +98,7 @@ describe('Tree', function() {
 
 })
 
-describe('Node', function() {
+describe('NsNode', function() {
 
   describe('forEach', function() {
 
@@ -133,18 +163,6 @@ describe('Node', function() {
       assert.deepEqual(nsTree.get('/').resolve(), {data1: [666, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]})
     })
 
-  })
-
-})
-
-describe('normalizeAddress', function() {
-
-  it('should remove trailing slash', function() {
-    assert.equal(normalizeAddress('/'), '/')
-    assert.equal(normalizeAddress('/bla'), '/bla')
-    assert.equal(normalizeAddress('/bla/blo'), '/bla/blo')
-    assert.equal(normalizeAddress('/bla/'), '/bla')
-    assert.equal(normalizeAddress('/bla/blo/'), '/bla/blo')
   })
 
 })
