@@ -249,6 +249,11 @@ describe('web client <-> server', function() {
       client.message('/blo', ['oui', 'non'])
     })
 
+    it('should throw an error if the address is not valid', function() {
+      assert.throws(function() { client.message('bla', 12, 23) })
+      assert.throws(function() { client.message('/blob', 'mna') })
+    })
+
   })
 
   describe('blob', function() {
@@ -297,14 +302,14 @@ describe('web client <-> server', function() {
         , received = []
 
       var assertions = function() {
-        assert.deepEqual(received, [
+        assert.deepEqual(_.sortBy(received, function(m) { return m[0] }), [
           [1, '/bla', client.userId, 'blobba'],
-          [2, '/bla', client.userId, 'blobba'],
           [1, '/blo', client.userId, 'blobbo'],
-          [2, '/blo', client.userId, 'blobbo'],
           [1, '/blu', client.userId, 'blobbu'],
-          [2, '/blu', client.userId, 'blobbu'],
           [1, '/bli', client.userId, 'blobbi'],
+          [2, '/bla', client.userId, 'blobba'],
+          [2, '/blo', client.userId, 'blobbo'],
+          [2, '/blu', client.userId, 'blobbu'],
           [2, '/bli', client.userId, 'blobbi'],
         ])
       }
@@ -335,6 +340,11 @@ describe('web client <-> server', function() {
       client.blob('/blo', blob2)
       client.blob('/blu', blob3)
       client.blob('/bli', blob4)
+    })
+
+    it('should throw an error if the address is not valid', function() {
+      assert.throws(function() { client.blob('bla', 1) })
+      assert.throws(function() { client.blob('/blob', 1) })
     })
 
   })
