@@ -16,7 +16,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'build/rhizome.js': ['lib/client/index.js'],
+          'build/rhizome.js': ['lib/web-client/index.js'],
         }
       }
     }

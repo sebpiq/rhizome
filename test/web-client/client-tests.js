@@ -3,9 +3,11 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , osc = require('node-osc')
-  , wsServer = require('../lib/server/websockets')
-  , oscServer = require('../lib/server/osc')
-  , client = require('../lib/client/client')
+  , wsServer = require('../../lib/server/websockets')
+  , oscServer = require('../../lib/server/osc')
+  , client = require('../../lib/web-client/client')
+  , helpers = require('../helpers')
+  , WebSocket = require('ws')
 
 var config = {
     server: { port: 8000, rootUrl: '/', usersLimit: 40, blobsDirName: '/tmp' },
@@ -13,34 +15,8 @@ var config = {
   }
   , oscClient = new osc.Client(config.server.hostname, config.osc.port)
 
-// For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
-var WebSocket = require('ws')
-WebSocket.prototype.removeEventListener = function(name, cb) {
-  var self = this
-    , handlerList = this._events[name]
-  handlerList = _.isFunction(handlerList) ? [handlerList] : handlerList
-  this._events[name] = _.reject(handlerList, function(other) {
-    return other._listener === cb
-  })
-}
 
-// Helper to create dummy connections from other clients
-var dummyConnections = function(count, done) {
-  var countBefore = wsServer.sockets().length
-  async.series(_.range(count).map(function(i) {
-    return function(next) {
-      socket = new WebSocket('ws://localhost:' + config.server.port + '/?dummies')
-      _dummies.push(socket)
-      socket.addEventListener('open', function() { next() })
-    }
-  }), function(err) {
-    assert.equal(wsServer.sockets().length, countBefore + count)
-    done(err)
-  })
-}
-_dummies = []
-
-describe('web client <-> server', function() {
+describe('web client', function() {
 
   before(function(done) { oscServer.start(config, done) })
   beforeEach(function(done) {
@@ -48,10 +24,8 @@ describe('web client <-> server', function() {
     done()
   })
   afterEach(function(done) {
-    _dummies.forEach(function() { socket.close() })
-    _dummies = []
     client.debug = function() {}
-    async.series([ client.stop, wsServer.stop ], done)
+    helpers.afterEach(done)
   })
 
   describe('start', function() {
@@ -81,7 +55,7 @@ describe('web client <-> server', function() {
       assert.equal(wsServer.sockets().length, 0)
       assert.equal(client.userId, null)
       async.series([
-        function(next) { dummyConnections(1, next) },
+        function(next) { helpers.dummyConnections(config, 1, next) },
         function(next) { client.start(next) }
       ], function(err) {
         assert.ok(err)
@@ -349,42 +323,7 @@ describe('web client <-> server', function() {
 
   })
 
-  describe('disconnections, server', function() {
-
-    beforeEach(function(done) {
-      client.config.reconnect = 0
-      wsServer.start(config, done)
-    })
-
-    it('should forget the socket', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
-      assert.equal(client.status(), 'stopped')
-      async.series([
-        function(next) { dummyConnections(2, next) },
-        function(next) { client.start(next) },
-        function(next) {
-          client.listen('/someAddr', function() {}, function(err) {
-            assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 1)
-            next(err)
-          }) 
-        },
-        function(next) {
-          assert.equal(wsServer.sockets().length, 3)
-          assert.equal(client.status(), 'started')
-          client.stop(next)
-        }
-      ], function(err) {
-        if (err) throw err
-        assert.equal(wsServer.sockets().length, 2)
-        assert.equal(client.status(), 'stopped')
-        assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 0)
-        done()
-      })
-    })
-
-  })
-
-  describe('disconnections, client', function() {
+  describe('auto-reconnect', function() {
 
     beforeEach(function(done) {
       client.config.reconnect = 1 // Just so that reconnect is not null and therefore it is handled

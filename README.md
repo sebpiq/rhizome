@@ -85,12 +85,13 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
-- 0.1.2 
-  - Renamed `client.config.retry` to `client.config.reconnect`
-  - sending blobs from web client to OSC. For now blobs are just saved on the local file system.
+- 0.2.0 
+  - In web client: renamed `client.config.retry` to `client.config.reconnect`
+  - Sending blobs from web client to OSC. For now blobs are just saved on the local file system.
+  - Added address validation
 
 - 0.1.1 
   - Fixed bugs with retry
-  - Added `client.status()`
+  - In web-client : added `client.status()`
 
 - 0.1.0 Initial release
