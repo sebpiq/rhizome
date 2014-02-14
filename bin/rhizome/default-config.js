@@ -16,7 +16,7 @@ module.exports = function(config) {
       webPort: 8000,
 
       // The port on which the server will receive OSC messages
-      oscPort: 9000
+      oscPort: 9000,
 
       // The maximum amount of users accepted simultaneously
       usersLimit: 40,

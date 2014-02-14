@@ -23,8 +23,8 @@ var path = require('path')
   , debug = require('debug')('rhizome.main')
   , async = require('async')
   , express = require('express')
-  , wsServer = require('./lib/server/websockets')
-  , oscServer = require('./lib/server/osc')
+  , wsServer = require('../../lib/server/websockets')
+  , oscServer = require('../../lib/server/osc')
 
 // TODO ; oscClient.port !== desktopClient.port AND server.port !== desktopClient.port
 var validateConfig = function(config) {
@@ -38,16 +38,17 @@ if (process.argv.length !== 3) {
 
 var app = express()
   , server = require('http').createServer(app)
-  , buildDir = path.join(__dirname, 'build')
-  , gruntExecPath = path.join(__dirname, 'node_modules', 'grunt-cli', 'bin', 'grunt')
-  , gruntFilePath = path.join(__dirname, 'Gruntfile.js')
+  , packageRootPath = path.join(__dirname, '..', '..')
+  , buildDir = path.join(packageRootPath, 'build')
+  , gruntExecPath = path.join(packageRootPath, 'node_modules', 'grunt-cli', 'bin', 'grunt')
+  , gruntFilePath = path.join(packageRootPath, 'Gruntfile.js')
   , configFilePath = path.join(process.cwd(), process.argv[2])
   , config = {}
 require('./default-config.js')(config)
 require(configFilePath)(config)
 config.server.instance = server
 
-app.set('port', config.server.port)
+app.set('port', config.server.webPort)
 app.use(express.logger('dev'))
 app.use(express.bodyParser())
 app.use(express.methodOverride())

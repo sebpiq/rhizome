@@ -24,7 +24,7 @@
   "devDependencies": {
     "mocha": "1.17.x"
   },
-  "bin" : { "rhizome" : "./main.js", "rhizome-client" : "./main.js" },
+  "bin" : { "rhizome" : "./bin/rhizome/main.js", "rhizome-client" : "./bin/rhizome-client/main.js" },
   "license": "MIT",
   "engines": {
     "node": ">=0.6"
