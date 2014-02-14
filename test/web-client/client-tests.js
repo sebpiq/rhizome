@@ -234,28 +234,7 @@ describe('web client', function() {
       client.message('/blo', ['oui', 'non'])
     })
 
-    it('should throw an error if the address is not valid', function() {
-      assert.throws(function() { client.message('bla', 12, 23) })
-      assert.throws(function() { client.message('/sys/', 'mna') })
-    })
-
-  })
-
-  describe('blob', function() {
-
-    beforeEach(function(done) {
-      config.osc.clients = [
-        { ip: 'localhost', port: 9005 },
-        { ip: 'localhost', port: 9010 }
-      ]
-      client.config.reconnect = 0
-      async.series([
-        function(next) { wsServer.start(config, next) },
-        function(next) { client.start(done) }
-      ], done)
-    })
-
-    it('should handle things correctly when chain sending blobs', function(done) {
+    it('should handle things correctly when sending blobs', function(done) {
       var blob1 = new Buffer('blobba')
         , blob2 = new Buffer('blobbo')
         , blob3 = new Buffer('blobbu')
@@ -270,29 +249,33 @@ describe('web client', function() {
 
         if (received.length >= 8) {
           helpers.assertSameElements(received, [
-            [shared.fromWebBlobAddress, [9005, '/bla', 'blobba', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/bli', 'blobbi', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/blo', 'blobbo', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/blu', 'blobbu', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/bla/blob', 'blobba', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/bli/blob/', 'blobbi', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/blo/blob', 'blobbo', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/blu/blob/', 'blobbu', client.userId]],
 
-            [shared.fromWebBlobAddress, [9010, '/bla', 'blobba', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/bli', 'blobbi', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/blo', 'blobbo', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/blu', 'blobbu', client.userId]]
+            [shared.fromWebBlobAddress, [9010, '/bla/blob', 'blobba', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/bli/blob/', 'blobbi', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/blo/blob', 'blobbo', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/blu/blob/', 'blobbu', client.userId]]
           ])
           done()
         }
       })
+  
+      client.message('/bla/blob', blob1)
+      client.message('/blo/blob', blob2)
+      client.message('/blu/blob/', blob3)
+      client.message('/bli/blob/', blob4)
+    })
 
-      client.blob('/bla', blob1)
-      client.blob('/blo', blob2)
-      client.blob('/blu', blob3)
-      client.blob('/bli', blob4)
+    it('should throw an error if the address is blob address but the argument is not a blob', function() {
+      assert.throws(function() { client.message('/blob', [12, 23]) })
     })
 
     it('should throw an error if the address is not valid', function() {
-      assert.throws(function() { client.blob('bla', 1) })
-      assert.throws(function() { client.blob('/sys', 1) })
+      assert.throws(function() { client.message('bla', [12]) })
+      assert.throws(function() { client.message('/sys/', ['mna']) })
     })
 
   })
