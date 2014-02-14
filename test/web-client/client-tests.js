@@ -6,14 +6,25 @@ var _ = require('underscore')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
   , client = require('../../lib/web-client/client')
+  , shared = require('../../lib/shared')
   , helpers = require('../helpers')
   , WebSocket = require('ws')
 
 var config = {
-    server: { port: 8000, rootUrl: '/', usersLimit: 40, blobsDirName: '/tmp' },
-    osc: { port: 9000, hostname: 'localhost', clients: [] }
-  }
-  , oscClient = new osc.Client(config.server.hostname, config.osc.port)
+  server: {
+    port: 8000,
+    rootUrl: '/',
+    usersLimit: 40,
+    blobsDirName: '/tmp'
+  },
+  osc: {
+    port: 9000,
+    hostname: 'localhost', clients: []
+  },
+  desktopClient: {port: 44444, blobsDirName: '/tmp'}
+}
+
+var oscClient = new osc.Client(config.server.hostname, config.osc.port)
 
 
 describe('web client', function() {
@@ -163,7 +174,8 @@ describe('web client', function() {
       client.start(function(err) {
         if (err) throw err
         assert.throws(function() { client.listen('bla', handler) })
-        assert.throws(function() { client.listen('/blob', handler) })
+        assert.throws(function() { client.listen('/sys', handler) })
+        assert.throws(function() { client.listen('/sys/takeIt/', handler) })
         done()
       })
     })
@@ -225,7 +237,7 @@ describe('web client', function() {
 
     it('should throw an error if the address is not valid', function() {
       assert.throws(function() { client.message('bla', 12, 23) })
-      assert.throws(function() { client.message('/blob', 'mna') })
+      assert.throws(function() { client.message('/sys/', 'mna') })
     })
 
   })
@@ -244,70 +256,39 @@ describe('web client', function() {
       ], done)
     })
 
-    it('should save blobs and send an osc message with the given address', function(done) {
-      var blob = new Buffer('blobby')
-
-      var oscTrace = new osc.Server(9005, 'localhost')
-        , received = []
-
-      oscTrace.on('message', function (msg, rinfo) {
-        var address = msg[0]
-          , userId = msg[1]
-          , filepath = msg[2]
-        assert.equal(userId, client.userId)
-        assert.equal(address, '/bla')
-        fs.readFile(filepath, function(err, data) {
-          assert.equal(data.toString(), 'blobby')
-          done()
-        })
-      })
-
-      client.blob('/bla', blob)
-    })
-
     it('should handle things correctly when chain sending blobs', function(done) {
       var blob1 = new Buffer('blobba')
         , blob2 = new Buffer('blobbo')
         , blob3 = new Buffer('blobbu')
         , blob4 = new Buffer('blobbi')
 
-      var oscTrace1 = new osc.Server(9005, 'localhost')
-        , oscTrace2 = new osc.Server(9010, 'localhost')
+      var oscTrace = new osc.Server(config.desktopClient.port, 'localhost')
         , received = []
 
-      var assertions = function() {
-        assert.deepEqual(_.sortBy(received, function(m) { return m[0] }), [
-          [1, '/bla', client.userId, 'blobba'],
-          [1, '/blo', client.userId, 'blobbo'],
-          [1, '/blu', client.userId, 'blobbu'],
-          [1, '/bli', client.userId, 'blobbi'],
-          [2, '/bla', client.userId, 'blobba'],
-          [2, '/blo', client.userId, 'blobbo'],
-          [2, '/blu', client.userId, 'blobbu'],
-          [2, '/bli', client.userId, 'blobbi'],
-        ])
-      }
+      oscTrace.on('message', function (msg, rinfo) {
+        var address = msg[0]
+          , args = msg.slice(1)
+          , pdPort = args[0]
+          , originalAddress = args[1]
+          , blob = args[2].toString()
+          , userId = args[3]
 
-      oscTrace1.on('message', function (msg, rinfo) {
-        var address = msg[0], userId = msg[1], filepath = msg[2]
-        fs.readFile(filepath, function(err, data) {
-          received.push([1, address, userId, data.toString()])
-          if (received.length === 8) {
-            assertions()
-            done()
-          }
-        })
-      })
+        received.push([address, pdPort, originalAddress, blob, userId])
 
-      oscTrace2.on('message', function (msg, rinfo) {
-        var address = msg[0], userId = msg[1], filepath = msg[2]
-        fs.readFile(filepath, function(err, data) {
-          received.push([2, address, userId, data.toString()])
-          if (received.length === 8) {
-            assertions()
-            done()
-          }
-        })
+        if (received.length >= 8) {
+          assert.deepEqual(_.sortBy(received, function(m) { return m[1].toString() + m[2] }), [
+            [shared.takeBlobAddress, 9005, '/bla', 'blobba', client.userId],
+            [shared.takeBlobAddress, 9005, '/bli', 'blobbi', client.userId],
+            [shared.takeBlobAddress, 9005, '/blo', 'blobbo', client.userId],
+            [shared.takeBlobAddress, 9005, '/blu', 'blobbu', client.userId],
+
+            [shared.takeBlobAddress, 9010, '/bla', 'blobba', client.userId],
+            [shared.takeBlobAddress, 9010, '/bli', 'blobbi', client.userId],
+            [shared.takeBlobAddress, 9010, '/blo', 'blobbo', client.userId],
+            [shared.takeBlobAddress, 9010, '/blu', 'blobbu', client.userId]
+          ])
+          done()
+        }
       })
 
       client.blob('/bla', blob1)
@@ -318,7 +299,7 @@ describe('web client', function() {
 
     it('should throw an error if the address is not valid', function() {
       assert.throws(function() { client.blob('bla', 1) })
-      assert.throws(function() { client.blob('/blob', 1) })
+      assert.throws(function() { client.blob('/sys', 1) })
     })
 
   })

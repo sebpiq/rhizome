@@ -29,7 +29,7 @@ module.exports = function(config) {
     // Configuration for OSC server and clients 
     osc: {
 
-      // The port on which rhizome will receive OSC messages
+      // The port on which the server will receive OSC messages
       port: 9000,
 
       // The host on which rhizome runs
@@ -37,8 +37,16 @@ module.exports = function(config) {
 
       // A list of OSC clients to transmit user messages to. Example :
       // [ {ip: '192.168.0.200', port: 57120}, {ip: '192.168.0.205', port: 9001} ]
-      clients: [] 
+      clients: []
+    },
+
+    desktopClient: {
+      port: 44444,
+
+      // Directory where blobs received from the server are saved
+      blobsDirName: '/tmp'
     }
+
   })
 
 }

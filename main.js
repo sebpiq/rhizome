@@ -26,6 +26,11 @@ var path = require('path')
   , wsServer = require('./lib/server/websockets')
   , oscServer = require('./lib/server/osc')
 
+// TODO ; oscClient.port !== desktopClient.port AND server.port !== desktopClient.port
+var validateConfig = function(config) {
+  if (config.server.port === config.desktopClient.port) {}
+}
+
 if (process.argv.length !== 3) {
   console.log('usage : rhizome <config.js>')
   process.exit(1)
