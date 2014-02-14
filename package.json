@@ -15,7 +15,7 @@
     "express": "3.3.x",
     "async": "0.2.x",
     "hbs": "2.3.x",
-    "node-osc": "0.2.x",
+    "osc-min": "0.0.x",
     "grunt": "0.4.x",
     "grunt-cli": "0.1.x",
     "grunt-contrib-uglify": "0.3.x",  

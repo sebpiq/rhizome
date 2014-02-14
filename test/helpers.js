@@ -31,8 +31,23 @@ exports.dummyConnections = function(config, count, done) {
 }
 var _dummies = []
 
+// Helper with common operations to clean after a test
 exports.afterEach = function(done) {
   _dummies.forEach(function() { socket.close() })
   _dummies = []
   async.series([ webClient.stop, wsServer.stop ], done)
+}
+
+// Helper to assert that 2 arrays contain the same elements (using deepEqual)
+exports.assertSameElements = function(arr1, arr2) {
+  assert.deepEqual(_.sortBy(arr1, _sortFunc), _.sortBy(arr2, _sortFunc))
+}
+var _sortFunc = function(obj) {
+  vals = obj
+  if (_.isObject(obj)) {
+    vals = _.chain(obj).pairs()
+      .sortBy(function(p) { return p[0] })
+      .pluck(1).value()
+  }
+  return vals.map(function(v) { return v.toString() }).join('')
 }

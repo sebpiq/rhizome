@@ -2,10 +2,10 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , osc = require('node-osc')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
   , webClient = require('../../lib/web-client/client')
+  , utils = require('../../lib/server/utils')
   , helpers = require('../helpers')
 
 var config = {
@@ -13,7 +13,6 @@ var config = {
     osc: { port: 9000, hostname: 'localhost', clients: [] },
     desktopClient: { port: 66666 }
   }
-  , oscClient = new osc.Client(config.server.hostname, config.osc.port)
 
 
 describe('websockets', function() {

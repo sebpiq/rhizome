@@ -2,11 +2,11 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , osc = require('node-osc')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
   , client = require('../../lib/web-client/client')
   , shared = require('../../lib/shared')
+  , utils = require('../../lib/server/utils')
   , helpers = require('../helpers')
   , WebSocket = require('ws')
 
@@ -24,7 +24,7 @@ var config = {
   desktopClient: {port: 44444, blobsDirName: '/tmp'}
 }
 
-var oscClient = new osc.Client(config.server.hostname, config.osc.port)
+var oscClient = new utils.OSCClient(config.server.hostname, config.osc.port)
 
 
 describe('web client', function() {
@@ -112,8 +112,8 @@ describe('web client', function() {
         if (err) throw err
         assert.equal(wsServer.nsTree.has('/place1'), true)
         assert.equal(wsServer.nsTree.get('/place1').data.sockets.length, 1)
-        oscClient.send('/place2', 44)
-        oscClient.send('/place1', 1, 2, 3)
+        oscClient.send('/place2', [44])
+        oscClient.send('/place1', [1, 2, 3])
       }
 
       var handler = function(address, args) {
@@ -143,24 +143,24 @@ describe('web client', function() {
 
     it('should receive all messages from subspaces', function(done) {
       var received = []
+
       var listend = function(err) {
         if (err) throw err
-        oscClient.send('/a', 44)
-        oscClient.send('/a/b', 55)
-        oscClient.send('/', 66)
-        oscClient.send('/c', 77)
-        oscClient.send('/a/d', 88)
-        oscClient.send('/a/', 99)
+        oscClient.send('/a', [44])
+        oscClient.send('/a/b', [55])
+        oscClient.send('/', [66])
+        oscClient.send('/c', [77])
+        oscClient.send('/a/d', [88])
+        oscClient.send('/a/', [99])
       }
 
       var handler = function(address, args) {
         received.push([args[0], address])
         assert.equal(args.length, 1)
         if (received.length === 4) {
-          var sortFunc = function(p) { return p[0] }
-          assert.deepEqual(
-            _.sortBy(received, sortFunc),
-            _.sortBy([[44, '/a'], [55, '/a/b'], [88, '/a/d'], [99, '/a']], sortFunc)
+          helpers.assertSameElements(
+            received, 
+            [[44, '/a'], [55, '/a/b'], [88, '/a/d'], [99, '/a']]
           )
           done()
         }
@@ -206,28 +206,27 @@ describe('web client', function() {
     })
 
     it('should receive messages from the specified address', function(done) {
-      var oscTrace1 = new osc.Server(9005, 'localhost')
-        , oscTrace2 = new osc.Server(9010, 'localhost')
+      var oscTrace1 = new utils.OSCServer(9005)
+        , oscTrace2 = new utils.OSCServer(9010)
         , received = []
 
       var assertions = function() {
-        received = _.sortBy(received, function(r) { return '' + r[0] + r[1][0] })
-        assert.deepEqual(received, [
-          [1, ['/bla', 1, 2, 3]],
-          [1, ['/blo', 'oui', 'non']],
-          [2, ['/bla', 1, 2, 3]],
-          [2, ['/blo', 'oui', 'non']]
+        helpers.assertSameElements(received, [
+          ['/bla', [1, 2, 3], 1],
+          ['/blo', ['oui', 'non'], 1],
+          ['/bla', [1, 2, 3], 2],
+          ['/blo', ['oui', 'non'], 2]
         ])
         done()
       }
 
-      oscTrace1.on('message', function (msg, rinfo) {
-        received.push([1, msg])
+      oscTrace1.on('message', function (address, args, rinfo) {
+        received.push([address, args, 1])
         if (received.length === 4) assertions()
       })
 
-      oscTrace2.on('message', function (msg, rinfo) {
-        received.push([2, msg])
+      oscTrace2.on('message', function (address, args, rinfo) {
+        received.push([address, args, 2])
         if (received.length === 4) assertions()
       })
 
@@ -262,30 +261,24 @@ describe('web client', function() {
         , blob3 = new Buffer('blobbu')
         , blob4 = new Buffer('blobbi')
 
-      var oscTrace = new osc.Server(config.desktopClient.port, 'localhost')
+      var oscTrace = new utils.OSCServer(config.desktopClient.port)
         , received = []
 
-      oscTrace.on('message', function (msg, rinfo) {
-        var address = msg[0]
-          , args = msg.slice(1)
-          , pdPort = args[0]
-          , originalAddress = args[1]
-          , blob = args[2].toString()
-          , userId = args[3]
-
-        received.push([address, pdPort, originalAddress, blob, userId])
+      oscTrace.on('message', function (address, args, rinfo) {
+        args[2] = args[2].toString()
+        received.push([address, args])
 
         if (received.length >= 8) {
-          assert.deepEqual(_.sortBy(received, function(m) { return m[1].toString() + m[2] }), [
-            [shared.takeBlobAddress, 9005, '/bla', 'blobba', client.userId],
-            [shared.takeBlobAddress, 9005, '/bli', 'blobbi', client.userId],
-            [shared.takeBlobAddress, 9005, '/blo', 'blobbo', client.userId],
-            [shared.takeBlobAddress, 9005, '/blu', 'blobbu', client.userId],
+          helpers.assertSameElements(received, [
+            [shared.takeBlobAddress, [9005, '/bla', 'blobba', client.userId]],
+            [shared.takeBlobAddress, [9005, '/bli', 'blobbi', client.userId]],
+            [shared.takeBlobAddress, [9005, '/blo', 'blobbo', client.userId]],
+            [shared.takeBlobAddress, [9005, '/blu', 'blobbu', client.userId]],
 
-            [shared.takeBlobAddress, 9010, '/bla', 'blobba', client.userId],
-            [shared.takeBlobAddress, 9010, '/bli', 'blobbi', client.userId],
-            [shared.takeBlobAddress, 9010, '/blo', 'blobbo', client.userId],
-            [shared.takeBlobAddress, 9010, '/blu', 'blobbu', client.userId]
+            [shared.takeBlobAddress, [9010, '/bla', 'blobba', client.userId]],
+            [shared.takeBlobAddress, [9010, '/bli', 'blobbi', client.userId]],
+            [shared.takeBlobAddress, [9010, '/blo', 'blobbo', client.userId]],
+            [shared.takeBlobAddress, [9010, '/blu', 'blobbu', client.userId]]
           ])
           done()
         }
