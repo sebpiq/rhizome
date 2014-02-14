@@ -55,7 +55,7 @@ Gallery
 Desktop client
 ----------------
 
-It is important to use the same config file as for the server.
+todo
 
 For contributors
 ------------------
@@ -94,7 +94,7 @@ istanbul cover _mocha -- test --recursive
 Server -> desktop client
 
 `/sys/blob/gimme <address> <filePath>`
-`/sys/blob/fromWeb <pdPort> <address> <blob> <userId>`
+`/sys/blob/fromWeb <address> <blob> <userId>`
 
 
 Desktop client -> server
@@ -106,7 +106,11 @@ Changelog
 -----------
 
 - 0.2.0 
-  - In web client: renamed `client.config.retry` to `client.config.reconnect`
+
+  - In web client:
+    - renamed `client.config.retry` to `client.config.reconnect`
+    - removed `blob`, now blob sent with `message`
+
   - Sending blobs from web client to OSC. For now blobs are just saved on the local file system.
   - Added address validation
 

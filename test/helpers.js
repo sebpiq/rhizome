@@ -20,7 +20,7 @@ exports.dummyConnections = function(config, count, done) {
   var countBefore = wsServer.sockets().length
   async.series(_.range(count).map(function(i) {
     return function(next) {
-      socket = new WebSocket('ws://localhost:' + config.server.port + '/?dummies')
+      socket = new WebSocket('ws://localhost:' + config.server.webPort + '/?dummies')
       _dummies.push(socket)
       socket.addEventListener('open', function() { next() })
     }

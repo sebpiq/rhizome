@@ -9,10 +9,16 @@ var _ = require('underscore')
   , helpers = require('../helpers')
 
 var config = {
-    server: { port: 8000, rootUrl: '/', usersLimit: 40, blobsDirName: '/tmp' },
-    osc: { port: 9000, hostname: 'localhost', clients: [] },
-    desktopClient: { port: 66666 }
-  }
+  server: {
+    ip: '127.0.0.1',
+    webPort: 8000,
+    oscPort: 9000, 
+    rootUrl: '/', 
+    usersLimit: 40, 
+    blobsDirName: '/tmp'
+  },
+  clients: []
+}
 
 
 describe('websockets', function() {

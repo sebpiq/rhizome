@@ -9,41 +9,46 @@ var _ = require('underscore')
   , utils = require('../../lib/server/utils')
   , helpers = require('../helpers')
 
-var config = {
+var serverConfig = {
 
   server: {
-    port: 8000,
-    blobsDirName: '/tmp'
+    blobsDirName: '/tmp',
+    ip: '127.0.0.1',
+    oscPort: 9000,
+    webPort: 8000
   },
 
-  osc: {
-    port: 9000,
-    hostname: 'localhost',
-    clients: [ {ip: 'localhost', port: 9001} ]
+  clients: [ {ip: '127.0.0.1', port: 9001, desktopClientPort: 44444} ]
+
+}
+
+var clientConfig = {
+
+  server: {
+    ip: '127.0.0.1',
+    oscPort: 9000
   },
 
-  desktopClient: {
-    port: 44444,
+  client: {
+    port: 9001,
+    desktopClientPort: 44444,
     blobsDirName: '/tmp'
   }
 
 }
 
-// This fakes the server
-var sendToDesktopClient = new utils.OSCClient(config.osc.clients[0].ip, config.desktopClient.port)
-
-// This fakes the performance system (Pd, processing)
-var receiveFromServer = new utils.OSCServer(config.osc.clients[0].port)
-  , sendToServer = new utils.OSCClient(config.osc.hostname, config.osc.port)
+var sendToDesktopClient = new utils.OSCClient(serverConfig.clients[0].ip, serverConfig.clients[0].desktopClientPort)
+  , fakePd = new utils.OSCServer(clientConfig.client.port)
+  , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
 
 describe('desktop-client', function() {
 
   beforeEach(function(done) {
-    receiveFromServer.removeAllListeners()
+    fakePd.removeAllListeners()
     async.series([
-      function(next) { oscServer.start(config, next) },
-      function(next) { wsServer.start(config, next) }
+      function(next) { oscServer.start(serverConfig, next) },
+      function(next) { wsServer.start(serverConfig, next) }
     ], done)
   })
 
@@ -54,7 +59,7 @@ describe('desktop-client', function() {
   describe('receive blob', function() {
 
     beforeEach(function(done) {
-      client.start(config, done)
+      client.start(clientConfig, done)
     })
 
     it('should save the blob and send a message to the final client (Pd, Processing...)', function(done) {
@@ -63,7 +68,7 @@ describe('desktop-client', function() {
         , buf3 = new Buffer('blobby3')
         , received = []
 
-      receiveFromServer.on('message', function (address, args, rinfo) {
+      fakePd.on('message', function (address, args, rinfo) {
         received.push([address, args])
         if (received.length === 3) {
 
@@ -84,9 +89,9 @@ describe('desktop-client', function() {
         }
       })
 
-      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/bla/blob', buf1, 0])
-      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/blo/bli/blob/', buf2, 0])
-      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/blob', buf3, 1])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/bla/blob', buf1, 0])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/blo/bli/blob/', buf2, 0])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/blob', buf3, 1])
     })
 
   })
@@ -141,7 +146,7 @@ describe('desktop-client', function() {
 
     it('should refuse to send a blob that is not in the configured dirName', function(done) {
       oscServer.stop(function(err) {
-        var fakeOscServer = new utils.OSCServer(config.osc.port)
+        var fakeOscServer = new utils.OSCServer(serverConfig.server.oscPort)
         fakeOscServer.on('message', function(address, args) {
           assert.equal(address, shared.errorAddress)
           done()

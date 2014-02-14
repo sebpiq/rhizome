@@ -12,19 +12,17 @@ var _ = require('underscore')
 
 var config = {
   server: {
-    port: 8000,
+    ip: '127.0.0.1',
+    webPort: 8000,
+    oscPort: 9000,
     rootUrl: '/',
     usersLimit: 40,
     blobsDirName: '/tmp'
   },
-  osc: {
-    port: 9000,
-    hostname: 'localhost', clients: []
-  },
-  desktopClient: {port: 44444, blobsDirName: '/tmp'}
+  clients: []
 }
 
-var oscClient = new utils.OSCClient(config.server.hostname, config.osc.port)
+var oscClient = new utils.OSCClient(config.server.ip, config.server.oscPort)
 
 
 describe('web client', function() {
@@ -194,9 +192,9 @@ describe('web client', function() {
   describe('message', function() {
     
     beforeEach(function(done) {
-      config.osc.clients = [
-        { ip: 'localhost', port: 9005 },
-        { ip: 'localhost', port: 9010 }
+      config.clients = [
+        { ip: '127.0.0.1', port: 9005, desktopClientPort: 44444 },
+        { ip: '127.0.0.1', port: 9010, desktopClientPort: 44445 }
       ]
       client.config.reconnect = 0
       async.series([
@@ -240,27 +238,35 @@ describe('web client', function() {
         , blob3 = new Buffer('blobbu')
         , blob4 = new Buffer('blobbi')
 
-      var oscTrace = new utils.OSCServer(config.desktopClient.port)
+      var oscTrace1 = new utils.OSCServer(44444)
+          oscTrace2 = new utils.OSCServer(44445)
         , received = []
 
-      oscTrace.on('message', function (address, args, rinfo) {
-        args[2] = args[2].toString()
-        received.push([address, args])
+      var assertions = function() {
+        helpers.assertSameElements(received, [
+          [44444, shared.fromWebBlobAddress, ['/bla/blob', 'blobba', client.userId]],
+          [44444, shared.fromWebBlobAddress, ['/bli/blob/', 'blobbi', client.userId]],
+          [44444, shared.fromWebBlobAddress, ['/blo/blob', 'blobbo', client.userId]],
+          [44444, shared.fromWebBlobAddress, ['/blu/blob/', 'blobbu', client.userId]],
 
-        if (received.length >= 8) {
-          helpers.assertSameElements(received, [
-            [shared.fromWebBlobAddress, [9005, '/bla/blob', 'blobba', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/bli/blob/', 'blobbi', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/blo/blob', 'blobbo', client.userId]],
-            [shared.fromWebBlobAddress, [9005, '/blu/blob/', 'blobbu', client.userId]],
+          [44445, shared.fromWebBlobAddress, ['/bla/blob', 'blobba', client.userId]],
+          [44445, shared.fromWebBlobAddress, ['/bli/blob/', 'blobbi', client.userId]],
+          [44445, shared.fromWebBlobAddress, ['/blo/blob', 'blobbo', client.userId]],
+          [44445, shared.fromWebBlobAddress, ['/blu/blob/', 'blobbu', client.userId]]
+        ])
+        done()
+      }
 
-            [shared.fromWebBlobAddress, [9010, '/bla/blob', 'blobba', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/bli/blob/', 'blobbi', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/blo/blob', 'blobbo', client.userId]],
-            [shared.fromWebBlobAddress, [9010, '/blu/blob/', 'blobbu', client.userId]]
-          ])
-          done()
-        }
+      oscTrace1.on('message', function (address, args, rinfo) {
+        args[1] = args[1].toString()
+        received.push([44444, address, args])
+        if (received.length >= 8) assertions()
+      })
+
+      oscTrace2.on('message', function (address, args, rinfo) {
+        args[1] = args[1].toString()
+        received.push([44445, address, args])
+        if (received.length >= 8) assertions()
       })
   
       client.message('/bla/blob', blob1)
