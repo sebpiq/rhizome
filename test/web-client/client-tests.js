@@ -270,15 +270,15 @@ describe('web client', function() {
 
         if (received.length >= 8) {
           helpers.assertSameElements(received, [
-            [shared.takeBlobAddress, [9005, '/bla', 'blobba', client.userId]],
-            [shared.takeBlobAddress, [9005, '/bli', 'blobbi', client.userId]],
-            [shared.takeBlobAddress, [9005, '/blo', 'blobbo', client.userId]],
-            [shared.takeBlobAddress, [9005, '/blu', 'blobbu', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/bla', 'blobba', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/bli', 'blobbi', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/blo', 'blobbo', client.userId]],
+            [shared.fromWebBlobAddress, [9005, '/blu', 'blobbu', client.userId]],
 
-            [shared.takeBlobAddress, [9010, '/bla', 'blobba', client.userId]],
-            [shared.takeBlobAddress, [9010, '/bli', 'blobbi', client.userId]],
-            [shared.takeBlobAddress, [9010, '/blo', 'blobbo', client.userId]],
-            [shared.takeBlobAddress, [9010, '/blu', 'blobbu', client.userId]]
+            [shared.fromWebBlobAddress, [9010, '/bla', 'blobba', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/bli', 'blobbi', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/blo', 'blobbo', client.userId]],
+            [shared.fromWebBlobAddress, [9010, '/blu', 'blobbu', client.userId]]
           ])
           done()
         }

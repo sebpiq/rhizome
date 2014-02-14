@@ -60,11 +60,13 @@ It is important to use the same config file as for the server.
 For contributors
 ------------------
 
+
 #### Activate logging
 
 ```
 export DEBUG=rhizome.*
 ```
+
 
 #### Running tests and code coverage
 
@@ -86,6 +88,19 @@ And generate a coverage report like so :
 ```
 istanbul cover _mocha -- test --recursive
 ```
+
+#### Internal OSC messages
+
+Server -> desktop client
+
+`/sys/blob/gimme <address> <filePath>`
+`/sys/blob/fromWeb <pdPort> <address> <blob> <userId>`
+
+
+Desktop client -> server
+
+`/sys/blob/fromDesktop <address> <blob>`
+
 
 Changelog
 -----------

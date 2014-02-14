@@ -103,5 +103,23 @@ describe('utils', function() {
     })
 
   })
+
+  describe('saveBlob', function() {
+
+    it('should save the blob in the given directory and pick a name automatically', function(done) {
+      var buf = new Buffer('blabla')
+
+      async.waterfall([
+        function(next) { utils.saveBlob('/tmp', buf, next) },
+        function(filePath, next) { fs.readFile(filePath, next) }
+      ], function(err, readBuf) {
+        if (err) throw err
+        assert.equal(readBuf.toString(), 'blabla')
+        done()
+      })
+
+    })
+
+  })
   
 })

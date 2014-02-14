@@ -75,18 +75,18 @@ describe('desktop-client', function() {
 
             received.forEach(function(msg, i) { msg[1][0] = results[i].toString() })
             helpers.assertSameElements(received, [
-              ['/bla/blob', ['blobby1']],
-              ['/blo/bli/blob/', [ 'blobby2' ]],
-              ['/blob', [ 'blobby3' ]]
+              ['/bla/blob', ['blobby1', 0]],
+              ['/blo/bli/blob/', [ 'blobby2', 0]],
+              ['/blob', [ 'blobby3', 1]]
             ])
             done()
           })
         }
       })
 
-      sendToDesktopClient.send(shared.takeBlobAddress, [config.osc.clients[0].port, '/bla/blob', buf1])
-      sendToDesktopClient.send(shared.takeBlobAddress, [config.osc.clients[0].port, '/blo/bli/blob/', buf2])
-      sendToDesktopClient.send(shared.takeBlobAddress, [config.osc.clients[0].port, '/blob', buf3])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/bla/blob', buf1, 0])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/blo/bli/blob/', buf2, 0])
+      sendToDesktopClient.send(shared.fromWebBlobAddress, [config.osc.clients[0].port, '/blob', buf3, 1])
     })
 
   })
@@ -136,6 +136,17 @@ describe('desktop-client', function() {
         sendToServer.send('/bla/bli/blob', ['/tmp/blob1'])
         sendToServer.send('/blob/', ['/tmp/blob2'])
         sendToServer.send('/BLO/blob/', ['/tmp/blob3'])
+      })
+    })
+
+    it('should refuse to send a blob that is not in the configured dirName', function(done) {
+      oscServer.stop(function(err) {
+        var fakeOscServer = new utils.OSCServer(config.osc.port)
+        fakeOscServer.on('message', function(address, args) {
+          assert.equal(address, shared.errorAddress)
+          done()
+        })
+        sendToDesktopClient.send(shared.gimmeBlobAddress, ['/bla', '/home/spiq/secret_file'])
       })
     })
 
