@@ -108,10 +108,10 @@ Changelog
 - 0.2.0 
 
   - In web client:
-    - renamed `client.config.retry` to `client.config.reconnect`
     - removed `blob`, now blob sent with `message`
+    - renamed `client.config.retry` to `client.config.reconnect`
 
-  - Sending blobs from web client to OSC. For now blobs are just saved on the local file system.
+  - Sending blobs web client <-> OSC
   - Added address validation
 
 - 0.1.1 
