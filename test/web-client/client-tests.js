@@ -193,8 +193,8 @@ describe('web client', function() {
     
     beforeEach(function(done) {
       config.clients = [
-        { ip: '127.0.0.1', port: 9005, desktopClientPort: 44444 },
-        { ip: '127.0.0.1', port: 9010, desktopClientPort: 44445 }
+        { ip: '127.0.0.1', oscPort: 9005, desktopClientPort: 44444 },
+        { ip: '127.0.0.1', oscPort: 9010, desktopClientPort: 44445 }
       ]
       client.config.reconnect = 0
       async.series([

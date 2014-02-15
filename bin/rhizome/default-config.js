@@ -36,7 +36,7 @@ module.exports = function(config) {
 
       // A list of OSC clients to transmit user messages to. Valid argument for each client is : 
       //    - <ip> : the IP address of the client
-      //    - <port> : the port on which the application (Pd, Processing, ...) will receive OSC messages
+      //    - <oscPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
       //    - <desktopClientPort> : the port on which the desktop client will receive OSC messages
 
     ]

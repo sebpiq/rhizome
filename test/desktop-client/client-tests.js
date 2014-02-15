@@ -18,7 +18,7 @@ var serverConfig = {
     webPort: 8000
   },
 
-  clients: [ {ip: '127.0.0.1', port: 9001, desktopClientPort: 44444} ]
+  clients: [ {ip: '127.0.0.1', oscPort: 9001, desktopClientPort: 44444} ]
 
 }
 
@@ -30,7 +30,7 @@ var clientConfig = {
   },
 
   client: {
-    port: 9001,
+    oscPort: 9001,
     desktopClientPort: 44444,
     blobsDirName: '/tmp'
   }
@@ -38,7 +38,7 @@ var clientConfig = {
 }
 
 var sendToDesktopClient = new utils.OSCClient(serverConfig.clients[0].ip, serverConfig.clients[0].desktopClientPort)
-  , fakePd = new utils.OSCServer(clientConfig.client.port)
+  , fakePd = new utils.OSCServer(clientConfig.client.oscPort)
   , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
 

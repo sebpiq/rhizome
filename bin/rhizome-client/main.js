@@ -16,7 +16,8 @@
  * along with rhizome.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var _ = require('underscore')
+var path = require('path')
+  , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
   , client = require('../../lib/desktop-client/client')
 

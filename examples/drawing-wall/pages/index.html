@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rhizome example</title>
+  <script src="/rhizome/rhizome.js"></script>
+  <script src="js/canvas-to-blob.min.js"></script>
+  <script src="js/fabric.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/styles.css" />
+</head>
+
+<body>
+  <canvas id="c" style="border:1px solid #aaa"></canvas>
+
+  <div id="drawing-options">
+    <label for="drawing-mode-selector">Mode:</label>
+    <select id="drawing-mode-selector">
+      <option>Pencil</option>
+      <option>Circle</option>
+      <option>Spray</option>
+      <option>Pattern</option>
+
+      <option>hline</option>
+      <option>vline</option>
+      <option>square</option>
+      <option>diamond</option>
+    </select><br>
+
+    <label for="drawing-line-width">Line width:</label>
+    <span class="info">30</span><input type="range" value="30" min="0" max="150" id="drawing-line-width"><br>
+
+    <label for="drawing-color">Line color:</label>
+    <input type="color" value="#005E7A" id="drawing-color"><br>
+
+    <div>
+      <button id="clear-canvas" class="btn btn-info">Clear</button>
+      <button id="send-canvas" class="btn btn-info">Send</button>
+    </div>
+  </div>
+
+  <script>
+    var $ = function(id){ return document.getElementById(id) }
+
+    rhizome.start(function(err) {
+      if (err) throw err
+
+      $('send-canvas').onclick = function() {
+        $('c').toBlob(function(blob) {
+          rhizome.message('/wall/blob', blob)
+        })
+      }
+    })
+
+    // Made with FabricJS. Source : http://fabricjs.com/freedrawing/
+    $('c').setAttribute('width', window.innerWidth)
+    $('c').setAttribute('height', window.innerWidth)
+
+    var canvas = this.__canvas = new fabric.Canvas('c', {
+      isDrawingMode: true
+    })
+
+    fabric.Object.prototype.transparentCorners = false
+
+    var drawingColorEl = $('drawing-color'),
+        drawingLineWidthEl = $('drawing-line-width'),
+        clearEl = $('clear-canvas')
+
+    clearEl.onclick = function() { canvas.clear() }
+
+    if (fabric.PatternBrush) {
+      var vLinePatternBrush = new fabric.PatternBrush(canvas)
+      vLinePatternBrush.getPatternSrc = function() {
+
+        var patternCanvas = fabric.document.createElement('canvas')
+        patternCanvas.width = patternCanvas.height = 10
+        var ctx = patternCanvas.getContext('2d')
+
+        ctx.strokeStyle = this.color
+        ctx.lineWidth = 5
+        ctx.beginPath()
+        ctx.moveTo(0, 5)
+        ctx.lineTo(10, 5)
+        ctx.closePath()
+        ctx.stroke()
+
+        return patternCanvas
+      }
+
+      var hLinePatternBrush = new fabric.PatternBrush(canvas)
+      hLinePatternBrush.getPatternSrc = function() {
+
+        var patternCanvas = fabric.document.createElement('canvas')
+        patternCanvas.width = patternCanvas.height = 10
+        var ctx = patternCanvas.getContext('2d')
+
+        ctx.strokeStyle = this.color
+        ctx.lineWidth = 5
+        ctx.beginPath()
+        ctx.moveTo(5, 0)
+        ctx.lineTo(5, 10)
+        ctx.closePath()
+        ctx.stroke()
+
+        return patternCanvas
+      }
+
+      var squarePatternBrush = new fabric.PatternBrush(canvas)
+      squarePatternBrush.getPatternSrc = function() {
+
+        var squareWidth = 10, squareDistance = 2
+
+        var patternCanvas = fabric.document.createElement('canvas')
+        patternCanvas.width = patternCanvas.height = squareWidth + squareDistance
+        var ctx = patternCanvas.getContext('2d')
+
+        ctx.fillStyle = this.color
+        ctx.fillRect(0, 0, squareWidth, squareWidth)
+
+        return patternCanvas
+      }
+
+      var diamondPatternBrush = new fabric.PatternBrush(canvas)
+      diamondPatternBrush.getPatternSrc = function() {
+
+        var squareWidth = 10, squareDistance = 5
+        var patternCanvas = fabric.document.createElement('canvas')
+        var rect = new fabric.Rect({
+          width: squareWidth,
+          height: squareWidth,
+          angle: 45,
+          fill: this.color
+        })
+
+        var canvasWidth = rect.getBoundingRectWidth()
+
+        patternCanvas.width = patternCanvas.height = canvasWidth + squareDistance
+        rect.set({ left: canvasWidth / 2, top: canvasWidth / 2 })
+
+        var ctx = patternCanvas.getContext('2d')
+        rect.render(ctx)
+
+        return patternCanvas
+      }
+    }
+
+    $('drawing-mode-selector').onchange = function() {
+
+      if (this.value === 'hline') {
+        canvas.freeDrawingBrush = vLinePatternBrush
+      }
+      else if (this.value === 'vline') {
+        canvas.freeDrawingBrush = hLinePatternBrush
+      }
+      else if (this.value === 'square') {
+        canvas.freeDrawingBrush = squarePatternBrush
+      }
+      else if (this.value === 'diamond') {
+        canvas.freeDrawingBrush = diamondPatternBrush
+      }
+      else {
+        canvas.freeDrawingBrush = new fabric[this.value + 'Brush'](canvas)
+      }
+
+      if (canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = drawingColorEl.value
+        canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1
+      }
+    }
+
+    drawingColorEl.onchange = function() {
+      canvas.freeDrawingBrush.color = this.value
+    }
+    drawingLineWidthEl.onchange = function() {
+      canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1
+      this.previousSibling.innerHTML = this.value
+    }
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = drawingColorEl.value
+      canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1
+    }
+
+  </script>
+
+</body>
+
+</html>

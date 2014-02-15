@@ -6,6 +6,10 @@ module.exports = function(config) {
     { rootUrl: '/example', dirName: './pages' }
   ]
   config.clients = [
-    { ip: '127.0.0.1', oscPort: 9001 }
+    {
+      ip: '127.0.0.1',
+      oscPort: 9001,
+      desktopClientPort: 44444
+    }
   ]
 }
