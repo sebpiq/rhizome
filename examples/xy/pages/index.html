@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rhizome example</title>
+  <script src="/rhizome/rhizome.js"></script>
+  <script src="js/jquery-2.1.0.min.js"></script>
+  <script src="js/touchmouse.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/styles.css" />
+  <script>
+    $(function() {
+
+      var mouseDown = false
+        , mouseTraceRadius = 30
+        , pageW = $(document).width()
+        , pageH = $(document).height()
+
+      $('#mouseTrace').css({
+        width: mouseTraceRadius * 2,
+        height: mouseTraceRadius * 2,
+        'border-radius': mouseTraceRadius
+      })
+
+      var updateMouseTrace = function(event) {
+        $('#mouseTrace').css({
+          left: event.pageX - mouseTraceRadius,
+          top: event.pageY - mouseTraceRadius
+        })
+      }
+
+      // `rhizome.start` is the first function that should be called. It opens the connection, and gets a user id.
+      // The function inside is executed once the connection has been established properly.
+      rhizome.start(function(err) {
+        if (err) return alert(err)
+
+        $('#canvas').on(TouchMouseEvent.DOWN, function(event) {
+          $('#mouseTrace').show()
+          updateMouseTrace(event)
+          rhizome.message('/' + rhizome.userId + '/on')
+          mouseDown = true
+        })
+
+        $('#canvas').on(TouchMouseEvent.MOVE, function(event) {
+          if (mouseDown) {
+            updateMouseTrace(event)
+            rhizome.message('/' + rhizome.userId + '/xy', [event.pageX / pageW, (pageH - event.pageY) / pageH])
+          }
+        })
+
+        $('#canvas').on(TouchMouseEvent.UP, function(event) {
+          $('#mouseTrace').hide()
+          rhizome.message('/' + rhizome.userId + '/off')
+          mouseDown = false
+        })
+
+      })
+
+      $(document).on('touchmove',function(e){
+        e.preventDefault()
+      })
+
+    })
+  </script>
+</head>
+
+<body>
+  <div id="canvas">
+    <div id="mouseTrace"></div>
+  </div>
+</body>
+
+</html>
