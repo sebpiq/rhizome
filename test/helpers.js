@@ -5,6 +5,7 @@ var assert = require('assert')
   , wsServer = require('../lib/server/websockets')
   , webClient = require('../lib/web-client/client')
   , connections = require('../lib/server/connections')
+  , utils = require('../lib/server/utils')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -31,6 +32,21 @@ exports.dummyWebClients = function(port, count, done) {
   })
 }
 var _dummies = []
+
+exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
+  var received = []
+
+  var _handler = function(address, args) {
+    received.push([this.id, address, args])
+    if (received.length >= expectedMsgCount) handler(received)
+  }
+
+  return clients.map(function(client, i) {
+    var server = new utils.OSCServer(client.oscPort)
+    server.on('message', _handler.bind({id: client.id}))
+    return server
+  })
+}
 
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
   var received = []

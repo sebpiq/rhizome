@@ -115,6 +115,11 @@ describe('NsTree', function() {
       assert.deepEqual(nsTree._root.children, {'': { address: '/', data: {data1: [1, 2, 3]}, children: {} }})
     })
 
+    it('shouldn\'t make a difference whether there is trailing slash or not', function() {
+      var nsTree = shared.createNsTree(meths)
+      assert.equal(nsTree.get('/bla'), nsTree.get('/bla/'))
+    })
+
   })
 
 })
