@@ -3,24 +3,10 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , shared = require('../../lib/shared')
-  , oscServer = require('../../lib/server/osc')
-  , wsServer = require('../../lib/server/websockets')
   , client = require('../../lib/desktop-client/client')
   , utils = require('../../lib/server/utils')
   , helpers = require('../helpers')
 
-var serverConfig = {
-
-  server: {
-    blobsDirName: '/tmp',
-    ip: '127.0.0.1',
-    oscPort: 9000,
-    webPort: 8000
-  },
-
-  clients: [ {ip: '127.0.0.1', oscPort: 9001, desktopClientPort: 44444} ]
-
-}
 
 var clientConfig = {
 
@@ -37,30 +23,25 @@ var clientConfig = {
 
 }
 
-var sendToDesktopClient = new utils.OSCClient(serverConfig.clients[0].ip, serverConfig.clients[0].desktopClientPort)
-  , fakePd = new utils.OSCServer(clientConfig.client.oscPort)
+var sendToDesktopClient = new utils.OSCClient('localhost', clientConfig.client.desktopClientPort)
+  , fakeApp = new utils.OSCServer(clientConfig.client.oscPort)
+  , fakeServer = new utils.OSCServer(clientConfig.server.oscPort)
   , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
 
 describe('desktop-client', function() {
 
-  beforeEach(function(done) {
-    fakePd.removeAllListeners()
-    async.series([
-      function(next) { oscServer.start(serverConfig, next) },
-      function(next) { wsServer.start(serverConfig, next) }
-    ], done)
+  before(function(done) {
+    client.start(clientConfig, done)
   })
 
   afterEach(function(done) {
+    fakeServer.removeAllListeners()
+    fakeApp.removeAllListeners()
     helpers.afterEach(done)
   })
 
   describe('receive blob', function() {
-
-    beforeEach(function(done) {
-      client.start(clientConfig, done)
-    })
 
     it('should save the blob and send a message to the final client (Pd, Processing...)', function(done) {
       var buf1 = new Buffer('blobby1')
@@ -68,7 +49,7 @@ describe('desktop-client', function() {
         , buf3 = new Buffer('blobby3')
         , received = []
 
-      fakePd.on('message', function (address, args, rinfo) {
+      fakeApp.on('message', function (address, args, rinfo) {
         received.push([address, args])
         if (received.length === 3) {
 
@@ -101,36 +82,29 @@ describe('desktop-client', function() {
     it('should send a blob to the server', function(done) {
       var received = []
 
-      var receivedHandler = function(msg) {
-        msg = JSON.parse(msg)
-        received.push(msg)
+      fakeServer.on('message', function(address, args) {
 
-        if (received.length === 4) {
+        // The protocol for sending a blob from the app to the server goes like this :
+        //    APP             SERVER                DESKTOP-CLIENT
+        //    /bla/blob ->
+        //                    gimmeBlobAddress ->
+        //                            <-   fromDesktopBlobAddress
+        if (shared.blobAddressRe.exec(address))
+          sendToDesktopClient.send(shared.gimmeBlobAddress, [address, args[0]])
 
-          async.series(received.map(function(msg) {
-            return function(next) { fs.readFile(msg.filePath, next) }
-          }), function(err, results) {
-            if (err) throw err
-            
-            received.forEach(function(r, i) {
-              r.blob = results[i].toString()
-              delete r.filePath
-            })
-
+        else {
+          received.push([address, args])
+          if (received.length === 3) {
+            received.forEach(function(r) { r[1][1] = r[1][1].toString() })
             helpers.assertSameElements(received, [
-              {command: 'blob', blob: 'blobbyA', address: '/bla/bli/blob'},
-              {command: 'blob', blob: 'blobbyA', address: '/bla/bli/blob'},
-              {command: 'blob', blob: 'blobbyB', address: '/blob/'},
-              {command: 'blob', blob: 'blobbyC', address: '/BLO/blob/'}
+              [shared.fromDesktopBlobAddress, ['/bla/bli/blob', 'blobbyA']],
+              [shared.fromDesktopBlobAddress, ['/blob/', 'blobbyB']],
+              [shared.fromDesktopBlobAddress, ['/BLO/blob/', 'blobbyC']]
             ])
             done()
-          })
+          }
         }
-      }
-
-      // Dummy receivers
-      wsServer.nsTree.get('/bla').data.sockets = [{ send: receivedHandler }]
-      wsServer.nsTree.get('/').data.sockets = [{ send: receivedHandler }]
+      })
 
       async.series([
         function(next) { fs.writeFile('/tmp/blob1', 'blobbyA', next) },
@@ -145,14 +119,11 @@ describe('desktop-client', function() {
     })
 
     it('should refuse to send a blob that is not in the configured dirName', function(done) {
-      oscServer.stop(function(err) {
-        var fakeOscServer = new utils.OSCServer(serverConfig.server.oscPort)
-        fakeOscServer.on('message', function(address, args) {
-          assert.equal(address, shared.errorAddress)
-          done()
-        })
-        sendToDesktopClient.send(shared.gimmeBlobAddress, ['/bla', '/home/spiq/secret_file'])
+      fakeServer.on('message', function(address, args) {
+        assert.equal(address, shared.errorAddress)
+        done()
       })
+      sendToDesktopClient.send(shared.gimmeBlobAddress, ['/bla', '/home/spiq/secret_file'])
     })
 
   })

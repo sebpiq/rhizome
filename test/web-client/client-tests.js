@@ -3,7 +3,7 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , wsServer = require('../../lib/server/websockets')
-  , oscServer = require('../../lib/server/osc')
+  , connections = require('../../lib/server/connections')
   , client = require('../../lib/web-client/client')
   , shared = require('../../lib/shared')
   , utils = require('../../lib/server/utils')
@@ -22,12 +22,9 @@ var config = {
   clients: []
 }
 
-var oscClient = new utils.OSCClient(config.server.ip, config.server.oscPort)
-
 
 describe('web client', function() {
 
-  before(function(done) { oscServer.start(config, done) })
   beforeEach(function(done) {
     //client.debug = console.log
     done()
@@ -55,22 +52,6 @@ describe('web client', function() {
         assert.equal(client.status(), 'started')
         assert.equal(wsServer.sockets().length, 1)
         assert.equal(client.userId, 0)
-        done()
-      })
-    })
-
-    it('should reject connection if server is full', function(done) {
-      assert.equal(client.status(), 'stopped')
-      assert.equal(wsServer.sockets().length, 0)
-      assert.equal(client.userId, null)
-      async.series([
-        function(next) { helpers.dummyConnections(config, 1, next) },
-        function(next) { client.start(next) }
-      ], function(err) {
-        assert.ok(err)
-        assert.equal(client.status(), 'stopped')
-        assert.equal(_.last(wsServer.sockets()).readyState, WebSocket.CLOSING)
-        assert.equal(client.userId, null)
         done()
       })
     })
@@ -104,14 +85,14 @@ describe('web client', function() {
     })
 
     it('should receive messages from the specified address', function(done) {
-      assert.equal(wsServer.nsTree.has('/place1'), false)
+      assert.equal(connections._nsTree.has('/place1'), false)
       
       var listend = function(err) {
         if (err) throw err
-        assert.equal(wsServer.nsTree.has('/place1'), true)
-        assert.equal(wsServer.nsTree.get('/place1').data.sockets.length, 1)
-        oscClient.send('/place2', [44])
-        oscClient.send('/place1', [1, 2, 3])
+        assert.equal(connections._nsTree.has('/place1'), true)
+        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
+        connections.send('/place2', [44])
+        connections.send('/place1', [1, 2, 3])
       }
 
       var handler = function(address, args) {
@@ -131,7 +112,7 @@ describe('web client', function() {
       var listend = function(err) {
         if (err) throw err
         answered++
-        assert.equal(wsServer.nsTree.get('/place1').data.sockets.length, 1)
+        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
         if (answered === 2) done()
       }
 
@@ -144,12 +125,12 @@ describe('web client', function() {
 
       var listend = function(err) {
         if (err) throw err
-        oscClient.send('/a', [44])
-        oscClient.send('/a/b', [55])
-        oscClient.send('/', [66])
-        oscClient.send('/c', [77])
-        oscClient.send('/a/d', [88])
-        oscClient.send('/a/', [99])
+        connections.send('/a', [44])
+        connections.send('/a/b', [55])
+        connections.send('/', [66])
+        connections.send('/c', [77])
+        connections.send('/a/d', [88])
+        connections.send('/a/', [99])
       }
 
       var handler = function(address, args) {
@@ -203,76 +184,52 @@ describe('web client', function() {
       ], done)
     })
 
-    it('should receive messages from the specified address', function(done) {
-      var oscTrace1 = new utils.OSCServer(9005)
-        , oscTrace2 = new utils.OSCServer(9010)
-        , received = []
-
-      var assertions = function() {
+    it('should send messages to the specified address', function(done) {
+      // Creating dummy connections
+      var dummyConns = helpers.dummyConnections(3, 2, function(received) {
         helpers.assertSameElements(received, [
-          ['/bla', [1, 2, 3], 1],
-          ['/blo', ['oui', 'non'], 1],
-          ['/bla', [1, 2, 3], 2],
-          ['/blo', ['oui', 'non'], 2]
+          [0, '/bla', [1, 2, 3]],
+          [0, '/blo', ['oui', 'non']],
+          [1, '/bla', [1, 2, 3]]
         ])
         done()
-      }
-
-      oscTrace1.on('message', function (address, args, rinfo) {
-        received.push([address, args, 1])
-        if (received.length === 4) assertions()
       })
 
-      oscTrace2.on('message', function (address, args, rinfo) {
-        received.push([address, args, 2])
-        if (received.length === 4) assertions()
-      })
+      // Subscribing them to receive what's sent by our client
+      connections.subscribe('/', dummyConns[0])
+      connections.subscribe('/bla', dummyConns[1])
 
+      // Sending messages
       client.message('/bla', [1, 2, 3])
       client.message('/blo', ['oui', 'non'])
     })
 
     it('should handle things correctly when sending blobs', function(done) {
-      var blob1 = new Buffer('blobba')
-        , blob2 = new Buffer('blobbo')
-        , blob3 = new Buffer('blobbu')
-        , blob4 = new Buffer('blobbi')
-
-      var oscTrace1 = new utils.OSCServer(44444)
-          oscTrace2 = new utils.OSCServer(44445)
-        , received = []
-
-      var assertions = function() {
+      // Creating dummy connections
+      var dummyConns = helpers.dummyConnections(6, 2, function(received) {
+        received.forEach(function(r) { r[2] = r[2].toString() })
         helpers.assertSameElements(received, [
-          [44444, shared.fromWebBlobAddress, ['/bla/blob', 'blobba', client.userId]],
-          [44444, shared.fromWebBlobAddress, ['/bli/blob/', 'blobbi', client.userId]],
-          [44444, shared.fromWebBlobAddress, ['/blo/blob', 'blobbo', client.userId]],
-          [44444, shared.fromWebBlobAddress, ['/blu/blob/', 'blobbu', client.userId]],
+          [0, '/bla/blob', 'blobba'],
+          [0, '/blu/blob', 'blobbu'],
 
-          [44445, shared.fromWebBlobAddress, ['/bla/blob', 'blobba', client.userId]],
-          [44445, shared.fromWebBlobAddress, ['/bli/blob/', 'blobbi', client.userId]],
-          [44445, shared.fromWebBlobAddress, ['/blo/blob', 'blobbo', client.userId]],
-          [44445, shared.fromWebBlobAddress, ['/blu/blob/', 'blobbu', client.userId]]
+          [1, '/bla/blob', 'blobba'],
+          [1, '/bli/blob', 'blobbi'],
+          [1, '/blo/blob', 'blobbo'],
+          [1, '/blu/blob', 'blobbu']
         ])
         done()
-      }
-
-      oscTrace1.on('message', function (address, args, rinfo) {
-        args[1] = args[1].toString()
-        received.push([44444, address, args])
-        if (received.length >= 8) assertions()
       })
 
-      oscTrace2.on('message', function (address, args, rinfo) {
-        args[1] = args[1].toString()
-        received.push([44445, address, args])
-        if (received.length >= 8) assertions()
-      })
-  
-      client.message('/bla/blob', blob1)
-      client.message('/blo/blob', blob2)
-      client.message('/blu/blob/', blob3)
-      client.message('/bli/blob/', blob4)
+      // Subscribing them to receive what's sent by our client
+      connections.subscribe('/bla/blob', dummyConns[0])
+      connections.subscribe('/blu/blob', dummyConns[0])
+      connections.subscribe('/', dummyConns[1])
+
+      // Sending messages
+      client.message('/bla/blob', new Buffer('blobba'))
+      client.message('/blo/blob', new Buffer('blobbo'))
+      client.message('/blu/blob/', new Buffer('blobbu'))
+      client.message('/bli/blob/', new Buffer('blobbi'))
     })
 
     it('should throw an error if the address is blob address but the argument is not a blob', function() {
@@ -298,7 +255,7 @@ describe('web client', function() {
     })
 
     var assertConnected = function() {
-      assert.equal(wsServer.nsTree.get('/someAddr').data.sockets.length, 1)
+      assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 1)
       assert.ok(_.isNumber(client.userId))
       assert.equal(client.status(), 'started')
     }
@@ -327,30 +284,30 @@ describe('web client', function() {
     })
 
     it('should work as well when retrying several times', function(done) {
-      client.config.reconnect = 50
+      client.config.reconnect = 30
       assertConnected()
       async.series([
         function(next) {
           wsServer.forget(wsServer.sockets()[0])
           wsServer.stop()
-          setTimeout(next, 250) // wait for a few retries
+          setTimeout(next, 150) // wait for a few retries
         },
         function(next) {
           assertDisconnected()
           wsServer.start(config, next)
         },
-        function(next) { setTimeout(next, 150) }, // wait for reconnection to happen
+        function(next) { setTimeout(next, 80) }, // wait for reconnection to happen
         function(next) {
           assertConnected()
           wsServer.stop() // do it again
-          setTimeout(next, 250)
+          setTimeout(next, 150)
         },
 
         function(next) {
           assertDisconnected()
           wsServer.start(config, next)
         },
-        function(next) { setTimeout(next, 75) }, // wait for reconnection to happen
+        function(next) { setTimeout(next, 80) }, // wait for reconnection to happen
         function(next) {
           assertConnected()
           next()

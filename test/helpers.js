@@ -4,6 +4,7 @@ var assert = require('assert')
   , WebSocket = require('ws')
   , wsServer = require('../lib/server/websockets')
   , webClient = require('../lib/web-client/client')
+  , connections = require('../lib/server/connections')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -16,25 +17,39 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 }
 
 // Helper to create dummy connections from other clients
-exports.dummyConnections = function(config, count, done) {
+exports.dummyWebClients = function(port, count, done) {
   var countBefore = wsServer.sockets().length
   async.series(_.range(count).map(function(i) {
     return function(next) {
-      socket = new WebSocket('ws://localhost:' + config.server.webPort + '/?dummies')
+      socket = new WebSocket('ws://localhost:' + port + '/?dummies')
       _dummies.push(socket)
       socket.addEventListener('open', function() { next() })
     }
   }), function(err) {
     assert.equal(wsServer.sockets().length, countBefore + count)
-    done(err)
+    done(err, _dummies)
   })
 }
 var _dummies = []
+
+exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
+  var received = []
+
+  var _handler = function(address, args) {
+    received.push([this.id, address, args])
+    if (received.length >= expectedMsgCount) handler(received)
+  }
+
+  return _.range(connectionCount).map(function(i) {
+    return { send: _handler, id: i }
+  })
+}
 
 // Helper with common operations to clean after a test
 exports.afterEach = function(done) {
   _dummies.forEach(function() { socket.close() })
   _dummies = []
+  connections.removeAll()
   async.series([ webClient.stop, wsServer.stop ], done)
 }
 

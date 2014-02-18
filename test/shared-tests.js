@@ -150,40 +150,4 @@ describe('NsNode', function() {
 
   })
 
-  describe('resolve', function() {
-
-    var meths = {
-      createData: function() {
-        return {data1: [1, 2, 3]}
-      },
-      mergeData: function(merged, data) {
-        merged.data1 = merged.data1.concat(data.data1)
-      }
-    }
-
-    it('should merge subnamespaces', function() {
-      var nsTree = shared.createNsTree(meths)
-      var nsroot = nsTree.get('/')
-        , nsa = nsTree.get('/a')
-        , nsab = nsTree.get('/a/b')
-        , nsac = nsTree.get('/a/c')
-        , nsacd = nsTree.get('/a/c/d')
-        , nsace = nsTree.get('/a/c/e')
-        , nsf = nsTree.get('/f')
-      nsroot.data.data1 = [666]
-      nsab.data.data1 = [4, 5, 6]
-      nsac.data.data1 = [7, 8, 9]
-      nsacd.data.data1 = [10, 11, 12]
-      nsace.data.data1 = [13, 14, 15]
-      nsf.data.data1 = [16, 17, 18]
-
-      assert.deepEqual(nsTree.get('/a/c/d').resolve(), {data1: [10, 11, 12]})
-      assert.deepEqual(nsTree.get('/a/b').resolve(), {data1: [4, 5, 6]})
-      assert.deepEqual(nsTree.get('/a/c').resolve(), {data1: [7, 8, 9, 10, 11, 12, 13, 14, 15]})
-      assert.deepEqual(nsTree.get('/a').resolve(), {data1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]})
-      assert.deepEqual(nsTree.get('/').resolve(), {data1: [666, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]})
-    })
-
-  })
-
 })
