@@ -207,15 +207,14 @@ describe('web client', function() {
     it('should handle things correctly when sending blobs', function(done) {
       // Creating dummy connections
       var dummyConns = helpers.dummyConnections(6, 2, function(received) {
-        received.forEach(function(r) { r[2] = r[2].toString() })
         helpers.assertSameElements(received, [
-          [0, '/bla/blob', 'blobba'],
-          [0, '/blu/blob', 'blobbu'],
+          [0, '/bla/blob', [1, new Buffer('blobba'), 'blabla']],
+          [0, '/blu/blob', [new Buffer('blobbu'), 'hoho', 5678]],
 
-          [1, '/bla/blob', 'blobba'],
-          [1, '/bli/blob', 'blobbi'],
-          [1, '/blo/blob', 'blobbo'],
-          [1, '/blu/blob', 'blobbu']
+          [1, '/bla/blob', [1, new Buffer('blobba'), 'blabla']],
+          [1, '/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')]],
+          [1, '/blu/blob', [new Buffer('blobbu'), 'hoho', 5678]],
+          [1, '/bli/blob', [new Buffer('blobbi')]],
         ])
         done()
       })
@@ -225,15 +224,11 @@ describe('web client', function() {
       connections.subscribe('/blu/blob', dummyConns[0])
       connections.subscribe('/', dummyConns[1])
 
-      // Sending messages
-      client.message('/bla/blob', new Buffer('blobba'))
-      client.message('/blo/blob', new Buffer('blobbo'))
-      client.message('/blu/blob/', new Buffer('blobbu'))
-      client.message('/bli/blob/', new Buffer('blobbi'))
-    })
-
-    it('should throw an error if the address is blob address but the argument is not a blob', function() {
-      assert.throws(function() { client.message('/blob', [12, 23]) })
+      // Sending messages containing blobs
+      client.message('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
+      client.message('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
+      client.message('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
+      client.message('/bli/blob/', [new Buffer('blobbi')])
     })
 
     it('should throw an error if the address is not valid', function() {
@@ -269,7 +264,7 @@ describe('web client', function() {
       assertConnected()
       async.series([
         function(next) {
-          wsServer.forget(wsServer.sockets()[0])
+          wsServer.sockets()[0].rhizome.close()
           setTimeout(next, 20)
         },
         function(next) {
@@ -288,7 +283,7 @@ describe('web client', function() {
       assertConnected()
       async.series([
         function(next) {
-          wsServer.forget(wsServer.sockets()[0])
+          wsServer.sockets()[0].rhizome.close()
           wsServer.stop()
           setTimeout(next, 150) // wait for a few retries
         },

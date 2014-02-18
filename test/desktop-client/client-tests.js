@@ -16,6 +16,7 @@ var clientConfig = {
   },
 
   client: {
+    id: 1,
     oscPort: 9001,
     desktopClientPort: 44444,
     blobsDirName: '/tmp'
@@ -37,42 +38,41 @@ describe('desktop-client', function() {
 
   afterEach(function(done) {
     fakeServer.removeAllListeners()
-    fakeApp.removeAllListeners()
     helpers.afterEach(done)
   })
 
   describe('receive blob', function() {
 
-    it('should save the blob and send a message to the final client (Pd, Processing...)', function(done) {
-      var buf1 = new Buffer('blobby1')
-        , buf2 = new Buffer('blobby2')
-        , buf3 = new Buffer('blobby3')
-        , received = []
+    it('should save the blob and send a message to the app client (Pd, Processing...)', function(done) {
 
-      fakeApp.on('message', function (address, args, rinfo) {
-        received.push([address, args])
-        if (received.length === 3) {
-
-          // Open all the files, and replace the filePaths with the actual file content for test purpose.
-          async.series(received.map(function(msg) {
-            return function(next) { fs.readFile(msg[1][0], next) }
-          }), function(err, results) {
-            if (err) throw err
-
-            received.forEach(function(msg, i) { msg[1][0] = results[i].toString() })
-            helpers.assertSameElements(received, [
-              ['/bla/blob', ['blobby1', 0]],
-              ['/blo/bli/blob/', [ 'blobby2', 0]],
-              ['/blob', [ 'blobby3', 1]]
-            ])
-            done()
+      helpers.dummyOSCClients(2, [clientConfig.client], function(received) {
+        // We collect the filePaths so that we can open them and replace the filepath
+        // by the actual content of the file in our test. 
+        var filePaths = _.chain(received).pluck(2).reduce(function(all, args, i) {
+          args.forEach(function(arg, j) {
+            if (/\/tmp.*/.exec(arg)) all.push([i, j, arg])
           })
-        }
+          return all
+        }, []).value()
+
+        // Open all the files, and replace the filePaths with the actual file content for test purpose.
+        async.series(filePaths.map(function(filePath) {
+          return function(next) { fs.readFile(filePath[2], next) }
+        }), function(err, results) {
+          if (err) throw err
+          results.forEach(function(contents, i) {
+            received[filePaths[i][0]][2][filePaths[i][1]] = results[i]
+          })
+          helpers.assertSameElements(received, [
+            [1, '/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')]],
+            [1, '/', [56789, new Buffer('hihihi')]]
+          ])
+          done()
+        })
       })
 
-      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/bla/blob', buf1, 0])
-      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/blo/bli/blob/', buf2, 0])
-      sendToDesktopClient.send(shared.fromWebBlobAddress, ['/blob', buf3, 1])
+      sendToDesktopClient.send('/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')])
+      sendToDesktopClient.send('/', [56789, new Buffer('hihihi')])
     })
 
   })
@@ -85,21 +85,20 @@ describe('desktop-client', function() {
       fakeServer.on('message', function(address, args) {
 
         // The protocol for sending a blob from the app to the server goes like this :
-        //    APP             SERVER                DESKTOP-CLIENT
-        //    /bla/blob ->
-        //                    gimmeBlobAddress ->
-        //                            <-   fromDesktopBlobAddress
-        if (shared.blobAddressRe.exec(address))
-          sendToDesktopClient.send(shared.gimmeBlobAddress, [address, args[0]])
+        //    APP                SERVER            DESKTOP-CLIENT
+        //    sendBlobAddress ->
+        //                    sendBlobAddress ->
+        //                                      <-   /some/address <blob>, <arg1>, >arg2>, ...
+        if (address === shared.sendBlobAddress)
+          sendToDesktopClient.send(shared.sendBlobAddress, args)
 
         else {
           received.push([address, args])
           if (received.length === 3) {
-            received.forEach(function(r) { r[1][1] = r[1][1].toString() })
             helpers.assertSameElements(received, [
-              [shared.fromDesktopBlobAddress, ['/bla/bli/blob', 'blobbyA']],
-              [shared.fromDesktopBlobAddress, ['/blob/', 'blobbyB']],
-              [shared.fromDesktopBlobAddress, ['/BLO/blob/', 'blobbyC']]
+              ['/bla/bli', [new Buffer('blobbyA'), 1234, 'blabla']],
+              ['/blo/', [new Buffer('blobbyB')]],
+              ['/BLO/b/', [new Buffer('blobbyC'), 5678]]
             ])
             done()
           }
@@ -112,9 +111,9 @@ describe('desktop-client', function() {
         function(next) { fs.writeFile('/tmp/blob3', 'blobbyC', next) },
       ], function(err) {
         if (err) throw err
-        sendToServer.send('/bla/bli/blob', ['/tmp/blob1'])
-        sendToServer.send('/blob/', ['/tmp/blob2'])
-        sendToServer.send('/BLO/blob/', ['/tmp/blob3'])
+        sendToServer.send(shared.sendBlobAddress, ['/bla/bli', '/tmp/blob1', 1234, 'blabla'])
+        sendToServer.send(shared.sendBlobAddress, ['/blo/', '/tmp/blob2'])
+        sendToServer.send(shared.sendBlobAddress, ['/BLO/b/', '/tmp/blob3', 5678])
       })
     })
 
@@ -123,7 +122,7 @@ describe('desktop-client', function() {
         assert.equal(address, shared.errorAddress)
         done()
       })
-      sendToDesktopClient.send(shared.gimmeBlobAddress, ['/bla', '/home/spiq/secret_file'])
+      sendToDesktopClient.send(shared.sendBlobAddress, ['/bla', '/home/spiq/secret_file'])
     })
 
   })

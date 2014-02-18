@@ -31,16 +31,6 @@ describe('validateAddress', function() {
 
 describe('address regular expressions', function() {
 
-  it('should recognize blob addresses', function() {
-    assert.ok(shared.blobAddressRe.exec('/bla/blob/'))
-    assert.ok(shared.blobAddressRe.exec('/blob'))
-
-    assert.equal(shared.blobAddressRe.exec('/bla'), null)
-    assert.equal(shared.blobAddressRe.exec('/'), null)
-    assert.equal(shared.blobAddressRe.exec('/blob/bla'), null)
-    assert.equal(shared.blobAddressRe.exec('blob'), null)
-  })
-
   it('should recognize system address', function() {
     assert.ok(shared.sysAddressRe.exec('/sys/bla/'))
     assert.ok(shared.sysAddressRe.exec('/sys/error'))

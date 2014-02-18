@@ -105,13 +105,18 @@ Desktop client -> server
 Changelog
 -----------
 
+- 0.3.0
+
+  - In OSC clients:
+    - clients must now subscribe by sending to `/sys/subscribe`
+
 - 0.2.0 
 
   - In web client:
     - removed `blob`, now blob sent with `message`
     - renamed `client.config.retry` to `client.config.reconnect`
 
-  - Sending blobs web client <-> OSC
+  - Blob client for sending blobs web client <-> OSC
   - Added address validation
 
 - 0.1.1 

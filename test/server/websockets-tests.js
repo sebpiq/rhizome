@@ -56,8 +56,8 @@ describe('websockets', function() {
       async.waterfall([
         function(next) { helpers.dummyWebClients(config.server.webPort, 3, next) },
         function(sockets, next) {
-          connections.subscribe('/someAddr', wsServer.sockets()[0].rhizome.connection)
-          connections.subscribe('/someOtherAddr', wsServer.sockets()[1].rhizome.connection)
+          connections.subscribe('/someAddr', wsServer.sockets()[0].rhizome)
+          connections.subscribe('/someOtherAddr', wsServer.sockets()[1].rhizome)
           assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 1)
           assert.equal(connections._nsTree.get('/someOtherAddr').data.connections.length, 1)
           assert.equal(wsServer.sockets().length, 3)
