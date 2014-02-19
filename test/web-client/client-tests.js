@@ -170,7 +170,7 @@ describe('web client', function() {
 
   })
 
-  describe('message', function() {
+  describe('send', function() {
     
     beforeEach(function(done) {
       config.clients = [
@@ -200,8 +200,8 @@ describe('web client', function() {
       connections.subscribe('/bla', dummyConns[1])
 
       // Sending messages
-      client.message('/bla', [1, 2, 3])
-      client.message('/blo', ['oui', 'non'])
+      client.send('/bla', [1, 2, 3])
+      client.send('/blo', ['oui', 'non'])
     })
 
     it('should handle things correctly when sending blobs', function(done) {
@@ -225,15 +225,15 @@ describe('web client', function() {
       connections.subscribe('/', dummyConns[1])
 
       // Sending messages containing blobs
-      client.message('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
-      client.message('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
-      client.message('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
-      client.message('/bli/blob/', [new Buffer('blobbi')])
+      client.send('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
+      client.send('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
+      client.send('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
+      client.send('/bli/blob/', [new Buffer('blobbi')])
     })
 
     it('should throw an error if the address is not valid', function() {
-      assert.throws(function() { client.message('bla', [12]) })
-      assert.throws(function() { client.message('/sys/', ['mna']) })
+      assert.throws(function() { client.send('bla', [12]) })
+      assert.throws(function() { client.send('/sys/', ['mna']) })
     })
 
   })
