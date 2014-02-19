@@ -89,30 +89,22 @@ And generate a coverage report like so :
 istanbul cover _mocha -- test --recursive
 ```
 
-#### Internal OSC messages
-
-Server -> desktop client
-
-`/sys/blob/gimme <address> <filePath>`
-`/sys/blob/fromWeb <address> <blob> <userId>`
-
-
-Desktop client -> server
-
-`/sys/blob/fromDesktop <address> <blob>`
-
 
 Changelog
 -----------
 
 - 0.3.0
 
-  - In OSC clients:
+  - App clients:
     - clients must now subscribe by sending to `/sys/subscribe`
+    - to send a blob, now clients must send to `/sys/blob`
+
+  - Web client:
+    - blobs are now handled like any other argument
 
 - 0.2.0 
 
-  - In web client:
+  - Web client:
     - removed `blob`, now blob sent with `message`
     - renamed `client.config.retry` to `client.config.reconnect`
 

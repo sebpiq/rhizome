@@ -74,7 +74,7 @@ describe('web client', function() {
 
   })
 
-  describe('listen', function() {
+  describe('subscribe', function() {
     
     beforeEach(function(done) {
       client.config.reconnect = 0
@@ -87,7 +87,7 @@ describe('web client', function() {
     it('should receive messages from the specified address', function(done) {
       assert.equal(connections._nsTree.has('/place1'), false)
       
-      var listend = function(err) {
+      var subscribed = function(err) {
         if (err) throw err
         assert.equal(connections._nsTree.has('/place1'), true)
         assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
@@ -101,29 +101,29 @@ describe('web client', function() {
         done()
       }
 
-      client.listen('/place1', handler, listend)
+      client.subscribe('/place1', handler, subscribed)
     })
 
-    it('shouldn\'t cause problem if listening twice same place', function(done) {
+    it('shouldn\'t cause problem if subscribing twice same place', function(done) {
       var answered = 0
 
       var handler = function() {}          
 
-      var listend = function(err) {
+      var subscribed = function(err) {
         if (err) throw err
         answered++
         assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
         if (answered === 2) done()
       }
 
-      client.listen('/place1', handler, listend)
-      client.listen('/place1', handler, listend)
+      client.subscribe('/place1', handler, subscribed)
+      client.subscribe('/place1', handler, subscribed)
     })
 
     it('should receive all messages from subspaces', function(done) {
       var received = []
 
-      var listend = function(err) {
+      var subscribed = function(err) {
         if (err) throw err
         connections.send('/a', [44])
         connections.send('/a/b', [55])
@@ -145,16 +145,16 @@ describe('web client', function() {
         }
       }
 
-      client.listen('/a', handler, listend)
+      client.subscribe('/a', handler, subscribed)
     })
 
     it('should throw an error if the address is not valid', function(done) {
       handler = function() {}
       client.start(function(err) {
         if (err) throw err
-        assert.throws(function() { client.listen('bla', handler) })
-        assert.throws(function() { client.listen('/sys', handler) })
-        assert.throws(function() { client.listen('/sys/takeIt/', handler) })
+        assert.throws(function() { client.subscribe('bla', handler) })
+        assert.throws(function() { client.subscribe('/sys', handler) })
+        assert.throws(function() { client.subscribe('/sys/takeIt/', handler) })
         done()
       })
     })
@@ -163,7 +163,7 @@ describe('web client', function() {
       handler = function() {}
       client.stop(function(err) {
         if (err) throw err
-        assert.throws(function() { client.listen('/bla', handler) })
+        assert.throws(function() { client.subscribe('/bla', handler) })
         done()
       })
     })
@@ -245,7 +245,7 @@ describe('web client', function() {
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(next) },
-        function(next) { client.listen('/someAddr', function() {}, next) }
+        function(next) { client.subscribe('/someAddr', function() {}, next) }
       ], done)
     })
 
