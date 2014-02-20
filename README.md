@@ -33,7 +33,7 @@ Open a terminal, and simply run `npm install -g rhizome-server`. If this succeed
 
 ##### 3) Implement your thing 
 
-More documentation will come soon. But for the moment, you can check-out the [example](https://github.com/sebpiq/rhizome/tree/master/example).
+More documentation will come soon. But for the moment, you can check-out the [example](https://github.com/sebpiq/rhizome/tree/master/examples).
 
 
 ##### 4) That's it!
