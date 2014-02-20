@@ -18,6 +18,14 @@ While **rhizome** provides you with a solid architecture for communication, you 
 - *the web page*. It should be implemented with **JavaScript** and **HTML**. **rhizome** comes with a JavaScript client handling all the communication for you. So you shouldn't have to worry about this, and instead, focus on implementing a nice user interface / cool visuals / cool sounds.
 
 
+Status of the project
+----------------------
+
+This project is brand new, and it is currently under heavy development. There is currently no documentation as the API is not yet stable.
+
+In the next few days, the situation should improve and I will update the examples. Meanwhile, don't hesitate to contact me if you have any questions. 
+
+
 Getting started
 -----------------
 
