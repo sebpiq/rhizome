@@ -4,39 +4,29 @@ module.exports = function(config) {
 
   _.extend(config, {
 
-    server: {
+    // The port on which the html pages will be served, as well as websocket requests
+    webPort: 8000,
 
-      // The host on which rhizome runs
-      ip: '127.0.0.1',
+    // The port on which the server will receive OSC messages
+    oscPort: 9000,
 
-      // Directory where blobs received from the web client are saved
-      blobsDirName: '/tmp',
+    // The maximum amount of users accepted simultaneously
+    usersLimit: 40,
 
-      // The port on which the html pages will be served, as well as websocket requests
-      webPort: 8000,
+    // The pages that the server should serve. Example :
+    // [
+    //    { rootUrl: '/bananas', dirName: './bananas_files' },
+    //    { rootUrl: '/oranges', dirName: './oranges_files' }
+    // ]
+    pages: [],
 
-      // The port on which the server will receive OSC messages
-      oscPort: 9000,
+    // The root of the rhizome application on the server
+    rootUrl: '/'
 
-      // The maximum amount of users accepted simultaneously
-      usersLimit: 40,
-
-      // The pages that the server should serve. Example :
-      // [
-      //    { rootUrl: '/bananas', dirName: './bananas_files' },
-      //    { rootUrl: '/oranges', dirName: './oranges_files' }
-      // ]
-      pages: [],
-
-      // The root of the rhizome application on the server
-      rootUrl: '/'
-    },
-
+    // A list of OSC clients to transmit user messages to. Valid argument for each client is :
     clients: [
-
-      // A list of OSC clients to transmit user messages to. Valid argument for each client is :
       //    - <ip> : the IP address of the client
-      //    - <oscPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
+      //    - <appPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
       //    - <blobClientPort> : the port on which the blob client will receive OSC messages
 
     ]

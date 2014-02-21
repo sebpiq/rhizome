@@ -10,21 +10,19 @@ var _ = require('underscore')
 
 var clientConfig = {
 
+  appPort: 9001,
+  blobClientPort: 44444,
+  blobsDirName: '/tmp',
+
   server: {
     ip: '127.0.0.1',
     oscPort: 9000
-  },
-
-  client: {
-    oscPort: 9001,
-    blobClientPort: 44444,
-    blobsDirName: '/tmp'
   }
 
 }
 
-var sendToBlobClient = new utils.OSCClient('localhost', clientConfig.client.blobClientPort)
-  , fakeApp = new utils.OSCServer(clientConfig.client.oscPort)
+var sendToBlobClient = new utils.OSCClient('localhost', clientConfig.blobClientPort)
+  , fakeApp = new utils.OSCServer(clientConfig.appPort)
   , fakeServer = new utils.OSCServer(clientConfig.server.oscPort)
   , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
@@ -44,7 +42,7 @@ describe('blob-client', function() {
 
     it('should save the blob and send a message to the app client (Pd, Processing...)', function(done) {
 
-      helpers.dummyOSCClients(2, [clientConfig.client], function(received) {
+      helpers.dummyOSCClients(2, [clientConfig], function(received) {
         // We collect the filePaths so that we can open them and replace the filepath
         // by the actual content of the file in our test. 
         var filePaths = _.chain(received).pluck(2).reduce(function(all, args, i) {

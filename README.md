@@ -109,6 +109,9 @@ Changelog
 
   - Web client:
     - blobs are now handled like any other argument
+    - can now both send and receive blobs
+    - `message` renamed to `send`
+    - `listen` renamed to `subscribe`
 
 - 0.2.0 
 

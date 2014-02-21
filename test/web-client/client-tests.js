@@ -11,14 +11,13 @@ var _ = require('underscore')
   , WebSocket = require('ws')
 
 var config = {
-  server: {
-    ip: '127.0.0.1',
-    webPort: 8000,
-    oscPort: 9000,
-    rootUrl: '/',
-    usersLimit: 40,
-    blobsDirName: '/tmp'
-  },
+  ip: '127.0.0.1',
+  webPort: 8000,
+  oscPort: 9000,
+  rootUrl: '/',
+  usersLimit: 40,
+  blobsDirName: '/tmp',
+
   clients: []
 }
 
@@ -37,11 +36,11 @@ describe('web client', function() {
   describe('start', function() {
     
     beforeEach(function(done) {
-      config.server.usersLimit = 1
+      config.usersLimit = 1
       client.config.reconnect = 0
       wsServer.start(config, done)
     })
-    afterEach(function() { config.server.usersLimit = 10 })
+    afterEach(function() { config.usersLimit = 10 })
 
     it('should open a socket connection to the server', function(done) {
       assert.equal(client.status(), 'stopped')
@@ -201,8 +200,8 @@ describe('web client', function() {
     
     beforeEach(function(done) {
       config.clients = [
-        { ip: '127.0.0.1', oscPort: 9005, blobClientPort: 44444 },
-        { ip: '127.0.0.1', oscPort: 9010, blobClientPort: 44445 }
+        { ip: '127.0.0.1', appPort: 9005, blobClientPort: 44444 },
+        { ip: '127.0.0.1', appPort: 9010, blobClientPort: 44445 }
       ]
       client.config.reconnect = 0
       async.series([

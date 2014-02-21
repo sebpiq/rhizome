@@ -9,22 +9,20 @@ var _ = require('underscore')
   , helpers = require('../helpers')
 
 var config = {
-  server: {
-    ip: '127.0.0.1',
-    webPort: 8000,
-    oscPort: 9000, 
-    rootUrl: '/', 
-    usersLimit: 5, 
-    blobsDirName: '/tmp'
-  },
+
+  webPort: 8000,
+  oscPort: 9000, 
+  rootUrl: '/', 
+  usersLimit: 5,
+
   clients: [
-    {ip: '127.0.0.1', oscPort: 9001},
-    {ip: '127.0.0.1', oscPort: 9002},
-    {ip: '127.0.0.1', oscPort: 9003}
+    {ip: '127.0.0.1', appPort: 9001},
+    {ip: '127.0.0.1', appPort: 9002},
+    {ip: '127.0.0.1', appPort: 9003}
   ]
 }
 
-var sendToServer = new utils.OSCClient('localhost', config.server.oscPort)
+var sendToServer = new utils.OSCClient('localhost', config.oscPort)
 
 describe('osc', function() {
 

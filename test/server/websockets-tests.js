@@ -9,14 +9,12 @@ var _ = require('underscore')
   , helpers = require('../helpers')
 
 var config = {
-  server: {
-    ip: '127.0.0.1',
-    webPort: 8000,
-    oscPort: 9000, 
-    rootUrl: '/', 
-    usersLimit: 5, 
-    blobsDirName: '/tmp'
-  },
+
+  webPort: 8000,
+  oscPort: 9000, 
+  rootUrl: '/',
+  usersLimit: 5,
+
   clients: []
 }
 
@@ -30,7 +28,7 @@ describe('websockets', function() {
 
     it('should reject connection when full', function(done) {
       assert.equal(wsServer.sockets().length, 0)
-      helpers.dummyWebClients(config.server.webPort, 6, function(err, sockets) {
+      helpers.dummyWebClients(config.webPort, 6, function(err, sockets) {
         if (err) throw err
         assert.deepEqual(
           _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
@@ -54,7 +52,7 @@ describe('websockets', function() {
     it('should forget the sockets', function(done) {
       assert.equal(wsServer.sockets().length, 0)
       async.waterfall([
-        function(next) { helpers.dummyWebClients(config.server.webPort, 3, next) },
+        function(next) { helpers.dummyWebClients(config.webPort, 3, next) },
         function(sockets, next) {
           connections.subscribe('/someAddr', wsServer.sockets()[0].rhizome)
           connections.subscribe('/someOtherAddr', wsServer.sockets()[1].rhizome)
