@@ -148,7 +148,7 @@ describe('web client', function() {
       client.subscribe('/a', handler, subscribed)
     })
 
-    it.skip('should receive blobs', function(done) {
+    it('should receive blobs', function(done) {
       var received = []
 
       var subscribed = function(err) {
@@ -160,13 +160,13 @@ describe('web client', function() {
       }
 
       var handler = function(address, args) {
-        received.push([args[0], address])
+        received.push([address, args])
         if (received.length === 4) {
           helpers.assertSameElements(received, [
             ['/a', [new Buffer('hahaha'), 1234, 'blabla']],
             ['/a/b', [new Buffer('hello')]],
             ['/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')]],
-            ['/a/', [new Buffer('huhu'), new Buffer('hyhy')]]
+            ['/a', [new Buffer('huhu'), new Buffer('hyhy')]]
           ])
           done()
         }
