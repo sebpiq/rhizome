@@ -26,9 +26,9 @@ var path = require('path')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
 
-// TODO ; oscClient.port !== desktopClient.port AND server.port !== desktopClient.port
+// TODO ; oscClient.port !== blobClient.port AND server.port !== blobClient.port
 var validateConfig = function(config) {
-  if (config.server.port === config.desktopClient.port) {}
+  if (config.server.port === config.blobClient.port) {}
 
 
   _.extend(config, {
@@ -66,7 +66,7 @@ var validateConfig = function(config) {
       // A list of OSC clients to transmit user messages to. Valid argument for each client is : 
       //    - <ip> : the IP address of the client
       //    - <oscPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
-      //    - <desktopClientPort> : the port on which the desktop client will receive OSC messages
+      //    - <blobClientPort> : the port on which the blob client will receive OSC messages
 
     ]
 

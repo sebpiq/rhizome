@@ -19,15 +19,15 @@
 var path = require('path')
   , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
-  , client = require('../../lib/desktop-client/client')
+  , client = require('../../lib/blob-client/client')
 
-// TODO ; oscClient.port !== desktopClient.port AND server.port !== desktopClient.port
+// TODO ; oscClient.port !== blobClient.port AND server.port !== blobClient.port
 var validateConfig = function(config) {
-  if (config.server.port === config.desktopClient.port) {}
+  if (config.server.port === config.blobClient.port) {}
 }
 
 if (process.argv.length !== 3) {
-  console.log('usage : rhizome-client <config.js>')
+  console.log('usage : rhizome-blobs <config.js>')
   process.exit(1)
 }
 

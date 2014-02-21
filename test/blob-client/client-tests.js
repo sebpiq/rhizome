@@ -3,7 +3,7 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , shared = require('../../lib/shared')
-  , client = require('../../lib/desktop-client/client')
+  , client = require('../../lib/blob-client/client')
   , utils = require('../../lib/server/utils')
   , helpers = require('../helpers')
 
@@ -17,19 +17,19 @@ var clientConfig = {
 
   client: {
     oscPort: 9001,
-    desktopClientPort: 44444,
+    blobClientPort: 44444,
     blobsDirName: '/tmp'
   }
 
 }
 
-var sendToDesktopClient = new utils.OSCClient('localhost', clientConfig.client.desktopClientPort)
+var sendToBlobClient = new utils.OSCClient('localhost', clientConfig.client.blobClientPort)
   , fakeApp = new utils.OSCServer(clientConfig.client.oscPort)
   , fakeServer = new utils.OSCServer(clientConfig.server.oscPort)
   , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
 
-describe('desktop-client', function() {
+describe('blob-client', function() {
 
   before(function(done) {
     client.start(clientConfig, done)
@@ -70,8 +70,8 @@ describe('desktop-client', function() {
         })
       })
 
-      sendToDesktopClient.send('/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')])
-      sendToDesktopClient.send('/', [56789, new Buffer('hihihi')])
+      sendToBlobClient.send('/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')])
+      sendToBlobClient.send('/', [56789, new Buffer('hihihi')])
     })
 
   })
@@ -89,7 +89,7 @@ describe('desktop-client', function() {
         //                    sendBlobAddress ->
         //                                      <-   /some/address <blob>, <arg1>, >arg2>, ...
         if (address === shared.sendBlobAddress)
-          sendToDesktopClient.send(shared.sendBlobAddress, args)
+          sendToBlobClient.send(shared.sendBlobAddress, args)
 
         else {
           received.push([address, args])
@@ -121,7 +121,7 @@ describe('desktop-client', function() {
         assert.equal(address, shared.errorAddress)
         done()
       })
-      sendToDesktopClient.send(shared.sendBlobAddress, ['/bla', '/home/spiq/secret_file'])
+      sendToBlobClient.send(shared.sendBlobAddress, ['/bla', '/home/spiq/secret_file'])
     })
 
   })

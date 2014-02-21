@@ -22,7 +22,7 @@ module.exports = function(config) {
       port: 9001,
 
       // Port to listen for OSC messages.
-      desktopClientPort: 44444
+      blobClientPort: 44444
     }
 
   })

@@ -9,7 +9,7 @@ module.exports = function(config) {
     {
       ip: '127.0.0.1',
       oscPort: 9001,
-      desktopClientPort: 44444
+      blobClientPort: 44444
     }
   ]
 }

@@ -5,6 +5,6 @@ module.exports = function(config) {
 
   config.client.blobsDirName = '/tmp'
   config.client.oscPort = 9001
-  config.client.desktopClientPort = 44444
+  config.client.blobClientPort = 44444
 
 }

@@ -60,7 +60,7 @@ Gallery
 - *Fields*. Diffusion of field recordings through the smartphones from people in the audience. The connected devices become a giant granular synthesizer that the performers can manipulate live with a midi controller.
 
 
-Desktop client
+Blob client
 ----------------
 
 todo
