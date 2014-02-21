@@ -43,7 +43,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
 
   return clients.map(function(client, i) {
     var server = new utils.OSCServer(client.oscPort)
-    server.on('message', _handler.bind({id: client.id}))
+    server.on('message', _handler.bind({id: client.oscPort}))
     return server
   })
 }

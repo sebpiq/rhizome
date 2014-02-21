@@ -16,7 +16,6 @@ var clientConfig = {
   },
 
   client: {
-    id: 1,
     oscPort: 9001,
     desktopClientPort: 44444,
     blobsDirName: '/tmp'
@@ -64,8 +63,8 @@ describe('desktop-client', function() {
             received[filePaths[i][0]][2][filePaths[i][1]] = results[i]
           })
           helpers.assertSameElements(received, [
-            [1, '/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')]],
-            [1, '/', [56789, new Buffer('hihihi')]]
+            [9001, '/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')]],
+            [9001, '/', [56789, new Buffer('hihihi')]]
           ])
           done()
         })

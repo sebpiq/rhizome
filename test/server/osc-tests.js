@@ -18,9 +18,9 @@ var config = {
     blobsDirName: '/tmp'
   },
   clients: [
-    {id: 1, ip: '127.0.0.1', oscPort: 9001},
-    {id: 2, ip: '127.0.0.1', oscPort: 9002},
-    {id: 3, ip: '127.0.0.1', oscPort: 9003}
+    {ip: '127.0.0.1', oscPort: 9001},
+    {ip: '127.0.0.1', oscPort: 9002},
+    {ip: '127.0.0.1', oscPort: 9003}
   ]
 }
 
@@ -36,18 +36,18 @@ describe('osc', function() {
     it('should subscribe the osc connection to the given address', function(done) {
       helpers.dummyOSCClients(3, config.clients, function(received) {
         helpers.assertSameElements(received, [
-          [1, shared.subscribedAddress, [1, '/bla']],
-          [2, shared.subscribedAddress, [2, '/bla/']],
-          [2, shared.subscribedAddress, [2, '/']]
+          [9001, shared.subscribedAddress, [9001, '/bla']],
+          [9002, shared.subscribedAddress, [9002, '/bla/']],
+          [9002, shared.subscribedAddress, [9002, '/']]
         ])
         assert.equal(connections._nsTree.get('/bla').data.connections.length, 2)
         assert.equal(connections._nsTree.get('/').data.connections.length, 1)
         done()
       })
 
-      sendToServer.send(shared.subscribeAddress, [1, '/bla'])
-      sendToServer.send(shared.subscribeAddress, [2, '/bla/'])
-      sendToServer.send(shared.subscribeAddress, [2, '/'])
+      sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
+      sendToServer.send(shared.subscribeAddress, [9002, '/bla/'])
+      sendToServer.send(shared.subscribeAddress, [9002, '/'])
     })
 
   })
@@ -57,20 +57,20 @@ describe('osc', function() {
     it('should transmit to osc connections subscribed to that address', function(done) {
       helpers.dummyOSCClients(5, config.clients, function(received) {
         helpers.assertSameElements(received, [
-          [1, shared.subscribedAddress, [1, '/bla']],
-          [2, shared.subscribedAddress, [2, '/']],
+          [9001, shared.subscribedAddress, [9001, '/bla']],
+          [9002, shared.subscribedAddress, [9002, '/']],
 
-          [1, '/bla', ['haha', 'hihi']],
-          [2, '/bla', ['haha', 'hihi']],
-          [2, '/blo/bli', ['non', 'oui', 1, 2]]
+          [9001, '/bla', ['haha', 'hihi']],
+          [9002, '/bla', ['haha', 'hihi']],
+          [9002, '/blo/bli', ['non', 'oui', 1, 2]]
         ])
         assert.deepEqual(dummyConn.received, [['/blo/bli', ['non', 'oui', 1, 2]]])
         done()
       })
 
       // Subscribing our osc clients
-      sendToServer.send(shared.subscribeAddress, [1, '/bla'])
-      sendToServer.send(shared.subscribeAddress, [2, '/'])
+      sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
+      sendToServer.send(shared.subscribeAddress, [9002, '/'])
 
       // Adding other dummy clients (simulate websockets)
       var dummyConn = { send: function(address, args) { this.received.push([address, args]) }, received: [] }
