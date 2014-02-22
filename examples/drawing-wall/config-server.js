@@ -1,15 +1,11 @@
-module.exports = function(config) {
+module.exports = {
 
-  config.server.webPort = 8001
-  config.server.oscPort = 9000
-  config.server.pages = [
+  webPort: 8001
+  oscPort: 9000
+  pages: [
     { rootUrl: '/example', dirName: './pages' }
   ]
-  config.clients = [
-    {
-      ip: '127.0.0.1',
-      oscPort: 9001,
-      blobClientPort: 44444
-    }
+  clients: [
+    { ip: '127.0.0.1', oscPort: 9001 }
   ]
 }

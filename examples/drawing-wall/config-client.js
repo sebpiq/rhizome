@@ -1,10 +1,6 @@
-module.exports = function(config) {
+module.exports = {
 
-  config.server.ip = '127.0.0.1'
-  config.server.oscPort = 9000
-
-  config.client.blobsDirName = '/tmp'
-  config.client.oscPort = 9001
-  config.client.blobClientPort = 44444
+  appPort: 9000,
+  blobsDirName: '/tmp'
 
 }

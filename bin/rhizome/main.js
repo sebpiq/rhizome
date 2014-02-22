@@ -23,6 +23,7 @@ var path = require('path')
   , debug = require('debug')('rhizome.main')
   , async = require('async')
   , express = require('express')
+  , clc = require('cli-color')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
   , validateConfig = require('./validate-config')
@@ -61,8 +62,7 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
   config.pages.forEach(function(page) {
     if (page.rootUrl.search('/rhizome.*') !== -1)
       throw new Error(' the page with url \'/rhizome\' is reserved')
-    var dirName = path.join(process.cwd(), page.dirName)
-    app.use(page.rootUrl, express.static(dirName))
+    app.use(page.rootUrl, express.static(page.dirName))
   })
 
   // Start servers
@@ -98,7 +98,22 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
 
   ], function(err) {
     if (err) throw err
-    console.log('----- rhizome ready -----')
+    console.log(clc.bold('Rhizome running.'))
+    console.log(clc.bold('(1)'), 'server listening for OSC messages on port', clc.bold(config.oscPort))
+
+    if (config.pages.length) {
+      console.log(clc.bold('(2)'), 'pages served at')
+      config.pages.forEach(function(page) {
+        console.log(clc.italic('  http://<serverIP>:' + config.webPort + page.rootUrl))
+      })
+    } else console.log(clc.bold('(2) Warning : no web pages declared'))
+
+    if (config.clients.length) {
+      console.log(clc.bold('(3)'), 'sending to client applications at')
+      config.clients.forEach(function(client) {
+        console.log(clc.italic('  IP=' + client.ip + ', port=' + client.appPort))
+      })
+    } else console.log(clc.bold('(3) Warning : no OSC clients declared'))
   })
 
 })

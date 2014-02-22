@@ -32,23 +32,27 @@
       rhizome.start(function(err) {
         if (err) return alert(err)
 
+        var onAddress = '/' + rhizome.userId + '/on'
+          , xyAddress = '/' + rhizome.userId + '/xy'
+          , offAddress = '/' + rhizome.userId + '/off'
+
         $('#canvas').on(TouchMouseEvent.DOWN, function(event) {
           $('#mouseTrace').show()
           updateMouseTrace(event)
-          rhizome.message('/' + rhizome.userId + '/on')
+          rhizome.send(onAddress)
           mouseDown = true
         })
 
         $('#canvas').on(TouchMouseEvent.MOVE, function(event) {
           if (mouseDown) {
             updateMouseTrace(event)
-            rhizome.message('/' + rhizome.userId + '/xy', [event.pageX / pageW, (pageH - event.pageY) / pageH])
+            rhizome.send(xyAddress, [event.pageX / pageW, (pageH - event.pageY) / pageH])
           }
         })
 
         $('#canvas').on(TouchMouseEvent.UP, function(event) {
           $('#mouseTrace').hide()
-          rhizome.message('/' + rhizome.userId + '/off')
+          rhizome.send(offAddress)
           mouseDown = false
         })
 

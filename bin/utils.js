@@ -18,7 +18,7 @@ var fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
   , chai = require('chai')
-  , clc = require('cli-color');
+  , clc = require('cli-color')
 
 exports.printConfigErrors = function(configErrors) {
   var count = 0

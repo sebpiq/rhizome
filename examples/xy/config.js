@@ -1,11 +1,9 @@
-module.exports = function(config) {
+module.exports = {
 
-  config.server.webPort = 8001
-  config.server.oscPort = 9000
-  config.server.pages = [
+  pages: [
     { rootUrl: '/example', dirName: './pages' }
-  ]
-  config.clients = [
-    { ip: '127.0.0.1', oscPort: 9001 }
+  ],
+  clients: [
+    { ip: '127.0.0.1', appPort: 9001 }
   ]
 }

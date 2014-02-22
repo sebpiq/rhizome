@@ -18,7 +18,8 @@
 
 var path = require('path')
   , _ = require('underscore')
-  , debug = require('debug')('rhizome.main')
+  , debug = require('debug')('rhizome-blobs.main')
+  , clc = require('cli-color')
   , client = require('../../lib/blob-client/client')
   , validateConfig = require('./validate-config')
   , utils = require('../utils')
@@ -39,7 +40,10 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
 
   client.start(config, function(err) {
     if (err) throw err
-    console.log('----- rhizome client ready -----')
+    console.log(clc.bold('Rhizome blobs running.'))
+    console.log(clc.bold('(1)'), 'saving and reading blobs from', clc.bold(config.blobsDirName))
+    console.log(clc.bold('(2)'), 'application client running on same machine, osc port', clc.bold(config.appPort))
+    console.log(clc.bold('(3)'), 'server', clc.italic('IP=' + config.server.ip + ', port=' + config.server.oscPort))
   })
 
 })
