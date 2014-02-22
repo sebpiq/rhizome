@@ -2,10 +2,10 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , shared = require('../../lib/shared')
-  , client = require('../../lib/blob-client/client')
-  , utils = require('../../lib/server/utils')
-  , helpers = require('../helpers')
+  , shared = require('../../../lib/shared')
+  , client = require('../../../lib/blob-client/client')
+  , utils = require('../../../lib/server/utils')
+  , helpers = require('../../helpers')
 
 
 var clientConfig = {

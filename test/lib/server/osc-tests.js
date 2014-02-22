@@ -2,11 +2,11 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , oscServer = require('../../lib/server/osc')
-  , connections = require('../../lib/server/connections')
-  , utils = require('../../lib/server/utils')
-  , shared = require('../../lib/shared')
-  , helpers = require('../helpers')
+  , oscServer = require('../../../lib/server/osc')
+  , connections = require('../../../lib/server/connections')
+  , utils = require('../../../lib/server/utils')
+  , shared = require('../../../lib/shared')
+  , helpers = require('../../helpers')
 
 var config = {
 

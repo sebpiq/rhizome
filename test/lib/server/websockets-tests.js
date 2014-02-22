@@ -3,10 +3,10 @@ var _ = require('underscore')
   , WebSocket = require('ws')
   , async = require('async')
   , assert = require('assert')
-  , wsServer = require('../../lib/server/websockets')
-  , connections = require('../../lib/server/connections')
-  , utils = require('../../lib/server/utils')
-  , helpers = require('../helpers')
+  , wsServer = require('../../../lib/server/websockets')
+  , connections = require('../../../lib/server/connections')
+  , utils = require('../../../lib/server/utils')
+  , helpers = require('../../helpers')
 
 var config = {
 

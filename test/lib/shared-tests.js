@@ -1,6 +1,6 @@
 var _ = require('underscore')
   , assert = require('assert')
-  , shared = require('../lib/shared')
+  , shared = require('../../lib/shared')
 
 describe('normalizeAddress', function() {
 

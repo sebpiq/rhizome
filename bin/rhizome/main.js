@@ -44,8 +44,7 @@ var app = express()
   , gruntFilePath = path.join(packageRootPath, 'Gruntfile.js')
   , configFilePath = path.join(process.cwd(), process.argv[2])
   , config = {}
-require('./default-config.js')(config)
-require(configFilePath)(config)
+require('./validate-config')(require(configFilePath))
 config.server.instance = server
 
 app.set('port', config.server.webPort)

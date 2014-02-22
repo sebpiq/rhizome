@@ -2,7 +2,7 @@ var fs = require('fs')
   , assert = require('assert')
   , _ = require('underscore')
   , async = require('async')
-  , utils = require('../../lib/server/utils')
+  , utils = require('../../../lib/server/utils')
 
 describe('utils', function() {
   
