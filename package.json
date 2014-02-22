@@ -18,6 +18,7 @@
     "osc-min": "0.0.x",
     "chai": "1.9.x",
     "chai-http": "0.4.x",
+    "cli-color": "0.2.x",
     "grunt": "0.4.x",
     "grunt-cli": "0.1.x",
     "grunt-contrib-uglify": "0.3.x",  

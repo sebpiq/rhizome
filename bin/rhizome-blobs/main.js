@@ -20,11 +20,8 @@ var path = require('path')
   , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
   , client = require('../../lib/blob-client/client')
-
-// TODO ; oscClient.port !== blobClient.port AND server.port !== blobClient.port
-var validateConfig = function(config) {
-  if (config.server.port === config.blobClient.port) {}
-}
+  , validateConfig = require('./validate-config')
+  , utils = require('../utils')
 
 if (process.argv.length !== 3) {
   console.log('usage : rhizome-blobs <config.js>')
@@ -32,13 +29,17 @@ if (process.argv.length !== 3) {
 }
 
 var configFilePath = path.join(process.cwd(), process.argv[2])
-  , config = {}
-require('./default-config.js')(config)
-require(configFilePath)(config)
 
-client.start(config, function(err) {
-  if (err) throw err
-  console.log('----- rhizome client ready -----')
+validateConfig(require(configFilePath), function(err, config, configErrors) {
+
+  if (_.keys(configErrors).length) {
+    utils.printConfigErrors(configErrors)
+    process.exit(1)
+  }
+
+  client.start(config, function(err) {
+    if (err) throw err
+    console.log('----- rhizome client ready -----')
+  })
+
 })
-
-

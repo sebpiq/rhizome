@@ -14,13 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with rhizome.  If not, see <http://www.gnu.org/licenses/>.
  */
-var _ = require('underscore')
+var fs = require('fs')
+  , _ = require('underscore')
   , async = require('async')
   , chai = require('chai')
+  , clc = require('cli-color');
+
+exports.printConfigErrors = function(configErrors) {
+  var count = 0
+  console.log(clc.bold.red('Your configuration file is invalid'))
+  _.pairs(configErrors).forEach(function(p) {
+    count++
+    console.log(clc.bold.red('(' + count + ')'), clc.bold(p[0]), p[1])
+  })
+}
 
 var validate = exports.validate = function(prefix, obj, validationErrors, beforeAfter, validators) {
-  var self = this
-    , asyncValid = []
+  var asyncValid = []
     , isValid = true
 
   var _handleError = function(err, attrName) {
@@ -32,6 +42,9 @@ var validate = exports.validate = function(prefix, obj, validationErrors, before
   }
 
   var _doFinally = function() {
+    var unknownAttrs = _.difference(_.keys(obj), _.keys(validators))
+    if (unknownAttrs.length)
+      _handleError(new chai.AssertionError('unknown attributes [' + unknownAttrs.join(', ') + ']'))
     if (isValid && beforeAfter.after) {
       try { beforeAfter.after.call(obj) } catch (err) { _handleError(err) }
     }

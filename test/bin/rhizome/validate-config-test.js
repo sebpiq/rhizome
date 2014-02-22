@@ -14,7 +14,7 @@ describe('rhizome validate-config', function() {
       usersLimit: 40,
       rootUrl: '/',
       pages: [
-        {rootUrl: '/page1', dirName: '../../../lib'},
+        {rootUrl: '/page1', dirName: __dirname},
         {rootUrl: '/page2', dirName: '/tmp'}
       ],
       clients: [

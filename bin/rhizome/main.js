@@ -25,11 +25,8 @@ var path = require('path')
   , express = require('express')
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
-
-// TODO ; oscClient.port !== blobClient.port AND server.port !== blobClient.port
-var validateConfig = function(config) {
-  if (config.server.port === config.blobClient.port) {}
-}
+  , validateConfig = require('./validate-config')
+  , utils = require('../utils')
 
 if (process.argv.length !== 3) {
   console.log('usage : rhizome <config.js>')
@@ -43,57 +40,65 @@ var app = express()
   , gruntExecPath = path.join(packageRootPath, 'node_modules', 'grunt-cli', 'bin', 'grunt')
   , gruntFilePath = path.join(packageRootPath, 'Gruntfile.js')
   , configFilePath = path.join(process.cwd(), process.argv[2])
-  , config = {}
-require('./validate-config')(require(configFilePath))
-config.server.instance = server
 
-app.set('port', config.server.webPort)
-app.use(express.logger('dev'))
-app.use(express.bodyParser())
-app.use(express.methodOverride())
-app.use(app.router)
-app.use('/rhizome', express.static(buildDir))
+validateConfig(require(configFilePath), function(err, config, configErrors) {
 
-// Serve the users pages
-config.server.pages.forEach(function(page) {
-  if (page.rootUrl.search('/rhizome.*') !== -1)
-    throw new Error(' the page with url \'/rhizome\' is reserved')
-  var dirName = path.join(process.cwd(), page.dirName)
-  app.use(page.rootUrl, express.static(dirName))
-})
-
-// Start servers
-async.parallel([
-
-  function(next) {
-    async.waterfall([
-      function(next2) { fs.exists(buildDir, function(exists) { next2(null, exists) }) },
-      function(exists, next2) {
-        if (!exists) fs.mkdir(buildDir, next2)
-        else next2()
-      },
-      function(next2) {
-        var grunt  = spawn(gruntExecPath, ['--gruntfile', gruntFilePath])
-        grunt.on('close', function (code, signal) {
-          if (code === 0) next2()
-          else next2(new Error('grunt terminated with error'))
-        })
-      }
-    ], next)
-  },
-
-  function(next) { wsServer.start(config, next) },
-
-  function(next) { oscServer.start(config, next) },
-
-  function(next) {
-    server.listen(app.get('port'), function() {
-      debug('Express server listening on port ' + app.get('port'))
-      next()
-    })
+  if (_.keys(configErrors).length) {
+    utils.printConfigErrors(configErrors)
+    process.exit(1)
   }
 
-], function(err) {
-  if (err) throw err
-  console.log('----- rhizome ready -----')
+  config.serverInstance = server
+
+  app.set('port', config.webPort)
+  app.use(express.logger('dev'))
+  app.use(express.bodyParser())
+  app.use(express.methodOverride())
+  app.use(app.router)
+  app.use('/rhizome', express.static(buildDir))
+
+  // Serve the users pages
+  config.pages.forEach(function(page) {
+    if (page.rootUrl.search('/rhizome.*') !== -1)
+      throw new Error(' the page with url \'/rhizome\' is reserved')
+    var dirName = path.join(process.cwd(), page.dirName)
+    app.use(page.rootUrl, express.static(dirName))
+  })
+
+  // Start servers
+  async.parallel([
+
+    function(next) {
+      async.waterfall([
+        function(next2) { fs.exists(buildDir, function(exists) { next2(null, exists) }) },
+        function(exists, next2) {
+          if (!exists) fs.mkdir(buildDir, next2)
+          else next2()
+        },
+        function(next2) {
+          var grunt  = spawn(gruntExecPath, ['--gruntfile', gruntFilePath])
+          grunt.on('close', function (code, signal) {
+            if (code === 0) next2()
+            else next2(new Error('grunt terminated with error'))
+          })
+        }
+      ], next)
+    },
+
+    function(next) { wsServer.start(config, next) },
+
+    function(next) { oscServer.start(config, next) },
+
+    function(next) {
+      server.listen(app.get('port'), function() {
+        debug('Express server listening on port ' + app.get('port'))
+        next()
+      })
+    }
+
+  ], function(err) {
+    if (err) throw err
+    console.log('----- rhizome ready -----')
+  })
+
 })
