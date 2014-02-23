@@ -103,20 +103,43 @@ describe('web client', function() {
       client.subscribe('/place1', handler, subscribed)
     })
 
-    it('shouldn\'t cause problem if subscribing twice same place', function(done) {
-      var answered = 0
-
-      var handler = function() {}          
-
-      var subscribed = function(err) {
-        if (err) throw err
-        answered++
-        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
-        if (answered === 2) done()
+    it('should work when subscribing one after the other two handlers to the same address', function(done) {
+      var subscribed1 = function() {
+        client.subscribe('/place1', function(address, args) { messageReceived([2, address, args]) }, subscribed2)
       }
 
-      client.subscribe('/place1', handler, subscribed)
-      client.subscribe('/place1', handler, subscribed)
+      var subscribed2 = function() {
+        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
+        connections.send('/place1/bla', ['blabla', 'lolo'])
+      }
+
+      var messageReceived = helpers.waitForAnswers(2, function(received) {
+        helpers.assertSameElements(received, [
+          [1, '/place1/bla', ['blabla', 'lolo']],
+          [2, '/place1/bla', ['blabla', 'lolo']]
+        ])
+        done()
+      })
+
+      client.subscribe('/place1', function(address, args) { messageReceived([1, address, args]) }, subscribed1)
+    })
+
+    it('should work when subscribing without waiting two handlers to the same address', function(done) {
+      var subscribed = helpers.waitForAnswers(2, function() {
+        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
+        connections.send('/place1/bla', [111, 222])
+      })
+
+      var messageReceived = helpers.waitForAnswers(2, function(received) {
+        helpers.assertSameElements(received, [
+          [1, '/place1/bla', [111, 222]],
+          [2, '/place1/bla', [111, 222]]
+        ])
+        done()
+      })
+
+      client.subscribe('/place1', function(address, args) { messageReceived([1, address, args]) }, subscribed)
+      client.subscribe('/place1', function(address, args) { messageReceived([2, address, args]) }, subscribed)
     })
 
     it('should receive all messages from subspaces', function(done) {
@@ -255,6 +278,15 @@ describe('web client', function() {
       client.send('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
       client.send('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
       client.send('/bli/blob/', [new Buffer('blobbi')])
+    })
+
+    it('should work when sending no arguments', function(done) {
+      var dummyConns = helpers.dummyConnections(1, 1, function(received) {
+        helpers.assertSameElements(received, [[0, '/bla', []]])
+        done()
+      })
+      connections.subscribe('/bla', dummyConns[0])
+      client.send('/bla/')
     })
 
     it('should throw an error if the address is not valid', function() {

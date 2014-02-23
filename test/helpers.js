@@ -3,6 +3,7 @@ var assert = require('assert')
   , async = require('async')
   , WebSocket = require('ws')
   , wsServer = require('../lib/server/websockets')
+  , oscServer = require('../lib/server/osc')
   , webClient = require('../lib/web-client/client')
   , connections = require('../lib/server/connections')
   , utils = require('../lib/server/utils')
@@ -34,31 +35,36 @@ exports.dummyWebClients = function(port, count, done) {
 var _dummies = []
 
 exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
-  var received = []
+  var answerReceived = waitForAnswers(expectedMsgCount, function() {
+    servers.forEach(function(server) { server.close() })
+    handler.apply(this, arguments)
+  })
 
-  var _handler = function(address, args) {
-    received.push([this.id, address, args])
-    if (received.length >= expectedMsgCount) handler(received)
-  }
-
-  return clients.map(function(client, i) {
+  var servers = clients.map(function(client, i) {
     var server = new utils.OSCServer(client.appPort)
-    server.on('message', _handler.bind({id: client.appPort}))
+    server.on('message', function(address, args) {
+      answerReceived([client.appPort, address, args])
+    })
     return server
   })
+  return servers
 }
 
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
-  var received = []
-
-  var _handler = function(address, args) {
-    received.push([this.id, address, args])
-    if (received.length >= expectedMsgCount) handler(received)
-  }
-
+  var answerReceived = waitForAnswers(expectedMsgCount, handler)
   return _.range(connectionCount).map(function(i) {
-    return { send: _handler, id: i }
+    return {send: function(address, args) {
+      answerReceived([i, address, args])
+    }}
   })
+}
+
+var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
+  var received = []
+  return function (elem) {
+    received.push(elem)
+    if (received.length >= expectedCount) done(received)
+  }
 }
 
 // Helper with common operations to clean after a test
@@ -66,7 +72,7 @@ exports.afterEach = function(done) {
   _dummies.forEach(function() { socket.close() })
   _dummies = []
   connections.removeAll()
-  async.series([ webClient.stop, wsServer.stop ], done)
+  async.series([ webClient.stop, wsServer.stop, oscServer.stop ], done)
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)

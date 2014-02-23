@@ -16,9 +16,9 @@ var config = {
   usersLimit: 5,
 
   clients: [
-    {ip: '127.0.0.1', appPort: 9001},
-    {ip: '127.0.0.1', appPort: 9002},
-    {ip: '127.0.0.1', appPort: 9003}
+    {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobClientPort: 44444},
+    {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobClientPort: 44445},
+    {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
   ]
 }
 
@@ -77,6 +77,56 @@ describe('osc', function() {
       // Sending messages
       sendToServer.send('/bla', ['haha', 'hihi'])
       sendToServer.send('/blo/bli', ['non', 'oui', 1, 2])
+    })
+
+    it('should transmit blobs to blob clients', function(done) {
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 44444}, // fake the blob client 1
+        {ip: '127.0.0.1', appPort: 44445}, // fake the blob client 2
+        config.clients[2]                  // app client that doesn't use blob client
+      ]
+
+      helpers.dummyOSCClients(7, oscClients, function(received) {
+        helpers.assertSameElements(received, [
+          [9003, shared.subscribedAddress, [9003, '/blo']],
+
+          [44444, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
+          [44445, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
+          [9003, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
+
+          [44444, '/blo/bli', [new Buffer('qwerty')]],
+          [44445, '/blo/bli', [new Buffer('qwerty')]],
+          [9003, '/blo/bli', [new Buffer('qwerty')]]
+        ])
+        done()
+      })
+
+      // Subscribing our osc clients
+      sendToServer.send(shared.subscribeAddress, [9001, '/blo'])
+      sendToServer.send(shared.subscribeAddress, [9002, '/blo'])
+      sendToServer.send(shared.subscribeAddress, [9003, '/blo'])
+
+      // Sending messages with blobs
+      sendToServer.send('/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')])
+      sendToServer.send('/blo/bli', [new Buffer('qwerty')])
+    })
+
+    it('should request the blob client to send a blob when asked for it', function(done) {
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 44444}, // fake the blob client 1
+        {ip: '127.0.0.1', appPort: 44445}, // fake the blob client 2
+      ]
+
+      helpers.dummyOSCClients(2, oscClients, function(received) {
+        helpers.assertSameElements(received, [
+          [44444, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]],
+          [44445, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
+        ])
+        done()
+      })
+
+      // Simulate request to send a blob
+      sendToServer.send(shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33])
     })
 
   })
