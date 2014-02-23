@@ -113,6 +113,9 @@ Changelog
     - `message` renamed to `send`
     - `listen` renamed to `subscribe`
 
+  - Bins:
+    - config is now validated and displayed when starting the binaries
+
 - 0.2.0 
 
   - Web client:

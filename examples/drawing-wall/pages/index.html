@@ -45,7 +45,7 @@
 
       $('send-canvas').onclick = function() {
         $('c').toBlob(function(blob) {
-          rhizome.message('/wall/blob', blob)
+          rhizome.send('/drawing', [blob])
         })
       }
     })

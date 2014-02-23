@@ -1,6 +1,6 @@
 module.exports = {
 
-  appPort: 9000,
+  appPort: 9001,
   blobsDirName: '/tmp'
 
 }
