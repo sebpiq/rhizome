@@ -1,11 +1,13 @@
-Instructions
+About Blobs
 --------------
 
-This folder contains a full **rhizome** application.
-
-It is an example of how to handle *.jpeg* files - binary data and files in general - with rhizome, even if your OSC application doesn't have a good support for sending/receiving files through OSC. The users connected to the web page can draw on a canvas, and when they click on the *"send"* button, the contents of the canvas are exported as *.jpeg*, and transmitted to OSC clients.
+This is an example of how to handle *.jpeg* files - binary data and files in general - with rhizome, even if your OSC application doesn't have a good support for sending/receiving files through OSC. The users connected to the web page can draw on a canvas, and when they click on the *"send"* button, the contents of the canvas are exported as *.jpeg*, and transmitted to OSC clients.
 
 Let's assume that we have an OSC application with no support for sending/receiving files (in OSC, files are called *blobs*). *rhizome* comes with an small (optional) tool that takes care of transferring files. This tool needs to run on the computer that also runs the OSC application.
+
+
+Instructions
+--------------
 
 Let's start the example. Open your terminal, go to the example folder and run `rhizome config-server.js`. This should start the server and print an extract of the configuration.
 
