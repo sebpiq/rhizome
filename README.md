@@ -41,7 +41,7 @@ Open a terminal, and simply run `npm install -g rhizome-server`. If this succeed
 
 ##### 3) Implement your thing 
 
-More documentation will come soon. But for the moment, you can check-out the [example](https://github.com/sebpiq/rhizome/tree/master/examples).
+More documentation will come soon. But for the moment, you can check-out the [examples](https://github.com/sebpiq/rhizome/tree/master/examples).
 
 
 ##### 4) That's it!
@@ -60,10 +60,13 @@ Gallery
 - *Fields*. Diffusion of field recordings through the smartphones from people in the audience. The connected devices become a giant granular synthesizer that the performers can manipulate live with a midi controller.
 
 
-Blob client
-----------------
+Transferring files
+-------------------
 
-todo
+**rhizome** supports transferring [OSC blobs](http://opensoundcontrol.org/spec-1_0) and [JavaScript blobs](https://developer.mozilla.org/en-US/docs/Web/API/Blob) without any problem. This means that you can transfer files (audio, images, ...) between your OSC application and the web page.
+
+However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
+
 
 For contributors
 ------------------
