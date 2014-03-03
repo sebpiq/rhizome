@@ -6,6 +6,7 @@ var _ = require('underscore')
   , wsServer = require('../../../lib/server/websockets')
   , connections = require('../../../lib/server/connections')
   , utils = require('../../../lib/server/utils')
+  , shared = require('../../../lib/shared')
   , helpers = require('../../helpers')
 
 var config = {
@@ -69,6 +70,29 @@ describe('websockets', function() {
         assert.equal(connections._nsTree.get('/someOtherAddr').data.connections.length, 1)
         done()
       })
+    })
+
+    it('should send a message to all other connections', function(done) {
+      assert.equal(wsServer.sockets().length, 0)
+
+      // Create dummy web clients, and immediately close one of them
+      helpers.dummyWebClients(config.webPort, 3, function(err, sockets) {
+        if (err) throw err
+        assert.equal(wsServer.sockets().length, 3)
+        sockets[2].close()
+      })
+
+      // Create dummy connections to listen to the 'close' message
+      var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
+        assert.deepEqual(received, [
+          [0, shared.closeAddress, [2]],
+          [2, shared.closeAddress, [2]]
+        ])
+        done()
+      })
+      connections.subscribe(shared.closeAddress, dummyConnections[0])
+      connections.subscribe(shared.closeAddress, dummyConnections[2])
+
     })
 
   })
