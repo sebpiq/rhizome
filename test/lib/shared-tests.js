@@ -35,11 +35,29 @@ describe('address regular expressions', function() {
     assert.ok(shared.sysAddressRe.exec('/sys/bla/'))
     assert.ok(shared.sysAddressRe.exec('/sys/error'))
     assert.ok(shared.sysAddressRe.exec('/sys'))
+    assert.ok(shared.sysAddressRe.exec(shared.subscribeAddress))
+    assert.ok(shared.sysAddressRe.exec(shared.subscribedAddress))
+    assert.ok(shared.sysAddressRe.exec(shared.sendBlobAddress))
+    assert.ok(shared.sysAddressRe.exec(shared.errorAddress))
 
     assert.equal(shared.sysAddressRe.exec('/bla'), null)
     assert.equal(shared.sysAddressRe.exec('/'), null)
     assert.equal(shared.sysAddressRe.exec('/bla/sys'), null)
     assert.equal(shared.sysAddressRe.exec('sys'), null)
+  })
+
+  it('should recognize system address', function() {
+    assert.ok(shared.broadcastAddressRe.exec('/broadcast/bla/'))
+    assert.ok(shared.broadcastAddressRe.exec('/broadcast/error'))
+    assert.ok(shared.broadcastAddressRe.exec('/broadcast'))
+
+    assert.ok(shared.broadcastAddressRe.exec(shared.connectionCloseAddress))
+    assert.ok(shared.broadcastAddressRe.exec(shared.connectionOpenAddress))
+
+    assert.equal(shared.broadcastAddressRe.exec('/bla'), null)
+    assert.equal(shared.broadcastAddressRe.exec('/'), null)
+    assert.equal(shared.broadcastAddressRe.exec('/bla/broadcast'), null)
+    assert.equal(shared.broadcastAddressRe.exec('broadcast'), null)
   })
 
 })

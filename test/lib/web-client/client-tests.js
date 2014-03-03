@@ -204,6 +204,7 @@ describe('web client', function() {
         assert.throws(function() { client.subscribe('bla', handler) })
         assert.throws(function() { client.subscribe('/sys', handler) })
         assert.throws(function() { client.subscribe('/sys/takeIt/', handler) })
+        assert.throws(function() { client.subscribe('/broadcast/bla/', handler) })
         done()
       })
     })
@@ -292,6 +293,7 @@ describe('web client', function() {
     it('should throw an error if the address is not valid', function() {
       assert.throws(function() { client.send('bla', [12]) })
       assert.throws(function() { client.send('/sys/', ['mna']) })
+      assert.throws(function() { client.send('/broadcast/', [123]) })
     })
 
   })
