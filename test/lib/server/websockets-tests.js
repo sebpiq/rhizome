@@ -46,6 +46,29 @@ describe('websockets', function() {
       })
     })
 
+    it('should send a message to all other connections', function(done) {
+      assert.equal(wsServer.sockets().length, 0)
+
+      // Create dummy connection to listen to the 'open' message
+      var dummyConnections = helpers.dummyConnections(6, 3, function(received) {
+        helpers.assertSameElements(received, [
+          [0, shared.connectionOpenAddress, [0]],
+          [0, shared.connectionOpenAddress, [1]],
+          [0, shared.connectionOpenAddress, [2]],
+
+          [2, shared.connectionOpenAddress, [0]],
+          [2, shared.connectionOpenAddress, [1]],
+          [2, shared.connectionOpenAddress, [2]]
+        ])
+        done()
+      })
+      connections.subscribe(shared.connectionOpenAddress, dummyConnections[0])
+      connections.subscribe(shared.connectionOpenAddress, dummyConnections[2])
+
+      // Create dummy web clients, so that new connections are open
+      helpers.dummyWebClients(config.webPort, 3)
+    })
+
   })
 
   describe('disconnection', function() {
@@ -84,14 +107,14 @@ describe('websockets', function() {
 
       // Create dummy connections to listen to the 'close' message
       var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
-        assert.deepEqual(received, [
-          [0, shared.closeAddress, [2]],
-          [2, shared.closeAddress, [2]]
+        helpers.assertSameElements(received, [
+          [0, shared.connectionCloseAddress, [2]],
+          [2, shared.connectionCloseAddress, [2]]
         ])
         done()
       })
-      connections.subscribe(shared.closeAddress, dummyConnections[0])
-      connections.subscribe(shared.closeAddress, dummyConnections[2])
+      connections.subscribe(shared.connectionCloseAddress, dummyConnections[0])
+      connections.subscribe(shared.connectionCloseAddress, dummyConnections[2])
 
     })
 

@@ -24,15 +24,15 @@ exports.dummyWebClients = function(port, count, done) {
   async.series(_.range(count).map(function(i) {
     return function(next) {
       socket = new WebSocket('ws://localhost:' + port + '/?dummies')
-      _dummies.push(socket)
+      _dummyWebClients.push(socket)
       socket.addEventListener('open', function() { next() })
     }
   }), function(err) {
     assert.equal(wsServer.sockets().length, countBefore + count)
-    done(err, _dummies)
+    if (done) done(err, _dummyWebClients)
   })
 }
-var _dummies = []
+var _dummyWebClients = []
 
 exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   var answerReceived = waitForAnswers(expectedMsgCount, function() {
@@ -69,8 +69,8 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
 
 // Helper with common operations to clean after a test
 exports.afterEach = function(done) {
-  _dummies.forEach(function() { socket.close() })
-  _dummies = []
+  _dummyWebClients.forEach(function() { socket.close() })
+  _dummyWebClients = []
   connections.removeAll()
   async.series([ webClient.stop, wsServer.stop, oscServer.stop ], done)
 }
