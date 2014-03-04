@@ -68,6 +68,15 @@ Transferring files
 However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
 
 
+Broadcast messages
+--------------------
+
+The following messages are sent by the server. To receive them, you should subscribe to them.
+
+  - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
+  - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
+
+
 For contributors
 ------------------
 
