@@ -53,14 +53,16 @@ describe('osc', function() {
   describe('message', function() {
 
     it('should transmit to osc connections subscribed to that address', function(done) {
-      helpers.dummyOSCClients(5, config.clients, function(received) {
+      helpers.dummyOSCClients(6, config.clients, function(received) {
         helpers.assertSameElements(received, [
           [9001, shared.subscribedAddress, [9001, '/bla']],
           [9002, shared.subscribedAddress, [9002, '/']],
 
           [9001, '/bla', ['haha', 'hihi']],
           [9002, '/bla', ['haha', 'hihi']],
-          [9002, '/blo/bli', ['non', 'oui', 1, 2]]
+          [9002, '/blo/bli', ['non', 'oui', 1, 2]],
+
+          [9002, '/empty', []]
         ])
         assert.deepEqual(dummyConn.received, [['/blo/bli', ['non', 'oui', 1, 2]]])
         done()
@@ -77,6 +79,7 @@ describe('osc', function() {
       // Sending messages
       sendToServer.send('/bla', ['haha', 'hihi'])
       sendToServer.send('/blo/bli', ['non', 'oui', 1, 2])
+      sendToServer.send('/empty')
     })
 
     it('should transmit blobs to blob clients', function(done) {
