@@ -104,6 +104,14 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
+- 0.3.1
+
+  - Server:
+    - now sends messages to `/broadcast/websockets/open` and `/broadcast/websockets/open` when a websocket connection is opened or closed
+
+  - Web client:
+    - throws an error if trying to send invalid args
+
 - 0.3.0
 
   - App clients:

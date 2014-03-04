@@ -37,17 +37,45 @@ describe('shared', function() {
 
   })
 
-  describe('validateAddress', function() {
+  describe('validateAddressForSub', function() {
     
-    it('should accept only well formed addresses', function() {
-      assert.equal(shared.validateAddress('/bla'), null)
-      assert.equal(shared.validateAddress('/'), null)
-      assert.equal(shared.validateAddress('/bla/blob/tre'), null)
-      assert.equal(shared.validateAddress('/blob'), null)
-      assert.equal(shared.validateAddress('/1/blob/'), null)
+    it('should accept valid addresses', function() {
+      assert.equal(shared.validateAddressForSub('/bla'), null)
+      assert.equal(shared.validateAddressForSub('/'), null)
+      assert.equal(shared.validateAddressForSub('/bla/blob/tre'), null)
+      assert.equal(shared.validateAddressForSub('/blob'), null)
+      assert.equal(shared.validateAddressForSub('/1/blob/'), null)
+    })
 
+    it('should reject malformed addresses', function() {
       // Should start with /
-      assert.ok(_.isString(shared.validateAddress('bla')))
+      assert.ok(_.isString(shared.validateAddressForSub('bla')))
+    })
+
+    it('should reject sys addresses', function() {
+      assert.ok(_.isString(shared.validateAddressForSub('/sys/bla')))
+    })
+
+  })
+
+  describe('validateAddressForSend', function() {
+    
+    it('should accept valid addresses', function() {
+      assert.equal(shared.validateAddressForSend('/bla'), null)
+      assert.equal(shared.validateAddressForSend('/'), null)
+      assert.equal(shared.validateAddressForSend('/bla/blob/tre'), null)
+      assert.equal(shared.validateAddressForSend('/blob'), null)
+      assert.equal(shared.validateAddressForSend('/1/blob/'), null)
+    })
+
+    it('should reject malformed addresses', function() {
+      // Should start with /
+      assert.ok(_.isString(shared.validateAddressForSend('bla')))
+    })
+
+    it('should reject sys and broadcast addresses', function() {
+      assert.ok(_.isString(shared.validateAddressForSend('/sys/bla')))
+      assert.ok(_.isString(shared.validateAddressForSend('/broadcast/bla')))
     })
 
   })

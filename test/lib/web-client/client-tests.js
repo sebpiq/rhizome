@@ -204,7 +204,6 @@ describe('web client', function() {
         assert.throws(function() { client.subscribe('bla', handler) })
         assert.throws(function() { client.subscribe('/sys', handler) })
         assert.throws(function() { client.subscribe('/sys/takeIt/', handler) })
-        assert.throws(function() { client.subscribe('/broadcast/bla/', handler) })
         done()
       })
     })
