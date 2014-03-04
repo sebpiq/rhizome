@@ -296,6 +296,11 @@ describe('web client', function() {
       assert.throws(function() { client.send('/broadcast/', [123]) })
     })
 
+    it('should throw an error if the args are not valid', function() {
+      assert.throws(function() { client.send('/hello', {}) })
+      assert.throws(function() { client.send('/hello', ['mna', null]) })
+    })
+
   })
 
   describe('auto-reconnect', function() {
