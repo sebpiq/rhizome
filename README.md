@@ -68,13 +68,27 @@ Transferring files
 However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
 
 
-Broadcast messages
---------------------
+API
+----
+
+### Broadcast messages
 
 The following messages are sent by the server. To receive them, you should subscribe to them.
 
   - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
   - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
+
+
+### Web client
+
+#### Event: 'connection lost'
+
+Emitted when the connection to the server has been lost.
+
+
+#### Event: 'reconnected'
+
+Emitted when the client has successfully reconnected to the server after having lost connection.
 
 
 For contributors
@@ -112,6 +126,14 @@ istanbul cover _mocha -- test --recursive
 
 Changelog
 -----------
+
+- 0.3.2
+
+  - Web client:
+    - `debug` renamed to `log`
+    - sends `connection lost` and `reconnected` events
+
+  - Server : more robust UDP connection handling
 
 - 0.3.1
 

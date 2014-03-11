@@ -40,7 +40,9 @@ describe('web client', function() {
       client.config.reconnect = 0
       wsServer.start(config, done)
     })
-    afterEach(function() { config.usersLimit = 10 })
+    afterEach(function() {
+      config.usersLimit = 10
+    })
 
     it('should open a socket connection to the server', function(done) {
       assert.equal(client.status(), 'stopped')
@@ -304,13 +306,26 @@ describe('web client', function() {
 
   describe('auto-reconnect', function() {
 
+    var received = []
+
+    before(function() {
+      client.on('connection lost', function() { received.push('connection lost') })
+      client.on('reconnected', function() { received.push('reconnected') })
+    })
+
     beforeEach(function(done) {
+      received = []
       client.config.reconnect = 1 // Just so that reconnect is not null and therefore it is handled
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(next) },
         function(next) { client.subscribe('/someAddr', function() {}, next) }
       ], done)
+    })
+
+    after(function() {
+      client.removeAllListeners('connection lost')
+      client.removeAllListeners('reconnected')
     })
 
     var assertConnected = function() {
@@ -339,7 +354,11 @@ describe('web client', function() {
           assertConnected()
           next()
         }
-      ], done)
+      ], function(err) {
+        if (err) throw err
+        assert.deepEqual(received, ['connection lost', 'reconnected'])
+        done()
+      })
     })
 
     it('should work as well when retrying several times', function(done) {
@@ -371,7 +390,11 @@ describe('web client', function() {
           assertConnected()
           next()
         }
-      ], done)
+      ], function(err) {
+        if (err) throw err
+        assert.deepEqual(received, ['connection lost', 'reconnected', 'connection lost', 'reconnected']) 
+        done()
+      })
     })
 
   })
