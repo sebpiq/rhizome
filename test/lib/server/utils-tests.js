@@ -3,6 +3,7 @@ var fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
   , utils = require('../../../lib/server/utils')
+  , helpers = require('../../helpers')
 
 describe('utils', function() {
   
@@ -116,6 +117,88 @@ describe('utils', function() {
         if (err) throw err
         assert.equal(readBuf.toString(), 'blabla')
         done()
+      })
+
+    })
+
+  })
+
+  describe('OSCServer', function() {
+
+    describe('start/stop', function () {
+
+      it('should bind the socket and call the callback on done', function(done) {
+        var server = new utils.OSCServer(9001)
+          , client = new utils.OSCClient('127.0.0.1', 9001)
+          , messageHandler
+
+        messageHandler = helpers.waitForAnswers(2, function(received) {
+          assert.deepEqual(received, [
+            ['/blabla', [1, 2, 3]],
+            ['/hello/helli', []],
+          ])
+          server.stop(done)
+        })
+        server.on('message', function(address, args) { messageHandler([address, args]) })
+
+        server.start(function(err) {
+          if (err) throw err
+          client.send('/blabla', [1, 2, 3])
+          client.send('/hello/helli', [])
+        })
+      })
+
+      it('should not cause problem if starting/stopping several times', function(done) {
+        var server = new utils.OSCServer(9001)
+          , client = new utils.OSCClient('127.0.0.1', 9001)
+          , messageHandler
+
+        async.series([
+          server.start.bind(server),
+          function(next) {
+            var _messageHandler = helpers.waitForAnswers(2, function(received) { next(null, received) })
+            messageHandler = function(address, args) { _messageHandler([1, address, args]) }
+            server.on('message', messageHandler)
+            client.send('/blabla', [1, 2, 3])
+            client.send('/hello/helli', [])
+          },
+          server.stop.bind(server),
+          server.stop.bind(server),
+          server.start.bind(server),
+          server.start.bind(server),
+          function(next) {
+            server.removeListener('message', messageHandler)
+            _messageHandler = helpers.waitForAnswers(1, function(received) { next(null, received) })
+            messageHandler = function(address, args) { _messageHandler([2, address, args]) }
+            server.on('message', messageHandler)
+            client.send('/bloblo', ['hello'])
+          }
+        ], function(err, results) {
+          if (err) throw err
+          results.shift()
+          assert.deepEqual(results.shift(), [
+            [1, '/blabla', [1, 2, 3]],
+            [1, '/hello/helli', []]
+          ])
+          _(4).times(function() { results.shift() })
+          assert.deepEqual(results.shift(), [
+            [2, '/bloblo', ['hello']]
+          ])
+          server.stop(done)
+        })
+      })
+
+      it('should throw an error if starting twice servers on same port', function(done) {
+        var server1 = new utils.OSCServer(9001)
+          , server2 = new utils.OSCServer(9001)
+
+        server1.start(function(err) {
+          if (err) throw err
+          server2.start(function(err) {
+            assert.ok(err)
+            done()
+          })
+        })
       })
 
     })

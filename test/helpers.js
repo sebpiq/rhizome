@@ -5,6 +5,7 @@ var assert = require('assert')
   , wsServer = require('../lib/server/websockets')
   , oscServer = require('../lib/server/osc')
   , webClient = require('../lib/web-client/client')
+  , blobClient = require('../lib/blob-client/client')
   , connections = require('../lib/server/connections')
   , utils = require('../lib/server/utils')
 
@@ -36,12 +37,18 @@ var _dummyWebClients = []
 
 exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   var answerReceived = waitForAnswers(expectedMsgCount, function() {
-    servers.forEach(function(server) { server.close() })
-    handler.apply(this, arguments)
+    var _arguments = arguments
+    async.series(servers.map(function(server) {
+      return server.stop.bind(server)
+    }), function(err) {
+      if (err) throw err 
+      handler.apply(this, _arguments)
+    })
   })
 
   var servers = clients.map(function(client, i) {
     var server = new utils.OSCServer(client.appPort)
+    server.start(function(err) { if (err) throw err })
     server.on('message', function(address, args) {
       answerReceived([client.appPort, address, args])
     })
@@ -49,6 +56,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   })
   return servers
 }
+var _dummyOSCClients = []
 
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
   var answerReceived = waitForAnswers(expectedMsgCount, handler)
@@ -69,10 +77,12 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
 
 // Helper with common operations to clean after a test
 exports.afterEach = function(done) {
-  _dummyWebClients.forEach(function() { socket.close() })
+  _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
+  _dummyOSCClients.forEach(function(server) { server.close() })
+  _dummyOSCClients = []
   connections.removeAll()
-  async.series([ webClient.stop, wsServer.stop, oscServer.stop ], done)
+  async.series([ webClient.stop, wsServer.stop, oscServer.stop, blobClient.stop ], done)
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)

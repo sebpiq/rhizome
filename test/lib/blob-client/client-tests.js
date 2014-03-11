@@ -22,20 +22,24 @@ var clientConfig = {
 }
 
 var sendToBlobClient = new utils.OSCClient('localhost', clientConfig.blobClientPort)
-  , fakeApp = new utils.OSCServer(clientConfig.appPort)
   , fakeServer = new utils.OSCServer(clientConfig.server.oscPort)
   , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
 
 
 describe('blob-client', function() {
 
-  before(function(done) {
-    client.start(clientConfig, done)
+  beforeEach(function(done) {
+    async.series([
+      client.start.bind(client, clientConfig), 
+      fakeServer.start.bind(fakeServer, done)
+    ])
   })
 
   afterEach(function(done) {
-    fakeServer.removeAllListeners()
-    helpers.afterEach(done)
+    async.series([
+      fakeServer.stop.bind(fakeServer),
+      helpers.afterEach
+    ], done)
   })
 
   describe('receive blob', function() {
@@ -78,7 +82,6 @@ describe('blob-client', function() {
 
     it('should send a blob to the server', function(done) {
       var received = []
-
       fakeServer.on('message', function(address, args) {
 
         // The protocol for sending a blob from the app to the server goes like this :
@@ -97,15 +100,15 @@ describe('blob-client', function() {
               ['/blo/', [new Buffer('blobbyB')]],
               ['/BLO/b/', [new Buffer('blobbyC'), 5678]]
             ])
-            done()
+            fakeServer.stop(done)
           }
         }
       })
 
       async.series([
-        function(next) { fs.writeFile('/tmp/blob1', 'blobbyA', next) },
-        function(next) { fs.writeFile('/tmp/blob2', 'blobbyB', next) },
-        function(next) { fs.writeFile('/tmp/blob3', 'blobbyC', next) },
+        fs.writeFile.bind(fs, '/tmp/blob1', 'blobbyA'),
+        fs.writeFile.bind(fs, '/tmp/blob2', 'blobbyB'),
+        fs.writeFile.bind(fs, '/tmp/blob3', 'blobbyC')
       ], function(err) {
         if (err) throw err
         sendToServer.send(shared.sendBlobAddress, ['/bla/bli', '/tmp/blob1', 1234, 'blabla'])
