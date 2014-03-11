@@ -22,7 +22,7 @@ var config = {
 }
 
 
-describe('web client', function() {
+describe('web-client.client', function() {
 
   beforeEach(function(done) {
     //client.debug = console.log

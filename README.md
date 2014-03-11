@@ -91,6 +91,47 @@ Emitted when the connection to the server has been lost.
 Emitted when the client has successfully reconnected to the server after having lost connection.
 
 
+#### start(done)
+
+Starts the client, and executes `done(err)` when complete. If the client started successfully, `err` is `null`, and `rhizome.userId` is set with the user id. Example :
+
+```javascript
+rhizome.start(function(err) {
+  if (err) throw err
+  setupUI() // a function that sets-up your user interface
+})
+```
+
+
+#### send(address[, args])
+
+Sends a message to `address`, with an optional list of arguments `args`. For example : 
+
+```javascript
+rhizome.send('/ring', ['wake up', 8.0])
+rhizome.send('/mood/bad')
+```
+
+
+#### utils.throttle(time, callback)
+
+This is a helper to limit the number of messages sent to the server. Sending too many messages, too fast, might overload the network and cause the system to be unresponsive. With this function you can force `callback(value)` to be called at most every `time` milliseconds. Example :
+
+```javascript
+// Let's assume for the sake of the example, the function `onMouseMove` is called every 5 milliseconds
+// each time the mouse moves. We don't want to send all those messages, so we're gonna use `rhizome.utils.throttle`
+// to send every 100 milliseconds instead.
+
+var sendValue = rhizome.utils.throttle(100, function(xy) {
+  rhizome.send('/mouse/xy', xy)
+})
+
+var onMouseMove function(x, y) {
+  sendValue([x, y])
+}
+```
+
+
 For contributors
 ------------------
 
@@ -130,6 +171,7 @@ Changelog
 - 0.3.2
 
   - Web client:
+    - added `utils.throttle` to limit messages sent to server
     - added `isSupported` to test browser support
     - sends `connection lost` and `reconnected` events
     - `debug` renamed to `log`

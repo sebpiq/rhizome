@@ -43,10 +43,16 @@
           mouseDown = true
         })
 
+        // Sending all the "mouse move" events might overload the network for no good reason.
+        // Therefore, we use `rhizome.utils.throttle` to send a message at most every 100 milliseconds.
+        var throttledMouseMove = rhizome.utils.throttle(100, function(event) {
+          rhizome.send(xyAddress, [event.pageX / pageW, (pageH - event.pageY) / pageH])
+        })
+
         $('#canvas').on(TouchMouseEvent.MOVE, function(event) {
           if (mouseDown) {
             updateMouseTrace(event)
-            rhizome.send(xyAddress, [event.pageX / pageW, (pageH - event.pageY) / pageH])
+            throttledMouseMove(event)
           }
         })
 

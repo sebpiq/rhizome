@@ -1,6 +1,6 @@
 {
   "name": "rhizome-server",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Sebastien Piquemal <sebpiq@gmail.com>",
   "description": "Web server for participative art performances and installations.",
   "repository": {
