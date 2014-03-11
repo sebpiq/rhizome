@@ -130,8 +130,9 @@ Changelog
 - 0.3.2
 
   - Web client:
-    - `debug` renamed to `log`
+    - added `isSupported` to test browser support
     - sends `connection lost` and `reconnected` events
+    - `debug` renamed to `log`
 
   - Server : more robust UDP connection handling
 
