@@ -48,7 +48,7 @@ More documentation will come soon. But for the moment, you can check-out the [ex
 
 Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
 
-Also, if you would like to share your projects realized with **rhizome**, please contact me, or add them directly in the gallery!
+Also, if you would like to share your projects realized with **rhizome**, please contact me, or add them directly to the gallery!
 
 
 Gallery
@@ -83,27 +83,41 @@ The following messages are sent by the server. To receive them, you should subsc
 
 #### Event: 'connection lost'
 
-Emitted when the connection to the server has been lost.
+Emitted when the connection to the server has been lost. You can use this e.g. to deactivate the user interface if the device is not connected anymore :
+
+```javascript
+rhizome.on('connection lost', function() {
+  hideControls()
+  showMessage('Reconnecting ... be patient')
+})
+```
 
 
 #### Event: 'reconnected'
 
-Emitted when the client has successfully reconnected to the server after having lost connection.
+Emitted when the client has successfully reconnected to the server after having lost connection. Example :
+
+```javascript
+rhizome.on('reconnected', function() {
+  showControls()
+  hideMessage()
+})
+```
 
 
-#### start(done)
+#### rhizome.start(done)
 
 Starts the client, and executes `done(err)` when complete. If the client started successfully, `err` is `null`, and `rhizome.userId` is set with the user id. Example :
 
 ```javascript
 rhizome.start(function(err) {
   if (err) throw err
-  setupUI() // a function that sets-up your user interface
+  showControls() // a hypothetical function that sets-up your user interface
 })
 ```
 
 
-#### send(address[, args])
+#### rhizome.send(address[, args])
 
 Sends a message to `address`, with an optional list of arguments `args`. For example : 
 
@@ -113,14 +127,15 @@ rhizome.send('/mood/bad')
 ```
 
 
-#### utils.throttle(time, callback)
+#### rhizome.utils.throttle(time, callback)
 
-This is a helper to limit the number of messages sent to the server. Sending too many messages, too fast, might overload the network and cause the system to be unresponsive. With this function you can force `callback(value)` to be called at most every `time` milliseconds. Example :
+This is a helper to limit the number of messages sent to the server. Sending too many messages, too fast, might overload the network and cause the system to be unresponsive. This function can help you tackle this issue by forcing `callback(value)` to be called at most every `time` milliseconds. Example :
 
 ```javascript
-// Let's assume for the sake of the example, the function `onMouseMove` is called every 5 milliseconds
-// each time the mouse moves. We don't want to send all those messages, so we're gonna use `rhizome.utils.throttle`
-// to send every 100 milliseconds instead.
+// Let's assume for the sake of the example, the function `onMouseMove`
+// is called every 5 milliseconds each time the mouse moves.
+// We don't want to send all those messages, so we're gonna use
+// `rhizome.utils.throttle` to send every 100 milliseconds instead.
 
 var sendValue = rhizome.utils.throttle(100, function(xy) {
   rhizome.send('/mouse/xy', xy)

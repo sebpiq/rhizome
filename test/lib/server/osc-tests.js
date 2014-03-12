@@ -34,9 +34,9 @@ describe('osc', function() {
     it('should subscribe the osc connection to the given address', function(done) {
       helpers.dummyOSCClients(3, config.clients, function(received) {
         helpers.assertSameElements(received, [
-          [9001, shared.subscribedAddress, [9001, '/bla']],
-          [9002, shared.subscribedAddress, [9002, '/bla/']],
-          [9002, shared.subscribedAddress, [9002, '/']]
+          [9001, shared.subscribedAddress, ['/bla']],
+          [9002, shared.subscribedAddress, ['/bla/']],
+          [9002, shared.subscribedAddress, ['/']]
         ])
         assert.equal(connections._nsTree.get('/bla').data.connections.length, 2)
         assert.equal(connections._nsTree.get('/').data.connections.length, 1)
@@ -50,13 +50,43 @@ describe('osc', function() {
 
   })
 
+  describe('resend', function() {
+
+    it('should resend the last messages sent at that address', function(done) {
+      helpers.dummyOSCClients(4, config.clients, function(received) {
+        helpers.assertSameElements(received, [
+          [9003, '/bla', [2, 'tutu', new Buffer('hello')]],
+          [9001, '/bla/blo', [333]],
+          [9002, '/bli', []],
+          [9002, '/neverSeenBefore', []]
+        ])
+        done()
+      })
+
+      sendToServer.send('/bla', [1, 'toitoi', new Buffer('hello')])
+      sendToServer.send('/bla/blo', [111])
+      sendToServer.send('/blu', ['feeling'])
+      sendToServer.send('/bla/blo', [222])
+      sendToServer.send('/bli')
+      sendToServer.send('/bly', [new Buffer('tyutyu')])
+      sendToServer.send('/bla', [2, 'tutu', new Buffer('hello')])
+      sendToServer.send('/bla/blo', [333])
+
+      sendToServer.send(shared.resendAddress, [9003, '/bla']) // Blobs
+      sendToServer.send(shared.resendAddress, [9001, '/bla/blo'])
+      sendToServer.send(shared.resendAddress, [9002, '/bli']) // Empty messages
+      sendToServer.send(shared.resendAddress, [9002, '/neverSeenBefore']) // Address that never received a message
+    })
+
+  })
+
   describe('message', function() {
 
     it('should transmit to osc connections subscribed to that address', function(done) {
       helpers.dummyOSCClients(6, config.clients, function(received) {
         helpers.assertSameElements(received, [
-          [9001, shared.subscribedAddress, [9001, '/bla']],
-          [9002, shared.subscribedAddress, [9002, '/']],
+          [9001, shared.subscribedAddress, ['/bla']],
+          [9002, shared.subscribedAddress, ['/']],
 
           [9001, '/bla', ['haha', 'hihi']],
           [9002, '/bla', ['haha', 'hihi']],
@@ -91,7 +121,7 @@ describe('osc', function() {
 
       helpers.dummyOSCClients(7, oscClients, function(received) {
         helpers.assertSameElements(received, [
-          [9003, shared.subscribedAddress, [9003, '/blo']],
+          [9003, shared.subscribedAddress, ['/blo']],
 
           [44444, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
           [44445, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
@@ -120,16 +150,15 @@ describe('osc', function() {
         {ip: '127.0.0.1', appPort: 44445}, // fake the blob client 2
       ]
 
-      helpers.dummyOSCClients(2, oscClients, function(received) {
+      helpers.dummyOSCClients(1, oscClients, function(received) {
         helpers.assertSameElements(received, [
-          [44444, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]],
           [44445, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
         ])
         done()
       })
 
       // Simulate request to send a blob
-      sendToServer.send(shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33])
+      sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
     })
 
   })
