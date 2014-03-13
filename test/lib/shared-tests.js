@@ -66,6 +66,7 @@ describe('shared', function() {
       assert.equal(shared.validateAddressForSend('/bla/blob/tre'), null)
       assert.equal(shared.validateAddressForSend('/blob'), null)
       assert.equal(shared.validateAddressForSend('/1/blob/'), null)
+      assert.equal(shared.validateAddressForSend('/sys/bla'), null)
     })
 
     it('should reject malformed addresses', function() {
@@ -73,8 +74,7 @@ describe('shared', function() {
       assert.ok(_.isString(shared.validateAddressForSend('bla')))
     })
 
-    it('should reject sys and broadcast addresses', function() {
-      assert.ok(_.isString(shared.validateAddressForSend('/sys/bla')))
+    it('should reject broadcast addresses', function() {
       assert.ok(_.isString(shared.validateAddressForSend('/broadcast/bla')))
     })
 

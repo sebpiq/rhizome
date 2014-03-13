@@ -75,7 +75,7 @@ describe('web-client.client', function() {
 
   })
 
-  describe('subscribe', function() {
+  describe('message', function() {
     
     beforeEach(function(done) {
       client.config.reconnect = 0
@@ -87,9 +87,10 @@ describe('web-client.client', function() {
 
     it('should receive messages from the specified address', function(done) {
       assert.equal(connections._nsTree.has('/place1'), false)
-      
-      var subscribed = function(err) {
-        if (err) throw err
+
+      var subscribed = function(address, args) {
+        assert.equal(address, shared.subscribedAddress)
+        assert.deepEqual(args, ['/place1'])
         assert.equal(connections._nsTree.has('/place1'), true)
         assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
         connections.send('/place2', [44])
@@ -99,124 +100,42 @@ describe('web-client.client', function() {
       var handler = function(address, args) {
         assert.equal(address, '/place1')
         assert.deepEqual(args, [1, 2, 3])
-        done()
+        done()        
       }
 
-      client.subscribe('/place1', handler, subscribed)
-    })
-
-    it('should work when subscribing one after the other two handlers to the same address', function(done) {
-      var subscribed1 = function() {
-        client.subscribe('/place1', function(address, args) { messageReceived([2, address, args]) }, subscribed2)
-      }
-
-      var subscribed2 = function() {
-        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
-        connections.send('/place1/bla', ['blabla', 'lolo'])
-      }
-
-      var messageReceived = helpers.waitForAnswers(2, function(received) {
-        helpers.assertSameElements(received, [
-          [1, '/place1/bla', ['blabla', 'lolo']],
-          [2, '/place1/bla', ['blabla', 'lolo']]
-        ])
-        done()
+      client.once('message', function(address, args) {
+        client.on('message', handler)
+        subscribed(address, args)
       })
-
-      client.subscribe('/place1', function(address, args) { messageReceived([1, address, args]) }, subscribed1)
-    })
-
-    it('should work when subscribing without waiting two handlers to the same address', function(done) {
-      var subscribed = helpers.waitForAnswers(2, function() {
-        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
-        connections.send('/place1/bla', [111, 222])
-      })
-
-      var messageReceived = helpers.waitForAnswers(2, function(received) {
-        helpers.assertSameElements(received, [
-          [1, '/place1/bla', [111, 222]],
-          [2, '/place1/bla', [111, 222]]
-        ])
-        done()
-      })
-
-      client.subscribe('/place1', function(address, args) { messageReceived([1, address, args]) }, subscribed)
-      client.subscribe('/place1', function(address, args) { messageReceived([2, address, args]) }, subscribed)
-    })
-
-    it('should receive all messages from subspaces', function(done) {
-      var received = []
-
-      var subscribed = function(err) {
-        if (err) throw err
-        connections.send('/a', [44])
-        connections.send('/a/b', [55])
-        connections.send('/', [66])
-        connections.send('/c', [77])
-        connections.send('/a/d', [88])
-        connections.send('/a/', [99])
-      }
-
-      var handler = function(address, args) {
-        received.push([args[0], address])
-        assert.equal(args.length, 1)
-        if (received.length === 4) {
-          helpers.assertSameElements(
-            received, 
-            [[44, '/a'], [55, '/a/b'], [88, '/a/d'], [99, '/a']]
-          )
-          done()
-        }
-      }
-
-      client.subscribe('/a', handler, subscribed)
+      client.send(shared.subscribeAddress, ['/place1'])
     })
 
     it('should receive blobs', function(done) {
-      var received = []
 
-      var subscribed = function(err) {
-        if (err) throw err
+      var subscribed = function(address, args) {
+        assert.equal(address, shared.subscribedAddress)
+        assert.deepEqual(args, ['/a'])
         connections.send('/a', [new Buffer('hahaha'), 1234, 'blabla'])
         connections.send('/a/b', [new Buffer('hello')])
         connections.send('/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')])
         connections.send('/a/', [new Buffer('huhu'), new Buffer('hyhy')])
       }
 
-      var handler = function(address, args) {
-        received.push([address, args])
-        if (received.length === 4) {
-          helpers.assertSameElements(received, [
-            ['/a', [new Buffer('hahaha'), 1234, 'blabla']],
-            ['/a/b', [new Buffer('hello')]],
-            ['/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')]],
-            ['/a', [new Buffer('huhu'), new Buffer('hyhy')]]
-          ])
-          done()
-        }
+      var handler = function(received) {
+        helpers.assertSameElements(received, [
+          ['/a', [new Buffer('hahaha'), 1234, 'blabla']],
+          ['/a/b', [new Buffer('hello')]],
+          ['/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')]],
+          ['/a', [new Buffer('huhu'), new Buffer('hyhy')]]
+        ])
+        done()
       }
 
-      client.subscribe('/a', handler, subscribed)
-    })
-
-    it('should throw an error if the address is not valid', function(done) {
-      handler = function() {}
-      client.start(function(err) {
-        if (err) throw err
-        assert.throws(function() { client.subscribe('bla', handler) })
-        assert.throws(function() { client.subscribe('/sys', handler) })
-        assert.throws(function() { client.subscribe('/sys/takeIt/', handler) })
-        done()
+      client.once('message', function(address, args) {
+        client.on('message', helpers.waitForAnswers(4, handler))
+        subscribed(address, args)
       })
-    })
-
-    it('should throw an error if the client isn\'t started', function(done) {
-      handler = function() {}
-      client.stop(function(err) {
-        if (err) throw err
-        assert.throws(function() { client.subscribe('/bla', handler) })
-        done()
-      })
+      client.send(shared.subscribeAddress, ['/a'])
     })
 
   })
@@ -293,7 +212,6 @@ describe('web-client.client', function() {
 
     it('should throw an error if the address is not valid', function() {
       assert.throws(function() { client.send('bla', [12]) })
-      assert.throws(function() { client.send('/sys/', ['mna']) })
       assert.throws(function() { client.send('/broadcast/', [123]) })
     })
 
@@ -308,28 +226,18 @@ describe('web-client.client', function() {
 
     var received = []
 
-    before(function() {
+    beforeEach(function(done) {
       client.on('connection lost', function() { received.push('connection lost') })
       client.on('reconnected', function() { received.push('reconnected') })
-    })
-
-    beforeEach(function(done) {
       received = []
       client.config.reconnect = 1 // Just so that reconnect is not null and therefore it is handled
       async.series([
         function(next) { wsServer.start(config, next) },
-        function(next) { client.start(next) },
-        function(next) { client.subscribe('/someAddr', function() {}, next) }
+        function(next) { client.start(next) }
       ], done)
     })
 
-    after(function() {
-      client.removeAllListeners('connection lost')
-      client.removeAllListeners('reconnected')
-    })
-
     var assertConnected = function() {
-      assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 1)
       assert.ok(_.isNumber(client.userId))
       assert.equal(client.status(), 'started')
     }
@@ -361,7 +269,7 @@ describe('web-client.client', function() {
       })
     })
 
-    it('should work as well when retrying several times', function(done) {
+    it('should work as well when reconnecting several times', function(done) {
       client.config.reconnect = 30
       assertConnected()
       async.series([

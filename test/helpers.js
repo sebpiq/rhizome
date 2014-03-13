@@ -50,7 +50,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
     var server = new utils.OSCServer(client.appPort)
     server.start(function(err) { if (err) throw err })
     server.on('message', function(address, args) {
-      answerReceived([client.appPort, address, args])
+      answerReceived(client.appPort, address, args)
     })
     return server
   })
@@ -62,15 +62,15 @@ exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) 
   var answerReceived = waitForAnswers(expectedMsgCount, handler)
   return _.range(connectionCount).map(function(i) {
     return {send: function(address, args) {
-      answerReceived([i, address, args])
+      answerReceived(i, address, args)
     }}
   })
 }
 
 var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
   var received = []
-  return function (elem) {
-    received.push(elem)
+  return function () {
+    received.push(_.toArray(arguments))
     if (received.length >= expectedCount) done(received)
   }
 }
@@ -82,6 +82,7 @@ exports.afterEach = function(done) {
   _dummyOSCClients.forEach(function(server) { server.close() })
   _dummyOSCClients = []
   connections.removeAll()
+  webClient.removeAllListeners()
   async.series([ webClient.stop, wsServer.stop, oscServer.stop, blobClient.stop ], done)
 }
 

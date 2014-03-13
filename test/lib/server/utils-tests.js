@@ -139,7 +139,7 @@ describe('utils', function() {
           ])
           server.stop(done)
         })
-        server.on('message', function(address, args) { messageHandler([address, args]) })
+        server.on('message', function(address, args) { messageHandler(address, args) })
 
         server.start(function(err) {
           if (err) throw err
@@ -157,7 +157,7 @@ describe('utils', function() {
           server.start.bind(server),
           function(next) {
             var _messageHandler = helpers.waitForAnswers(2, function(received) { next(null, received) })
-            messageHandler = function(address, args) { _messageHandler([1, address, args]) }
+            messageHandler = function(address, args) { _messageHandler(1, address, args) }
             server.on('message', messageHandler)
             client.send('/blabla', [1, 2, 3])
             client.send('/hello/helli', [])
@@ -169,7 +169,7 @@ describe('utils', function() {
           function(next) {
             server.removeListener('message', messageHandler)
             _messageHandler = helpers.waitForAnswers(1, function(received) { next(null, received) })
-            messageHandler = function(address, args) { _messageHandler([2, address, args]) }
+            messageHandler = function(address, args) { _messageHandler(2, address, args) }
             server.on('message', messageHandler)
             client.send('/bloblo', ['hello'])
           }
