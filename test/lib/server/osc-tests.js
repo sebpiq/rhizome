@@ -29,57 +29,6 @@ describe('osc', function() {
   beforeEach(function(done) { oscServer.start(config, done) })
   afterEach(function(done) { helpers.afterEach(done) })
 
-  describe('subscribe', function() {
-
-    it('should subscribe the osc connection to the given address', function(done) {
-      helpers.dummyOSCClients(3, config.clients, function(received) {
-        helpers.assertSameElements(received, [
-          [9001, shared.subscribedAddress, ['/bla']],
-          [9002, shared.subscribedAddress, ['/bla/']],
-          [9002, shared.subscribedAddress, ['/']]
-        ])
-        assert.equal(connections._nsTree.get('/bla').data.connections.length, 2)
-        assert.equal(connections._nsTree.get('/').data.connections.length, 1)
-        done()
-      })
-
-      sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
-      sendToServer.send(shared.subscribeAddress, [9002, '/bla/'])
-      sendToServer.send(shared.subscribeAddress, [9002, '/'])
-    })
-
-  })
-
-  describe('resend', function() {
-
-    it('should resend the last messages sent at that address', function(done) {
-      helpers.dummyOSCClients(4, config.clients, function(received) {
-        helpers.assertSameElements(received, [
-          [9003, '/bla', [2, 'tutu', new Buffer('hello')]],
-          [9001, '/bla/blo', [333]],
-          [9002, '/bli', []],
-          [9002, '/neverSeenBefore', []]
-        ])
-        done()
-      })
-
-      sendToServer.send('/bla', [1, 'toitoi', new Buffer('hello')])
-      sendToServer.send('/bla/blo', [111])
-      sendToServer.send('/blu', ['feeling'])
-      sendToServer.send('/bla/blo', [222])
-      sendToServer.send('/bli')
-      sendToServer.send('/bly', [new Buffer('tyutyu')])
-      sendToServer.send('/bla', [2, 'tutu', new Buffer('hello')])
-      sendToServer.send('/bla/blo', [333])
-
-      sendToServer.send(shared.resendAddress, [9003, '/bla']) // Blobs
-      sendToServer.send(shared.resendAddress, [9001, '/bla/blo'])
-      sendToServer.send(shared.resendAddress, [9002, '/bli']) // Empty messages
-      sendToServer.send(shared.resendAddress, [9002, '/neverSeenBefore']) // Address that never received a message
-    })
-
-  })
-
   describe('send', function() {
 
     it('should transmit to osc connections subscribed to that address', function(done) {

@@ -3,6 +3,7 @@ var fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
   , utils = require('../../../lib/server/utils')
+  , shared = require('../../../lib/shared')
   , helpers = require('../../helpers')
 
 describe('utils', function() {
@@ -204,5 +205,102 @@ describe('utils', function() {
     })
 
   })
-  
+
+  describe('NsTree', function() {
+
+    describe('has', function() {
+
+      it('should work correctly', function() {
+        var nsTree = utils.createNsTree()
+        nsTree._root = {children: {
+          '': {address: '/', children: {
+            'bla': {address: '/bla', children: {
+              'blo': {address: '/bla/blo', children: {
+                'bli': {address: '/bla/blo/bli', children: {}}
+              }},
+              'bly': {address: '/bla/bly', children: {}}
+            }},
+            'blu': {address: '/blu', children: {}}
+          }}
+        }}
+
+        assert.ok(nsTree.has('/'))
+        assert.ok(nsTree.has('/bla'))
+        assert.ok(nsTree.has('/bla/bly'))
+        assert.ok(nsTree.has('/bla/blo'))
+        assert.ok(nsTree.has('/bla/blo/bli'))
+        assert.ok(nsTree.has('/blu'))
+      })
+    })
+
+    describe('get', function() {
+
+      it('should create the namespace dynamically', function() {
+        var nsTree = utils.createNsTree()
+
+        assert.ok(!nsTree.has('/'))
+        assert.ok(!nsTree.has('/bla'))
+        assert.deepEqual(nsTree.get('/bla'), { address: '/bla', connections: [], lastMessage: null, children: {} })
+        assert.ok(nsTree.has('/'))
+        assert.ok(nsTree.has('/bla'))
+
+        assert.ok(!nsTree.has('/bla/blo/bli'))
+        assert.ok(!nsTree.has('/bla/blo'))
+        assert.deepEqual(nsTree.get('/bla/blo/bli'), { address: '/bla/blo/bli', connections: [], lastMessage: null, children: {} })
+        assert.ok(nsTree.has('/bla/blo/bli'))
+        assert.ok(nsTree.has('/bla/blo'))
+      })
+
+      it('should work also for the root', function() {
+        var nsTree = utils.createNsTree()
+
+        assert.ok(!nsTree.has('/'))
+        assert.deepEqual(nsTree.get('/'), { address: '/', connections: [], lastMessage: null, children: {} })
+        assert.ok(nsTree.has('/'))
+
+        assert.deepEqual(nsTree._root.children, {'': { address: '/', connections: [], lastMessage: null, children: {} }})
+      })
+
+      it('shouldn\'t make a difference whether there is trailing slash or not', function() {
+        var nsTree = utils.createNsTree()
+        assert.equal(nsTree.get('/bla'), nsTree.get('/bla/'))
+      })
+
+    })
+
+  })
+
+  describe('NsNode', function() {
+
+    describe('forEach', function() {
+
+      it('should iterate over all namespaces no matter depth', function() {
+        var nsTree = utils.createNsTree()
+          , allData = []
+          , iter = function(ns) { allData.push(ns.address) }
+
+        var testIter = function(root, expected) {
+          nsTree.get(root).forEach(iter)
+          assert.deepEqual(allData, expected)
+          allData = []
+        }
+
+        testIter('/', ['/'])
+        testIter('/a', ['/a'])
+        testIter('/', ['/', '/a'])
+
+        nsTree.get('/a/b')
+        nsTree.get('/a/c')
+        testIter('/a', ['/a', '/a/b', '/a/c'])
+
+        nsTree.get('/a/c/d')
+        nsTree.get('/a/c/e')
+        nsTree.get('/f')
+        testIter('/', ['/', '/a', '/a/b', '/a/c', '/a/c/d', '/a/c/e', '/f'])
+      })
+
+    })
+
+  })
+
 })

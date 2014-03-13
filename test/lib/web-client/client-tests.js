@@ -17,10 +17,8 @@ var config = {
   rootUrl: '/',
   usersLimit: 40,
   blobsDirName: '/tmp',
-
   clients: []
 }
-
 
 describe('web-client.client', function() {
 
@@ -73,6 +71,19 @@ describe('web-client.client', function() {
       })
     })
 
+    it('should reject connection when server is full', function(done) {
+      assert.equal(wsServer.sockets().length, 0)
+      helpers.dummyWebClients(config.webPort, 1, function(err, sockets) {
+        if (err) throw err
+        assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
+        client.start(function(err) {
+          assert.ok(err)
+          assert.equal(client.userId, null)
+          done()
+        })
+      })
+    })
+
   })
 
   describe('message', function() {
@@ -92,7 +103,7 @@ describe('web-client.client', function() {
         assert.equal(address, shared.subscribedAddress)
         assert.deepEqual(args, ['/place1'])
         assert.equal(connections._nsTree.has('/place1'), true)
-        assert.equal(connections._nsTree.get('/place1').data.connections.length, 1)
+        assert.equal(connections._nsTree.get('/place1').connections.length, 1)
         connections.send('/place2', [44])
         connections.send('/place1', [1, 2, 3])
       }

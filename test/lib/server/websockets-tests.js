@@ -80,8 +80,8 @@ describe('websockets', function() {
         function(sockets, next) {
           connections.subscribe(wsServer.sockets()[0].rhizome, '/someAddr')
           connections.subscribe(wsServer.sockets()[1].rhizome, '/someOtherAddr')
-          assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 1)
-          assert.equal(connections._nsTree.get('/someOtherAddr').data.connections.length, 1)
+          assert.equal(connections._nsTree.get('/someAddr').connections.length, 1)
+          assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
           assert.equal(wsServer.sockets().length, 3)
           sockets[0].close()
           sockets[0].on('close', function() { next() })
@@ -89,8 +89,8 @@ describe('websockets', function() {
       ], function(err) {
         if (err) throw err
         assert.equal(wsServer.sockets().length, 2)
-        assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 0)
-        assert.equal(connections._nsTree.get('/someOtherAddr').data.connections.length, 1)
+        assert.equal(connections._nsTree.get('/someAddr').connections.length, 0)
+        assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
         done()
       })
     })
