@@ -29,12 +29,6 @@ describe('connections', function() {
       ])
     })
 
-    it('should return an error message if args are invalid', function() {
-      assert.ok(_.isString(connections.send('/bla/bli', {})))
-      assert.ok(_.isString(connections.send('/bla/bli', [1, null])))
-      assert.ok(_.isString(connections.send('/bla/bli')))
-    })
-
   })
 
   describe('subscribe', function() {
