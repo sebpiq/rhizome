@@ -62,8 +62,8 @@ describe('websockets', function() {
         ])
         done()
       })
-      connections.subscribe(shared.connectionOpenAddress, dummyConnections[0])
-      connections.subscribe(shared.connectionOpenAddress, dummyConnections[2])
+      connections.subscribe(dummyConnections[0], shared.connectionOpenAddress)
+      connections.subscribe(dummyConnections[2], shared.connectionOpenAddress)
 
       // Create dummy web clients, so that new connections are open
       helpers.dummyWebClients(config.webPort, 3)
@@ -78,8 +78,8 @@ describe('websockets', function() {
       async.waterfall([
         function(next) { helpers.dummyWebClients(config.webPort, 3, next) },
         function(sockets, next) {
-          connections.subscribe('/someAddr', wsServer.sockets()[0].rhizome)
-          connections.subscribe('/someOtherAddr', wsServer.sockets()[1].rhizome)
+          connections.subscribe(wsServer.sockets()[0].rhizome, '/someAddr')
+          connections.subscribe(wsServer.sockets()[1].rhizome, '/someOtherAddr')
           assert.equal(connections._nsTree.get('/someAddr').data.connections.length, 1)
           assert.equal(connections._nsTree.get('/someOtherAddr').data.connections.length, 1)
           assert.equal(wsServer.sockets().length, 3)
@@ -113,8 +113,8 @@ describe('websockets', function() {
         ])
         done()
       })
-      connections.subscribe(shared.connectionCloseAddress, dummyConnections[0])
-      connections.subscribe(shared.connectionCloseAddress, dummyConnections[2])
+      connections.subscribe(dummyConnections[0], shared.connectionCloseAddress)
+      connections.subscribe(dummyConnections[2], shared.connectionCloseAddress)
 
     })
 

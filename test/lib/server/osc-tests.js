@@ -80,7 +80,7 @@ describe('osc', function() {
 
   })
 
-  describe('message', function() {
+  describe('send', function() {
 
     it('should transmit to osc connections subscribed to that address', function(done) {
       helpers.dummyOSCClients(6, config.clients, function(received) {
@@ -104,7 +104,7 @@ describe('osc', function() {
 
       // Adding other dummy clients (simulate websockets)
       var dummyConn = { send: function(address, args) { this.received.push([address, args]) }, received: [] }
-      connections.subscribe('/blo', dummyConn)
+      connections.subscribe(dummyConn, '/blo')
 
       // Sending messages
       sendToServer.send('/bla', ['haha', 'hihi'])
@@ -159,6 +159,28 @@ describe('osc', function() {
 
       // Simulate request to send a blob
       sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
+    })
+
+    it('should return an error if sending to an invalid address', function(done) {
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001},
+        {ip: '127.0.0.1', appPort: 9002}
+      ]
+
+      helpers.dummyOSCClients(2, oscClients, function(received) {
+        received.forEach(function(r) {
+          var args = _.last(r)
+          assert.ok(_.isString(args[0]))
+          args.pop()
+        })
+        helpers.assertSameElements(received, [
+          [9001, shared.errorAddress, []],
+          [9002, shared.errorAddress, []]
+        ])
+        done()
+      })
+
+      sendToServer.send('/broadcast/bla', [11, 22, 33])
     })
 
   })

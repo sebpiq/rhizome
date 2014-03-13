@@ -1,42 +1,48 @@
 var assert = require('assert')
   , _ = require('underscore')
   , connections = require('../../../lib/server/connections')
+  , helpers = require('../../helpers')
 
 describe('connections', function() {
 
   describe('send', function() {
 
-    it.skip('should send messages from subspaces', function(done) {
+    it('should send messages from subspaces', function() {
       var received = []
+      var connection = new helpers.DummyConnection(function(address, args) {
+        received.push([address, args])
+      })
 
-      var subscribed = function(err) {
-        if (err) throw err
-        connections.send('/a', [44])
-        connections.send('/a/b', [55])
-        connections.send('/', [66])
-        connections.send('/c', [77])
-        connections.send('/a/d', [88])
-        connections.send('/a/', [99])
-      }
+      connections.subscribe(connection, '/a')
+      assert.equal(connections.send('/a', [44]), null)
+      assert.equal(connections.send('/a/b', [55]), null)
+      assert.equal(connections.send('/', [66]), null)
+      assert.equal(connections.send('/c', [77]), null)
+      assert.equal(connections.send('/a/d', [88]), null)
+      assert.equal(connections.send('/a/', [99]), null)
 
-      var handler = function(address, args) {
-        received.push([args[0], address])
-        assert.equal(args.length, 1)
-        if (received.length === 4) {
-          helpers.assertSameElements(
-            received, 
-            [[44, '/a'], [55, '/a/b'], [88, '/a/d'], [99, '/a']]
-          )
-          done()
-        }
-      }
-
-      client.subscribe('/a', handler, subscribed)
+      helpers.assertSameElements(received, [
+        ['/a', [44]],
+        ['/a/b', [55]],
+        ['/a/d', [88]],
+        ['/a', [99]]
+      ])
     })
 
-    it.skip('should throw an error if args are invalid', function() {
-      assert.throws(function() { connections.send('/bla/bli', {}) })
-      assert.throws(function() { connections.send('/bla/bli', [1, null]) })
+    it('should return an error message if args are invalid', function() {
+      assert.ok(_.isString(connections.send('/bla/bli', {})))
+      assert.ok(_.isString(connections.send('/bla/bli', [1, null])))
+      assert.ok(_.isString(connections.send('/bla/bli')))
+    })
+
+  })
+
+  describe('subscribe', function() {
+
+    it('should return an error message if address in not valid', function() {
+      assert.ok(_.isString(connections.subscribe({}, '')))
+      assert.ok(_.isString(connections.subscribe({}, 'bla')))
+      assert.ok(_.isString(connections.subscribe({}, '/sys/bla')))
     })
 
   })

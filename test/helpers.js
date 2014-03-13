@@ -7,6 +7,7 @@ var assert = require('assert')
   , webClient = require('../lib/web-client/client')
   , blobClient = require('../lib/blob-client/client')
   , connections = require('../lib/server/connections')
+  , Connection = require('../lib/server/Connection')
   , utils = require('../lib/server/utils')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
@@ -19,7 +20,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
   })
 }
 
-// Helper to create dummy connections from other clients
+// Helper to create dummy web clients
 exports.dummyWebClients = function(port, count, done) {
   var countBefore = wsServer.sockets().length
   async.series(_.range(count).map(function(i) {
@@ -35,6 +36,7 @@ exports.dummyWebClients = function(port, count, done) {
 }
 var _dummyWebClients = []
 
+// Helper to create dummy osc clients
 exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   var answerReceived = waitForAnswers(expectedMsgCount, function() {
     var _arguments = arguments
@@ -58,15 +60,23 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
 }
 var _dummyOSCClients = []
 
+// Helpers to create dummy server-side connections
+var DummyConnection = exports.DummyConnection = function(callback) {
+  this.callback = callback
+  Connection.apply(this)
+}
+_.extend(DummyConnection.prototype, Connection.prototype, {
+  send: function(address, args) { this.callback(address, args) }
+})
+
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
   var answerReceived = waitForAnswers(expectedMsgCount, handler)
   return _.range(connectionCount).map(function(i) {
-    return {send: function(address, args) {
-      answerReceived(i, address, args)
-    }}
+    return new DummyConnection(answerReceived.bind(this, i))
   })
 }
 
+// Helper for asynchronous tests, waiting for `expectedCount` answers and then calling `done`
 var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
   var received = []
   return function () {

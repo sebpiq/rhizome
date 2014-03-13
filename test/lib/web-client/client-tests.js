@@ -166,8 +166,8 @@ describe('web-client.client', function() {
       })
 
       // Subscribing them to receive what's sent by our client
-      connections.subscribe('/', dummyConns[0])
-      connections.subscribe('/bla', dummyConns[1])
+      connections.subscribe(dummyConns[0], '/')
+      connections.subscribe(dummyConns[1], '/bla')
 
       // Sending messages
       client.send('/bla', [1, 2, 3])
@@ -190,9 +190,9 @@ describe('web-client.client', function() {
       })
 
       // Subscribing them to receive what's sent by our client
-      connections.subscribe('/bla/blob', dummyConns[0])
-      connections.subscribe('/blu/blob', dummyConns[0])
-      connections.subscribe('/', dummyConns[1])
+      connections.subscribe(dummyConns[0], '/bla/blob')
+      connections.subscribe(dummyConns[0], '/blu/blob')
+      connections.subscribe(dummyConns[1], '/')
 
       // Sending messages containing blobs
       client.send('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
@@ -206,7 +206,7 @@ describe('web-client.client', function() {
         helpers.assertSameElements(received, [[0, '/bla', []]])
         done()
       })
-      connections.subscribe('/bla', dummyConns[0])
+      connections.subscribe(dummyConns[0], '/bla')
       client.send('/bla/')
     })
 

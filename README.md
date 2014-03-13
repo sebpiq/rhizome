@@ -87,6 +87,17 @@ The following messages are used for communication between one connection and the
 
 ### Web client
 
+#### Event: 'message'
+
+This is the event you need to listen in order to receive messages. For example :
+
+```javascript
+rhizome.on('message', function(address, args) {
+  if (address === '/background/color') setBgColor(args[0])
+})
+```
+
+
 #### Event: 'connection lost'
 
 Emitted when the connection to the server has been lost. You can use this e.g. to deactivate the user interface if the device is not connected anymore :
