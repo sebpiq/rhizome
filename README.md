@@ -111,7 +111,7 @@ rhizome.on('reconnected', function() {
 ```
 
 
-#### rhizome.start(done)
+#### rhizome.start([config, ] done)
 
 Starts the client, and executes `done(err)` when complete. If the client started successfully, `err` is `null`, and `rhizome.userId` is set with the user id. Example :
 

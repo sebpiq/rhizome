@@ -37,7 +37,7 @@ describe('web-client.client', function() {
     
     beforeEach(function(done) {
       config.usersLimit = 1
-      client.config.reconnect = 0
+      client.config.reconnect(0)
       wsServer.start(config, done)
     })
     afterEach(function() {
@@ -78,7 +78,7 @@ describe('web-client.client', function() {
   describe('message', function() {
     
     beforeEach(function(done) {
-      client.config.reconnect = 0
+      client.config.reconnect(0)
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(done) }
@@ -147,7 +147,7 @@ describe('web-client.client', function() {
         { ip: '127.0.0.1', appPort: 9005, blobClientPort: 44444 },
         { ip: '127.0.0.1', appPort: 9010, blobClientPort: 44445 }
       ]
-      client.config.reconnect = 0
+      client.config.reconnect(0)
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(done) }
@@ -230,7 +230,6 @@ describe('web-client.client', function() {
       client.on('connection lost', function() { received.push('connection lost') })
       client.on('reconnected', function() { received.push('reconnected') })
       received = []
-      client.config.reconnect = 1 // Just so that reconnect is not null and therefore it is handled
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(next) }
@@ -247,30 +246,27 @@ describe('web-client.client', function() {
     }
 
     it('should reconnect', function(done) {
-      client.config.reconnect = 50
+      client.config.reconnect(50)
       assertConnected()
       async.series([
         function(next) {
+          client.once('connection lost', next)
           wsServer.sockets()[0].rhizome.close()
-          setTimeout(next, 20)
         },
         function(next) {
           assertDisconnected()
-          setTimeout(next, 100)
-        },
-        function(next) {
-          assertConnected()
-          next()
+          client.once('reconnected', next)
         }
       ], function(err) {
         if (err) throw err
+        assertConnected()
         assert.deepEqual(received, ['connection lost', 'reconnected'])
         done()
       })
     })
 
     it('should work as well when reconnecting several times', function(done) {
-      client.config.reconnect = 30
+      client.config.reconnect(30)
       assertConnected()
       async.series([
         function(next) {
@@ -282,7 +278,7 @@ describe('web-client.client', function() {
           assertDisconnected()
           wsServer.start(config, next)
         },
-        function(next) { setTimeout(next, 80) }, // wait for reconnection to happen
+        function(next) { client.once('reconnected', next) },
         function(next) {
           assertConnected()
           wsServer.stop() // do it again
@@ -293,7 +289,7 @@ describe('web-client.client', function() {
           assertDisconnected()
           wsServer.start(config, next)
         },
-        function(next) { setTimeout(next, 80) }, // wait for reconnection to happen
+        function(next) { client.once('reconnected', next) }, // wait for reconnection to happen
         function(next) {
           assertConnected()
           next()
