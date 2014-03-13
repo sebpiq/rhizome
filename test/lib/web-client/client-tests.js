@@ -42,45 +42,87 @@ describe('web-client.client', function() {
       config.usersLimit = 10
     })
 
-    it('should open a socket connection to the server', function(done) {
+    var assertConnected = function() {
+      assert.equal(client.status(), 'started')
+      assert.equal(wsServer.sockets().filter(function(s) {
+        return s.upgradeReq.url !== '/?dummies'
+      }).length, 1)
+      assert.equal(client.userId, 0)
+    }
+
+    var assertDisconnected = function() {
       assert.equal(client.status(), 'stopped')
       assert.equal(client.userId, null)
-      assert.equal(wsServer.sockets().length, 0)
+    }
+
+    it('should open a socket connection to the server', function(done) {
+      var received
+      client.on('connected', function() { received = 'connected' })
+      assertDisconnected()
+
       client.start(function(err) {
         if (err) throw err
-        assert.equal(client.status(), 'started')
-        assert.equal(wsServer.sockets().length, 1)
-        assert.equal(client.userId, 0)
+        assertConnected()
+        assert.equal(received, 'connected')
         done()
       })
     })
 
     it('should return an error if the server is not responding', function(done) {
-      assert.equal(client.status(), 'stopped')
-      assert.equal(wsServer.sockets().length, 0)
-      assert.equal(client.userId, null)
+      assertDisconnected()
       async.series([
         function(next) { wsServer.stop(next) },
         function(next) { setTimeout(next, 50) },
         function(next) { client.start(next) }
       ], function(err) {
         assert.ok(err)
-        assert.equal(client.status(), 'stopped')
-        assert.equal(client.userId, null)
+        assertDisconnected()
         done()
       })
     })
 
-    it('should reject connection when server is full', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+    it('should reject connection when server is full and queue is false', function(done) {
+      var received
+      client.on('server full', function() { received = 'server full' })
+      client.config.queueIfFull(false)
+      assertDisconnected()
+
       helpers.dummyWebClients(config.webPort, 1, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
+
         client.start(function(err) {
           assert.ok(err)
-          assert.equal(client.userId, null)
+          assert.equal(received, 'server full')
           done()
         })
+
+      })
+    })
+
+    it('should put the client on queue when server is full and queue is true', function(done) {
+      client.config.queueIfFull(true)
+      assertDisconnected()
+
+      async.waterfall([
+
+        helpers.dummyWebClients.bind(this, config.webPort, 1),
+
+        function(sockets, next) {
+          client.start()
+          client.once('server full', function(err) { next(err, sockets) })
+        },
+
+        function(sockets, next) {
+          assertDisconnected()
+          sockets[0].close()
+          client.once('connected', next)
+        }
+
+      ], function(err) {
+        if (err) throw err
+        assertConnected()
+        done()
       })
     })
 
@@ -241,10 +283,15 @@ describe('web-client.client', function() {
       client.on('connection lost', function() { received.push('connection lost') })
       client.on('reconnected', function() { received.push('reconnected') })
       received = []
+      config.usersLimit = 2
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(next) }
       ], done)
+    })
+
+    afterEach(function() {
+      config.usersLimit = 10
     })
 
     var assertConnected = function() {
@@ -308,6 +355,56 @@ describe('web-client.client', function() {
       ], function(err) {
         if (err) throw err
         assert.deepEqual(received, ['connection lost', 'reconnected', 'connection lost', 'reconnected']) 
+        done()
+      })
+    })
+
+    it('should work fine if the server is full when trying to reconnect', function(done) {
+      var dummySockets
+      client.config.reconnect(100)
+      assertConnected()
+      async.series([
+        function(next) {
+          wsServer.sockets()[0].rhizome.close()
+          setTimeout(next, 10)
+        },
+        function(next) {
+          helpers.dummyWebClients(config.webPort, 2, function(err, sockets) {
+            dummySockets = sockets
+            next()
+          })
+        },
+        function(next) {
+          assertDisconnected()
+          client.once('server full', next)
+        },
+        function(next) {
+          dummySockets[0].close()
+          client.once('reconnected', next)
+        },
+        function(next) {
+          assertConnected()
+          wsServer.stop() // do it again
+          setTimeout(next, 150)
+        },
+        function(next) {
+          wsServer.start(config, next)
+          assertDisconnected()
+          helpers.dummyWebClients(config.webPort, 2, function(err, sockets) {
+            dummySockets = sockets
+            next()
+          })
+        },
+        function(next) {
+          client.once('server full', next)
+        },
+        function(next) {
+          dummySockets[0].close()
+          client.once('reconnected', next)
+        }
+      ], function(err) {
+        if (err) throw err
+        assertConnected()
         done()
       })
     })

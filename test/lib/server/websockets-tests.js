@@ -29,20 +29,28 @@ describe('websockets', function() {
 
     it('should reject connection when full', function(done) {
       assert.equal(wsServer.sockets().length, 0)
-      helpers.dummyWebClients(config.webPort, 6, function(err, sockets) {
+
+      async.waterfall([
+
+        function(next) {
+          helpers.dummyWebClients(config.webPort, 6, function(err, sockets) {
+            if (err) return next(err)
+            assert.deepEqual(
+              _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
+              _.range(5).map(function() { return WebSocket.OPEN })
+            )
+            _.last(sockets).on('message', function(msg) { next(null, msg) })
+          })
+        }
+
+      ], function(err, msg) {
         if (err) throw err
-        assert.deepEqual(
-          _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
-          _.range(5).map(function() { return WebSocket.OPEN })
-        )
+        msg = JSON.parse(msg)
+        assert.ok(msg.error)
+        delete msg.error
+        assert.deepEqual(msg, {command: 'connect', status: 1})
         assert.equal(_.last(wsServer.sockets()).readyState, WebSocket.CLOSING)
-        _.last(sockets).on('message', function(msg) {
-          msg = JSON.parse(msg)
-          assert.ok(msg.error)
-          delete msg.error
-          assert.deepEqual(msg, {command: 'connect', status: 1})
-          done()
-        })
+        done()
       })
     })
 

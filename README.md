@@ -87,6 +87,11 @@ The following messages are used for communication between one connection and the
 
 ### Web client
 
+#### Event: 'connected'
+
+This event is sent when the client successfully connected with the server.
+
+
 #### Event: 'message'
 
 This is the event you need to listen in order to receive messages. For example :
@@ -94,6 +99,23 @@ This is the event you need to listen in order to receive messages. For example :
 ```javascript
 rhizome.on('message', function(address, args) {
   if (address === '/background/color') setBgColor(args[0])
+})
+```
+
+
+#### Event: 'server full'
+
+This event is sent when connection fails because the server is full.
+
+```javascript
+rhizome.start()
+
+rhizome.on('server full', function() {
+  showMessage('Waiting for an available space')
+})
+
+rhizome.on('connected', function() {
+  hideMessage()
 })
 ```
 

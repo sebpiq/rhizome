@@ -93,7 +93,7 @@ exports.afterEach = function(done) {
   _dummyOSCClients = []
   connections.removeAll()
   webClient.removeAllListeners()
-  async.series([ webClient.stop, wsServer.stop, oscServer.stop, blobClient.stop ], done)
+  async.series([ wsServer.stop, webClient.stop, oscServer.stop, blobClient.stop ], done)
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)
