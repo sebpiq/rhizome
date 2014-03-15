@@ -14,7 +14,7 @@ describe('rhizome-blobs validate-config', function() {
       blobsDirName: '/tmp',
       server: {
         ip: '10.10.10.189',
-        oscPort: 8888
+        blobsPort: 8888
       }
     }
     validate(config, function(err, finalConfig, validationErrors) {
@@ -37,7 +37,7 @@ describe('rhizome-blobs validate-config', function() {
       blobsPort: 44444,
       server: {
         ip: '127.0.0.1',
-        oscPort: 9000
+        blobsPort: 44445
       }
     }
     validate(config, function(err, finalConfig, validationErrors) {
@@ -56,14 +56,14 @@ describe('rhizome-blobs validate-config', function() {
       blobsDirName: '/probablydoesnotexist/veryprobably/',
       server: {
         ip: 'blabla',
-        oscPort: 'bloblo'
+        blobsPort: 'bloblo'
       }
     }
     validate(config, function(err, finalConfig, validationErrors) {
       if (err) throw err
       assert.deepEqual(Object.keys(validationErrors).sort(), [
         'config.appPort', 'config.blobsPort', 'config.blobsDirName',
-        'config.server.ip', 'config.server.oscPort'
+        'config.server.ip', 'config.server.blobsPort'
       ].sort())
       done()
     })
@@ -85,27 +85,4 @@ describe('rhizome-blobs validate-config', function() {
   })
 
 })
-
-var defaultConfig = {
-
-  // Port on which the application (Pd, Processing...) receives OSC messages.
-  appPort: 9001,
-
-  // Port on which the blob client receives OSC messages.
-  blobsPort: 44444,
-
-  // Directory where blobs are stored.
-  blobsDirName: '/tmp',
-
-  // Infos about the rhizome server
-  server: {
-    
-    // The host name or IP of the server
-    ip: '127.0.0.1',
-    
-    // The port on which the server is listening for OSC messages
-    oscPort: 9000
-  }
-
-}
 

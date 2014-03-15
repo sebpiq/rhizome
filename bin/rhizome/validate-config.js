@@ -36,6 +36,9 @@ var defaultConfig = {
   // The maximum amount of users accepted simultaneously
   usersLimit: 40,
 
+  // The port on which the server receives blobs
+  blobsPort: 44445,
+
   // The pages that the server should serve. Example :
   // [
   //    { rootUrl: '/bananas', dirName: './bananas_files' },
@@ -132,8 +135,8 @@ module.exports = function(config, done) {
   validate('config', config, validationErrors,
     {
       after: function() {
-        if (this.oscPort === this.webPort)
-          new chai.AssertionError('oscPort and webPort must be different')
+        if (_.uniq([this.oscPort, this.webPort, this.blobsPort]))
+          new chai.AssertionError('oscPort, webPort and blobsPort must be all different')
       },
       done: done
     }, 
@@ -144,6 +147,11 @@ module.exports = function(config, done) {
       },
 
       oscPort: function(val) {
+        expect(val).to.be.a('number')
+        expect(val).to.be.within(1025, 49150)
+      },
+
+      blobsPort: function(val) {
         expect(val).to.be.a('number')
         expect(val).to.be.within(1025, 49150)
       },

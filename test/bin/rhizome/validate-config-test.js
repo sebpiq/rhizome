@@ -11,6 +11,7 @@ describe('rhizome validate-config', function() {
     var config = {
       webPort: 8003,
       oscPort: 8002,
+      blobsPort: 8004,
       usersLimit: 40,
       rootUrl: '/',
       pages: [
@@ -43,6 +44,7 @@ describe('rhizome validate-config', function() {
     var expectedConfig = {
       webPort: 8000,
       oscPort: 9000,
+      blobsPort: 44445,
       usersLimit: 40,
       rootUrl: '/',
       pages: [

@@ -39,8 +39,8 @@ var defaultConfig = {
     // The host name or IP of the server
     ip: '127.0.0.1',
     
-    // The port on which the server is listening for OSC messages
-    oscPort: 9000
+    // The port on which the server is listening for blobs
+    blobsPort: 44445
   }
 
 }
@@ -78,9 +78,9 @@ module.exports = function(config, done) {
     },
 
     server: function(val) {
-      expect(val).to.contain.keys(['oscPort', 'ip'])
+      expect(val).to.contain.keys(['blobsPort', 'ip'])
       validate('config.server', val, validationErrors, {}, {
-        oscPort: function(val) {
+        blobsPort: function(val) {
           expect(val).to.be.a('number')
           expect(val).to.be.within(1025, 49150)
         },
