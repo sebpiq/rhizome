@@ -20,6 +20,8 @@
         'border-radius': mouseTraceRadius
       })
 
+      $(document).on('touchmove',function(e){ e.preventDefault() })
+
       var updateMouseTrace = function(event) {
         $('#mouseTrace').css({
           left: event.pageX - mouseTraceRadius,
@@ -29,9 +31,9 @@
 
       // `rhizome.start` is the first function that should be called. It opens the connection, and gets a user id.
       // The function inside is executed once the connection has been established properly.
-      rhizome.start(function(err) {
-        if (err) return alert(err)
+      rhizome.start()
 
+      rhizome.on('connected', function() {
         var onAddress = '/' + rhizome.userId + '/on'
           , xyAddress = '/' + rhizome.userId + '/xy'
           , offAddress = '/' + rhizome.userId + '/off'
@@ -61,11 +63,6 @@
           rhizome.send(offAddress)
           mouseDown = false
         })
-
-      })
-
-      $(document).on('touchmove',function(e){
-        e.preventDefault()
       })
 
     })

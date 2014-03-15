@@ -18,7 +18,7 @@ describe('rhizome validate-config', function() {
         {rootUrl: '/page2', dirName: '/tmp'}
       ],
       clients: [
-        {ip: '120.120.0.5', appPort: 9002, useBlobClient: true, blobClientPort: 9003},
+        {ip: '120.120.0.5', appPort: 9002, useBlobClient: true, blobsPort: 9003},
         {ip: '203.1.76.84', appPort: 9004}
       ]
     }
@@ -70,7 +70,7 @@ describe('rhizome validate-config', function() {
           usersLimit: null,
           rootUrl: 1234,
           pages: [{rootUrl: 1234, dirName: 1234}],
-          clients: [{ip: '120', appPort: 'hello', useBlobClient: 678, blobClientPort: 'bla'}]
+          clients: [{ip: '120', appPort: 'hello', useBlobClient: 678, blobsPort: 'bla'}]
         }
 
         validate(config, function(err, finalConfig, validationErrors) {
@@ -78,7 +78,7 @@ describe('rhizome validate-config', function() {
           assert.deepEqual(Object.keys(validationErrors).sort(), ([
             'config.webPort', 'config.oscPort', 'config.usersLimit', 'config.rootUrl',
             'config.pages[0].rootUrl', 'config.pages[0].dirName',
-            'config.clients[0].ip', 'config.clients[0].appPort', 'config.clients[0].useBlobClient', 'config.clients[0].blobClientPort'
+            'config.clients[0].ip', 'config.clients[0].appPort', 'config.clients[0].useBlobClient', 'config.clients[0].blobsPort'
           ]).sort())
           next(err)
         })
@@ -92,7 +92,7 @@ describe('rhizome validate-config', function() {
             {rootUrl: '/page', dirName: '/mostprobablydoesnotexist/'}
           ],
           clients: [
-            {appPort: 8000, useBlobClient: true, blobClientPort: 8000}
+            {appPort: 8000, useBlobClient: true, blobsPort: 8000}
           ]
         }
 

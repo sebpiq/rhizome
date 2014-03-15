@@ -7,5 +7,13 @@ body, html {
   font-size: 20px;
 }
 
-#drawing-options {
+#message {
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: white;
+  z-index: 1;
 }

@@ -31,7 +31,7 @@ var defaultConfig = {
   // <blobsDirName> Directory where blobs are stored.
 
   // Port on which the blob client receives OSC messages.
-  blobClientPort: 44444,
+  blobsPort: 44444,
 
   // Infos about the rhizome server
   server: {
@@ -52,8 +52,8 @@ module.exports = function(config, done) {
 
   validate('config', config, validationErrors, {
     after: function() {
-      if (this.appPort === this.blobClientPort)
-        throw new chai.AssertionError('appPort and blobClientPort should be different')
+      if (this.appPort === this.blobsPort)
+        throw new chai.AssertionError('appPort and blobsPort should be different')
     },
     done: done
   }, {
@@ -62,7 +62,7 @@ module.exports = function(config, done) {
       expect(val).to.be.within(1025, 49150)
     },
 
-    blobClientPort: function(val) {
+    blobsPort: function(val) {
       expect(val).to.be.a('number')
       expect(val).to.be.within(1025, 49150)
     },

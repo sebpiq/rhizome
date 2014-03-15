@@ -51,7 +51,7 @@ var defaultConfig = {
     //    - <ip> : the IP address of the client
     //    - <appPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
     //    - <useBlobClient> : true or false.
-    //    - <blobClientPort> : the port on which the blob client will receive OSC messages
+    //    - <blobsPort> : the port on which the blob client will receive OSC messages
 
   ]
 
@@ -99,8 +99,8 @@ module.exports = function(config, done) {
         },
 
         after: function() {
-          if (this.useBlobClient && (this.blobClientPort === this.appPort))
-            new chai.AssertionError('appPort and blobClientPort should be different')
+          if (this.useBlobClient && (this.blobsPort === this.appPort))
+            new chai.AssertionError('appPort and blobsPort should be different')
         }
       },
       {
@@ -117,12 +117,12 @@ module.exports = function(config, done) {
           expect(val).to.be.a('Boolean')
         },
 
-        blobClientPort: function(val) {
+        blobsPort: function(val) {
           if (this.useBlobClient) {
-            if (this.blobClientPort) {
+            if (this.blobsPort) {
               expect(val).to.be.a('number')
               expect(val).to.be.within(1025, 49150)
-            } else this.blobClientPort = 44444
+            } else this.blobsPort = 44444
           }
         }
       }

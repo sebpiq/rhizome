@@ -4,26 +4,27 @@ var _ = require('underscore')
   , assert = require('assert')
   , shared = require('../../../lib/shared')
   , client = require('../../../lib/blob-client/client')
-  , utils = require('../../../lib/server/utils')
+  , utils = require('../../../lib/server/core/utils')
+  , oscCore = require('../../../lib/server/core/osc-core')
   , helpers = require('../../helpers')
 
 
 var clientConfig = {
 
   appPort: 9001,
-  blobClientPort: 44444,
+  blobsPort: 44444,
   blobsDirName: '/tmp',
 
   server: {
     ip: '127.0.0.1',
-    oscPort: 9000
+    blobsPort: 44445
   }
 
 }
 
-var sendToBlobClient = new utils.OSCClient('localhost', clientConfig.blobClientPort)
-  , fakeServer = new utils.OSCServer(clientConfig.server.oscPort)
-  , sendToServer = new utils.OSCClient(clientConfig.server.ip, clientConfig.server.oscPort)
+var sendToBlobClient = new oscCore.createOSCClient('localhost', clientConfig.blobsPort, 'tcp')
+  , fakeServer = new oscCore.createOSCServer(clientConfig.server.blobsPort, 'tcp')
+  , sendToServer = new oscCore.createOSCClient(clientConfig.server.ip, clientConfig.server.blobsPort, 'tcp')
 
 
 describe('blob-client', function() {
@@ -31,8 +32,8 @@ describe('blob-client', function() {
   beforeEach(function(done) {
     async.series([
       client.start.bind(client, clientConfig), 
-      fakeServer.start.bind(fakeServer, done)
-    ])
+      fakeServer.start.bind(fakeServer)
+    ], done)
   })
 
   afterEach(function(done) {
@@ -45,6 +46,7 @@ describe('blob-client', function() {
   describe('receive blob', function() {
 
     it('should save the blob and send a message to the app client (Pd, Processing...)', function(done) {
+      var bigBuf = new Buffer(Math.pow(2, 15))
 
       helpers.dummyOSCClients(2, [clientConfig], function(received) {
         // We collect the filePaths so that we can open them and replace the filepath
@@ -65,14 +67,14 @@ describe('blob-client', function() {
             received[filePaths[i][0]][2][filePaths[i][1]] = results[i]
           })
           helpers.assertSameElements(received, [
-            [9001, '/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')]],
+            [9001, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
             [9001, '/', [56789, new Buffer('hihihi')]]
           ])
           done()
         })
       })
 
-      sendToBlobClient.send('/bla/blob', [new Buffer('blabla'), 'holle', 12345, new Buffer('bloblo')])
+      sendToBlobClient.send('/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')])
       sendToBlobClient.send('/', [56789, new Buffer('hihihi')])
     })
 
@@ -82,21 +84,18 @@ describe('blob-client', function() {
 
     it('should send a blob to the server', function(done) {
       var received = []
+        , bigBuf = new Buffer(Math.pow(2, 15))
+
       fakeServer.on('message', function(address, args) {
 
-        // The protocol for sending a blob from the app to the server goes like this :
-        //    APP                SERVER            DESKTOP-CLIENT
-        //    sendBlobAddress ->
-        //                    sendBlobAddress ->
-        //                                      <-   /some/address <blob>, <arg1>, >arg2>, ...
-        if (address === shared.sendBlobAddress)
+        if (address === shared.sendBlobAddress) {
           sendToBlobClient.send(shared.sendBlobAddress, args)
 
-        else {
+        } else {
           received.push([address, args])
           if (received.length === 3) {
             helpers.assertSameElements(received, [
-              ['/bla/bli', [new Buffer('blobbyA'), 1234, 'blabla']],
+              ['/bla/bli', [bigBuf, 1234, 'blabla']],
               ['/blo/', [new Buffer('blobbyB')]],
               ['/BLO/b/', [new Buffer('blobbyC'), 5678]]
             ])
@@ -106,7 +105,7 @@ describe('blob-client', function() {
       })
 
       async.series([
-        fs.writeFile.bind(fs, '/tmp/blob1', 'blobbyA'),
+        fs.writeFile.bind(fs, '/tmp/blob1', bigBuf),
         fs.writeFile.bind(fs, '/tmp/blob2', 'blobbyB'),
         fs.writeFile.bind(fs, '/tmp/blob3', 'blobbyC')
       ], function(err) {

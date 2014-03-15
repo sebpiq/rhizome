@@ -222,6 +222,19 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
+-0.4
+
+  - get the last message sent to an address by sending to `/sys/resend`
+
+  - Web client:
+    - subscribing now happens by sending to `/sys/subscribe`
+    - receiving a message by listening to `'message'` event
+    - events `'connected'`, `'server full'`, `'connection lost'`, `'reconnected'`
+    - added `utils.throttle` function
+    - added `isSupported` to test browser support
+
+  - Server : added different transports (TCP, UDP) for OSC.
+
 - 0.3.2
 
   - Web client:

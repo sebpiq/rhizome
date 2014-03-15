@@ -9,6 +9,7 @@
 </head>
 
 <body>
+  <div id="message"></div>
   <canvas id="c" style="border:1px solid #aaa"></canvas>
 
   <div id="drawing-options">
@@ -39,23 +40,48 @@
 
   <script src="js/freedrawing.js"></script>
   <script>
-    ;(function() {
-    var sendCanvasButton = document.getElementById('send-canvas')
-      , canvas = document.getElementById('c')
+    (function() {
+      var sendCanvasButton = document.getElementById('send-canvas')
+        , canvas = document.getElementById('c')
+        , messageDiv = document.getElementById('message')
 
-    // Start rhizome web client
-    rhizome.start(function(err) {
-      if (err) throw err
-
-      // When clicking on the "send" button, export the canvas to .jpeg with `toBlob`,
-      // and send a message containg the file to the address `/drawing`.
-      sendCanvasButton.onclick = function() {
-        canvas.toBlob(function(jpegFile) {
-          rhizome.send('/drawing', [jpegFile])
-        })
+      var showMessage = function(msg) {
+        messageDiv.style.display = 'block'
+        messageDiv.innerText = msg
+        document.body.style.overflow = 'hidden'
       }
 
-    })
+      var hideMessage = function() {
+        messageDiv.style.display = 'none'
+        document.body.style.overflow = 'auto'
+      }
+
+      rhizome.start()
+      showMessage('Connecting ...')
+
+      rhizome.on('server full', function() {
+        showMessage('The server is full, please wait ...')
+      })
+
+      rhizome.on('connected', function() {
+        hideMessage()
+        // When clicking on the "send" button, export the canvas to .jpeg with `toBlob`,
+        // and send a message containg the file to the address `/drawing`.
+        sendCanvasButton.onclick = function() {
+          canvas.toBlob(function(jpegFile) {
+            rhizome.send('/drawing', [jpegFile])
+          })
+        }
+      })
+
+      rhizome.on('connection lost', function() {
+        showMessage('Reconnecting, please wait ...')
+      })
+
+      rhizome.on('reconnected', function() {
+        hideMessage()
+      })
+
     })()
   </script>
 

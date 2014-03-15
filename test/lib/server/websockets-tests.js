@@ -5,7 +5,7 @@ var _ = require('underscore')
   , assert = require('assert')
   , wsServer = require('../../../lib/server/websockets')
   , connections = require('../../../lib/server/connections')
-  , utils = require('../../../lib/server/utils')
+  , utils = require('../../../lib/server/core/utils')
   , shared = require('../../../lib/shared')
   , helpers = require('../../helpers')
 

@@ -6,7 +6,7 @@ var _ = require('underscore')
   , connections = require('../../../lib/server/connections')
   , client = require('../../../lib/web-client/client')
   , shared = require('../../../lib/shared')
-  , utils = require('../../../lib/server/utils')
+  , utils = require('../../../lib/server/core/utils')
   , helpers = require('../../helpers')
   , WebSocket = require('ws')
 
@@ -24,6 +24,7 @@ describe('web-client.client', function() {
 
   beforeEach(function(done) {
     //client.debug = console.log
+    client.on('error', function() {}) // Just to avoid throwing
     done()
   })
   afterEach(function(done) {
@@ -197,8 +198,8 @@ describe('web-client.client', function() {
     
     beforeEach(function(done) {
       config.clients = [
-        { ip: '127.0.0.1', appPort: 9005, blobClientPort: 44444 },
-        { ip: '127.0.0.1', appPort: 9010, blobClientPort: 44445 }
+        { ip: '127.0.0.1', appPort: 9005 },
+        { ip: '127.0.0.1', appPort: 9010 }
       ]
       client.config.reconnect(0)
       async.series([

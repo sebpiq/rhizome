@@ -7,8 +7,9 @@ var assert = require('assert')
   , webClient = require('../lib/web-client/client')
   , blobClient = require('../lib/blob-client/client')
   , connections = require('../lib/server/connections')
-  , Connection = require('../lib/server/Connection')
-  , utils = require('../lib/server/utils')
+  , Connection = require('../lib/server/core/Connection')
+  , utils = require('../lib/server/core/utils')
+  , oscCore = require('../lib/server/core/osc-core')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -49,7 +50,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   })
 
   var servers = clients.map(function(client, i) {
-    var server = new utils.OSCServer(client.appPort)
+    var server = new oscCore.createOSCServer(client.appPort, client.transport || 'udp')
     server.start(function(err) { if (err) throw err })
     server.on('message', function(address, args) {
       answerReceived(client.appPort, address, args)
@@ -58,7 +59,6 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   })
   return servers
 }
-var _dummyOSCClients = []
 
 // Helpers to create dummy server-side connections
 var DummyConnection = exports.DummyConnection = function(callback) {
@@ -89,8 +89,6 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
 exports.afterEach = function(done) {
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
-  _dummyOSCClients.forEach(function(server) { server.close() })
-  _dummyOSCClients = []
   connections.removeAll()
   webClient.removeAllListeners()
   async.series([ wsServer.stop, webClient.stop, oscServer.stop, blobClient.stop ], done)

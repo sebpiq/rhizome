@@ -10,7 +10,7 @@ describe('rhizome-blobs validate-config', function() {
   it('should accept valid configs', function(done) {
     var config = {
       appPort: 20011,
-      blobClientPort: 33333,
+      blobsPort: 33333,
       blobsDirName: '/tmp',
       server: {
         ip: '10.10.10.189',
@@ -34,7 +34,7 @@ describe('rhizome-blobs validate-config', function() {
     var expectedConfig = {
       appPort: 20011,
       blobsDirName: '/tmp',
-      blobClientPort: 44444,
+      blobsPort: 44444,
       server: {
         ip: '127.0.0.1',
         oscPort: 9000
@@ -52,7 +52,7 @@ describe('rhizome-blobs validate-config', function() {
   it('should reject config with invalid values', function(done) {
     var config = {
       appPort: 108,
-      blobClientPort: 106,
+      blobsPort: 106,
       blobsDirName: '/probablydoesnotexist/veryprobably/',
       server: {
         ip: 'blabla',
@@ -62,17 +62,17 @@ describe('rhizome-blobs validate-config', function() {
     validate(config, function(err, finalConfig, validationErrors) {
       if (err) throw err
       assert.deepEqual(Object.keys(validationErrors).sort(), [
-        'config.appPort', 'config.blobClientPort', 'config.blobsDirName',
+        'config.appPort', 'config.blobsPort', 'config.blobsDirName',
         'config.server.ip', 'config.server.oscPort'
       ].sort())
       done()
     })
   })
 
-  it('should reject if appPort and blobClientPort have same values', function(done) {
+  it('should reject if appPort and blobsPort have same values', function(done) {
     var config = {
       appPort: 3333,
-      blobClientPort: 3333,
+      blobsPort: 3333,
       blobsDirName: '/tmp'
     }
     validate(config, function(err, finalConfig, validationErrors) {
@@ -92,7 +92,7 @@ var defaultConfig = {
   appPort: 9001,
 
   // Port on which the blob client receives OSC messages.
-  blobClientPort: 44444,
+  blobsPort: 44444,
 
   // Directory where blobs are stored.
   blobsDirName: '/tmp',

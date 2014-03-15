@@ -104,14 +104,14 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
     if (config.pages.length) {
       console.log(clc.bold('(2)'), 'pages served at')
       config.pages.forEach(function(page) {
-        console.log(clc.italic('  http://<serverIP>:' + config.webPort + page.rootUrl))
+        console.log(clc.italic('  http://<serverIP>:' + config.webPort + clc.bold(page.rootUrl)))
       })
     } else console.log(clc.bold('(2) Warning : no web pages declared'))
 
     if (config.clients.length) {
       console.log(clc.bold('(3)'), 'sending to client applications at')
       config.clients.forEach(function(client) {
-        console.log(clc.italic('  IP=' + client.ip + ', port=' + client.appPort))
+        console.log(clc.italic('  IP=' + clc.bold(client.ip) + ', port=' + clc.bold(client.appPort)))
       })
     } else console.log(clc.bold('(3) Warning : no OSC clients declared'))
   })

@@ -1,9 +1,9 @@
 var _ = require('underscore')
   , assert = require('assert')
-  , Connection = require('../../../lib/server/Connection')
-  , connections = require('../../../lib/server/connections') 
-  , shared = require('../../../lib/shared')
-  , helpers = require('../../helpers')
+  , Connection = require('../../../../lib/server/core/Connection')
+  , connections = require('../../../../lib/server/connections') 
+  , shared = require('../../../../lib/shared')
+  , helpers = require('../../../helpers')
 
 describe('Connection', function() {
 
