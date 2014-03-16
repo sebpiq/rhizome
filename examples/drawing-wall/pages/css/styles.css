@@ -4,11 +4,15 @@ body, html {
   width: 100%;
   height: 100%;
   font-family: 'sans-serif';
-  font-size: 20px;
+  font-size: 40px;
 }
 
 canvas {
   border: 1px solid #aaa;
+}
+
+button, input, select {
+  font-size: 100%;
 }
 
 #message {

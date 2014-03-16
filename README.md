@@ -78,16 +78,18 @@ The following messages are sent by the server. To receive them, you should subsc
   - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
   - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
 
+
 ### System messages
 
 The following messages are used for communication between one connection and the server
 
+  - `/sys/subscribe <address>` : subscribes the client to messages sent at `<address>`
   - `/sys/resend <address>` : resends the last message sent at `address`.
   - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server.
 
 
-
 ### Web client
+
 
 #### Event: 'connected'
 
@@ -186,6 +188,18 @@ var onMouseMove function(x, y) {
   sendValue([x, y])
 }
 ```
+
+
+#### rhizome.isSupported()
+
+Returns `true` if the current browser is supported, `false` otherwise.
+
+
+#### rhizome.userId
+
+Id of the connected user. It is `null` if the web client is not connected.
+
+
 
 
 For contributors
