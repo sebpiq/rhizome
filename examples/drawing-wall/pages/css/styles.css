@@ -7,6 +7,10 @@ body, html {
   font-size: 20px;
 }
 
+canvas {
+  border: 1px solid #aaa;
+}
+
 #message {
   background-color: rgba(0, 0, 0, 0.8);
   width: 100%;

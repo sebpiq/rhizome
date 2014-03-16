@@ -83,6 +83,8 @@ The following messages are sent by the server. To receive them, you should subsc
 The following messages are used for communication between one connection and the server
 
   - `/sys/resend <address>` : resends the last message sent at `address`.
+  - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server.
+
 
 
 ### Web client

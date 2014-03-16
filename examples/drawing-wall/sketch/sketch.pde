@@ -1,48 +1,69 @@
 import oscP5.*;
 import netP5.*;
 
-int imgSize = 100;
-int imgPerRow = 8;
-int imgPerCol = 6;
-
-int imgCount = 0;
-OscP5 oscP5;
-NetAddress rhizomeLocation;
+// Networking settings
 int serverOSCPort = 9000;
 int appPort = 9001;
 String serverIP = "127.0.0.1";
 
+// Other settings
+int imgSize = 100;
+int imgPerSide = 8;
+int canvasWidth = imgPerSide * imgSize;
+int canvasHeight = imgPerSide * imgSize;
+// Must be inside the "blobsDirName" folder set in "config-blobs.js"
+String saveImgPath = "/tmp/exportedImg.png";
+
+int imgCount = 0;
+OscP5 oscP5;
+NetAddress rhizomeLocation;
+
 void setup() {
-  size(imgPerRow * imgSize, imgPerCol * imgSize);
-  
+  size(canvasWidth, canvasHeight);
+  background(255);
   oscP5 = new OscP5(this, appPort);
   rhizomeLocation = new NetAddress(serverIP, serverOSCPort);
   
-  // Subscribe to receive messages
+  // Subscribe to receive messages from /drawing
   OscMessage subscribeMsg = new OscMessage("/sys/subscribe");
   subscribeMsg.add(appPort);
   subscribeMsg.add("/drawing");
   oscP5.send(subscribeMsg, rhizomeLocation);
   
-  //noLoop();
+  noLoop();
 }
 
 void draw() {}
 
-void oscEvent(OscMessage msg) 
-{
+void oscEvent(OscMessage msg) {
   if (msg.addrPattern().equals("/sys/subscribed")) {
     println("subscribed successfully to /drawing");
-  } else {
+     
+  } else if (msg.addrPattern().equals("/drawing")) {
     String imgPath = msg.get(0).stringValue();
     PImage img;
-    int imgX = (imgCount % imgPerRow) * imgSize;
-    int imgY = ((imgCount / imgPerRow) % imgPerCol) * imgSize;
-    print(msg.addrPattern() + " " + imgPath);
+    int imgX = (imgCount % imgPerSide) * imgSize;
+    int imgY = ((imgCount / imgPerSide) % imgPerSide) * imgSize;
+    println(msg.addrPattern() + " " + imgPath);
     
     img = loadImage(imgPath, "jpg");
     image(img, imgX, imgY, imgSize, imgSize);
     redraw();
     imgCount++;
+    
+  } else {
+    println("unexpected message received " + msg.addrPattern());
   }
+}
+
+void mouseClicked() {
+  save(saveImgPath);
+  println("exported current canvas to " + saveImgPath);
+  
+  // Send the image to rhizome at address /mosaic
+  OscMessage sendBlobMsg = new OscMessage("/sys/blob");
+  sendBlobMsg.add(appPort);
+  sendBlobMsg.add("/mosaic");
+  sendBlobMsg.add(saveImgPath);
+  oscP5.send(sendBlobMsg, rhizomeLocation);
 }

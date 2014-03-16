@@ -9,8 +9,8 @@
 </head>
 
 <body>
+  <canvas id="c"></canvas>
   <div id="message"></div>
-  <canvas id="c" style="border:1px solid #aaa"></canvas>
 
   <div id="drawing-options">
     <label for="drawing-mode-selector">Mode:</label>
@@ -18,12 +18,6 @@
       <option>Pencil</option>
       <option>Circle</option>
       <option>Spray</option>
-      <option>Pattern</option>
-
-      <option>hline</option>
-      <option>vline</option>
-      <option>square</option>
-      <option>diamond</option>
     </select><br>
 
     <label for="drawing-line-width">Line width:</label>
@@ -38,12 +32,21 @@
     </div>
   </div>
 
-  <script src="js/freedrawing.js"></script>
   <script>
     (function() {
-      var sendCanvasButton = document.getElementById('send-canvas')
+      var processingCanvasSize = 800
+        , canvasSize = window.innerWidth
+        , sendCanvasButton = document.getElementById('send-canvas')
         , canvas = document.getElementById('c')
         , messageDiv = document.getElementById('message')
+        , URL = window.URL || window.webkitURL
+
+      canvas.setAttribute('width', canvasSize)
+      canvas.setAttribute('height', canvasSize)
+
+      // Test for browser support
+      if (!rhizome.isSupported() || !URL)
+        return alert('Your browser is not supported')
 
       var showMessage = function(msg) {
         messageDiv.style.display = 'block'
@@ -72,6 +75,8 @@
             rhizome.send('/drawing', [jpegFile])
           })
         }
+
+        rhizome.send('/sys/subscribe', ['/mosaic'])
       })
 
       rhizome.on('connection lost', function() {
@@ -80,10 +85,28 @@
 
       rhizome.on('reconnected', function() {
         hideMessage()
+        rhizome.send('/sys/subscribe', ['/mosaic'])
+      })
+
+      rhizome.on('message', function(address, args) {
+        if (address === '/sys/subscribed') {
+          console.log('successfully subscribed to ' + args[0])
+
+        } else if (address === '/mosaic') {
+          var blob = args[0]
+            , url = URL.createObjectURL(blob)
+          fabricCanvas.setBackgroundImage(url, fabricCanvas.renderAll.bind(fabricCanvas), {
+            scaleX: canvasSize/processingCanvasSize, scaleY: canvasSize/processingCanvasSize
+          })
+
+        } else {
+          console.log('unexpected message ' + address + ' ' + args)
+        }
       })
 
     })()
   </script>
+  <script src="js/freedrawing.js"></script>
 
 </body>
 

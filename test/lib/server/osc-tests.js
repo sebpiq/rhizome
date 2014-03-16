@@ -165,6 +165,27 @@ describe('osc', function() {
       sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
     })
 
+    it('should return an error if invalid address', function(done) {
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001}, // fakes an app client
+      ]
+
+      helpers.dummyOSCClients(1, oscClients, function(received) {
+        received.forEach(function(r) {
+          var args = _.last(r)
+          assert.ok(_.isString(args[0]))
+          args.pop()
+        })
+        helpers.assertSameElements(received, [
+          [9001, shared.errorAddress, []]
+        ])
+        done()
+      })
+
+      // Simulate request to send a blob
+      sendToServer.send(shared.sendBlobAddress, [9001, 'bla', '/tmp/hihi'])      
+    })
+
   })
 
 })
