@@ -21,9 +21,9 @@ While **rhizome** provides you with a solid architecture for communication, you 
 Status of the project
 ----------------------
 
-This project is brand new, and it is currently under heavy development. There is currently no documentation as the API is not yet stable.
+This project is brand new, and it is currently under heavy development. As the API will become more stable over time, the documentation should follow.
 
-In the next few days, the situation should improve and I will update the examples. Meanwhile, don't hesitate to contact me if you have any questions. 
+Meanwhile, don't hesitate to contact me if you have any questions. 
 
 
 Getting started
