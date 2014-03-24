@@ -51,7 +51,7 @@ describe('rhizome validate-config', function() {
         {rootUrl: '/page1', dirName: __dirname}
       ],
       clients: [
-        {ip: '120.120.0.5', appPort: 9002, useBlobClient: false}
+        {ip: '120.120.0.5', appPort: 9002, useBlobClient: false, blobsPort: 44444}
       ]
     }
     validate(config, function(err, finalConfig, validationErrors) {
