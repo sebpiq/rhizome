@@ -121,12 +121,8 @@ module.exports = function(config, done) {
         },
 
         blobsPort: function(val) {
-          if (this.useBlobClient) {
-            if (this.blobsPort) {
-              expect(val).to.be.a('number')
-              expect(val).to.be.within(1025, 49150)
-            } else this.blobsPort = 44444
-          }
+          expect(val).to.be.a('number')
+          expect(val).to.be.within(1025, 49150)
         }
       }
     )
@@ -176,7 +172,7 @@ module.exports = function(config, done) {
       clients: function(val) {
         expect(val).to.be.an('array')
         config.clients.forEach(function(client, i) {
-          _.defaults(client, {useBlobClient: false})
+          _.defaults(client, {useBlobClient: false, blobsPort: 44444})
           validateClient('config.clients['+i+']', client)
         })
       }

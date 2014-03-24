@@ -111,7 +111,8 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
     if (config.clients.length) {
       console.log(clc.bold('(3)'), 'sending to client applications at')
       config.clients.forEach(function(client) {
-        console.log(clc.italic('  IP=' + clc.bold(client.ip) + ', port=' + clc.bold(client.appPort)))
+        console.log(clc.italic('  IP=' + clc.bold(client.ip) + ', appPort=' + clc.bold(client.appPort)
+          + (client.useBlobClient ? ', blobsPort=' + clc.bold(client.blobsPort) : '')))
       })
     } else console.log(clc.bold('(3) Warning : no OSC clients declared'))
   })

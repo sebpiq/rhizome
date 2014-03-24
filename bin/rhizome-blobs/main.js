@@ -42,8 +42,9 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
     if (err) throw err
     console.log(clc.bold('Rhizome blobs running.'))
     console.log(clc.bold('(1)'), 'saving and reading blobs from', clc.bold(config.blobsDirName))
-    console.log(clc.bold('(2)'), 'application client running on same machine, osc port', clc.bold(config.appPort))
-    console.log(clc.bold('(3)'), 'server', clc.italic('IP=' + clc.bold(config.server.ip) + ', port=' + clc.bold(config.server.blobsPort)))
+    console.log(clc.bold('(2)'), 'receiving blobs on port', clc.bold(config.blobsPort))
+    console.log(clc.bold('(3)'), 'application client running on same machine, osc port', clc.bold(config.appPort))
+    console.log(clc.bold('(4)'), 'server', clc.italic('IP=' + clc.bold(config.server.ip) + ', blobsPort=' + clc.bold(config.server.blobsPort)))
   })
 
 })

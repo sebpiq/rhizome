@@ -78,7 +78,9 @@ module.exports = function(config, done) {
     },
 
     server: function(val) {
-      expect(val).to.contain.keys(['blobsPort', 'ip'])
+      expect(val).to.contain.keys(['ip'])
+      _.defaults(val, {blobsPort: 44445})
+
       validate('config.server', val, validationErrors, {}, {
         blobsPort: function(val) {
           expect(val).to.be.a('number')
