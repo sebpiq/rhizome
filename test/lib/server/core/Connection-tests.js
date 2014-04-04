@@ -5,6 +5,8 @@ var _ = require('underscore')
   , shared = require('../../../../lib/shared')
   , helpers = require('../../../helpers')
 
+afterEach(helpers.afterEach)
+
 describe('Connection', function() {
 
   describe('subscribe', function() {
@@ -61,6 +63,22 @@ describe('Connection', function() {
         ['/bla/blo', [333]],
         ['/bli', []],
         ['/neverSeenBefore', []]
+      ])
+    })
+
+    it('should send empty list if the address exists but no last message', function() {
+      var received = []
+
+      var dummyConnection = new helpers.DummyConnection(function(address, args) {
+        received.push([address, args])
+      })
+
+      dummyConnection.onSysMessage(shared.subscribeAddress, ['/bla'])
+      dummyConnection.onSysMessage(shared.resendAddress, ['/bla'])
+
+      helpers.assertSameElements(received, [
+        ['/sys/subscribed', ['/bla']],
+        ['/bla', []]
       ])
     })
 
