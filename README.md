@@ -238,7 +238,13 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
--0.4
+-0.4.1
+
+  - Server:
+    - bug fixes
+    - OSC messages 
+
+-0.4.0
 
   - get the last message sent to an address by sending to `/sys/resend`
 
