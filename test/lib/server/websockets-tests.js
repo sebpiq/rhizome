@@ -128,4 +128,24 @@ describe('websockets', function() {
 
   })
 
+  describe('send', function() {
+
+    it('shouldn\'t crash if socket is not opened', function(done) {
+      assert.equal(wsServer.sockets().length, 0)
+
+      // Create dummy web clients, and immediately close one of them
+      helpers.dummyWebClients(config.webPort, 1, function(err, sockets) {
+        if (err) throw err
+        assert.equal(wsServer.sockets().length, 1)
+        var serverSocket = wsServer.sockets()[0]
+        serverSocket.close()
+        console.log('DO NOT PANIC : this is just a test')
+        serverSocket.rhizome.send('/bla', [1, 2, 3])
+        done()
+      })
+
+    })
+
+  })
+
 })
