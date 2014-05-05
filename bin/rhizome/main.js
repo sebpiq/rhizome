@@ -21,6 +21,8 @@ var path = require('path')
   , spawn = require('child_process').spawn
   , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
+  , program = require('commander')
+  , version = require('../../package.json').version
   , async = require('async')
   , express = require('express')
   , clc = require('cli-color')
@@ -28,6 +30,10 @@ var path = require('path')
   , oscServer = require('../../lib/server/osc')
   , validateConfig = require('./validate-config')
   , utils = require('../utils')
+
+program
+  .version(version)
+  .parse(process.argv);
 
 if (process.argv.length !== 3) {
   console.log('usage : rhizome <config.js>')
@@ -98,7 +104,7 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
 
   ], function(err) {
     if (err) throw err
-    console.log(clc.bold('Rhizome running.'))
+    console.log(clc.bold('Rhizome ' + version +' running.') )
     console.log(clc.bold('(1)'), 'server listening for OSC messages on port', clc.bold(config.oscPort))
 
     if (config.pages.length) {
