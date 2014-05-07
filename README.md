@@ -71,14 +71,6 @@ However, some OSC applications have bad support for OSC blobs (for example Pure 
 API
 ----
 
-### Broadcast messages
-
-The following messages are sent by the server. To receive them, you should subscribe to them.
-
-  - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
-  - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
-
-
 ### System messages
 
 The following messages are used for communication between one connection and the server
@@ -86,6 +78,14 @@ The following messages are used for communication between one connection and the
   - `/sys/subscribe <address>` : subscribes the client to messages sent at `<address>`
   - `/sys/resend <address>` : resends the last message sent at `address`.
   - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server.
+
+
+### Broadcast messages
+
+The following messages are sent by the server. To receive them, you should subscribe to them.
+
+  - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
+  - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
 
 
 ### Web client
@@ -238,11 +238,10 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
--0.4.1
+-0.4.2
 
   - Server:
-    - bug fixes
-    - OSC messages 
+    - bug fixes 
 
 -0.4.0
 
