@@ -19,10 +19,16 @@
 var path = require('path')
   , _ = require('underscore')
   , debug = require('debug')('rhizome-blobs.main')
+  , program = require('commander')
+  , version = require('../../package.json').version  
   , clc = require('cli-color')
   , client = require('../../lib/blob-client/client')
   , validateConfig = require('./validate-config')
   , utils = require('../utils')
+
+program
+  .version(version)
+  .parse(process.argv);
 
 if (process.argv.length !== 3) {
   console.log('usage : rhizome-blobs <config.js>')
@@ -40,7 +46,7 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
 
   client.start(config, function(err) {
     if (err) throw err
-    console.log(clc.bold('Rhizome blobs running.'))
+    console.log(clc.bold('Rhizome blobs ' + version + ' running.'))
     console.log(clc.bold('(1)'), 'saving and reading blobs from', clc.bold(config.blobsDirName))
     console.log(clc.bold('(2)'), 'receiving blobs on port', clc.bold(config.blobsPort))
     console.log(clc.bold('(3)'), 'application client running on same machine, osc port', clc.bold(config.appPort))
