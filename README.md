@@ -56,8 +56,8 @@ Gallery
 
 **rhizome** was used to realize the following projects :
 
-- *The Projectionist Orchestra*. Live audio-visual performance, where the audience can control sound and visuals with their smartphones.
-- *Fields*. Diffusion of field recordings through the smartphones from people in the audience. The connected devices become a giant granular synthesizer that the performers can manipulate live with a midi controller.
+- *Fields*. Diffusion of field recordings through the smartphones from people in the audience. The connected devices become a giant granular synthesizer that the performers can manipulate live with a midi controller. [Watch excerpt](https://vimeo.com/92586493)
+- *The Projectionist Orchestra*. Live audio-visual performance, where the audience can control sound and visuals with their smartphones. [Watch excerpt](https://vimeo.com/91108668)
 
 
 Transferring files
