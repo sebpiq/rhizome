@@ -83,9 +83,12 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
         },
         function(next2) {
           var grunt  = spawn(gruntExecPath, ['--gruntfile', gruntFilePath])
+            , output = ''
+          grunt.stdout.on('data', function(data) { output += data })
+          grunt.stderr.on('data', function(data) { output += data })
           grunt.on('close', function (code, signal) {
             if (code === 0) next2()
-            else next2(new Error('grunt terminated with error'))
+            else next2(new Error('grunt terminated with error : ' + output))
           })
         }
       ], next)
