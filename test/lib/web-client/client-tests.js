@@ -336,57 +336,45 @@ describe('web-client.client', function() {
       client.on('reconnected', function() { client.send(shared.subscribeAddress, ['/a']) })
       client.send(shared.subscribeAddress, ['/a'])
 
+      var disconnectReconnect = function(done) {
+        async.series([
+
+          // Stop the server to cause a disconnection,
+          // wait for a few retries to happen.
+          function(next) {
+            assertConnected()
+            wsServer.stop()
+            setTimeout(next, 250)
+          },
+
+          // Restart the server
+          function(next) {
+            assertDisconnected()
+            wsServer.start(config, next)
+          },
+
+          // Wait for the reconnection to happen
+          function(next) { client.once('reconnected', next) }, // wait for reconnection to happen
+          function(next) { client.once('message', function() { next() }) }
+        ], done)
+      }
+
       async.series([
         // Wait for the 'subscribed' message before continuing
         function(next) { client.once('message', function() { next() }) },
+        disconnectReconnect,
+        disconnectReconnect,
+        disconnectReconnect
 
-        function(next) {
-          wsServer.sockets()[0].rhizome.close()
-          wsServer.stop()
-          setTimeout(next, 250) // wait for a few retries
-        },
-        function(next) {
-          assertDisconnected()
-          wsServer.start(config, next)
-        },
-        function(next) { client.once('reconnected', next) },
-        function(next) { client.once('message', function() { next() }) },
-
-        function(next) {
-          assertConnected()
-          wsServer.stop() // do it again
-          setTimeout(next, 250)
-        },
-        function(next) {
-          assertDisconnected()
-          wsServer.start(config, next)
-        },
-        function(next) { client.once('reconnected', next) }, // wait for reconnection to happen
-        function(next) { client.once('message', function() { next() }) },
-        function(next) {
-          assertConnected()
-          next()
-        },
-
-        function(next) {
-          assertConnected()
-          wsServer.stop() // do it again
-          setTimeout(next, 250)
-        },
-        function(next) {
-          assertDisconnected()
-          wsServer.start(config, next)
-        },
-        function(next) { client.once('reconnected', next) }, // wait for reconnection to happen
-        function(next) { client.once('message', function() { next() }) },
-        function(next) {
-          assertConnected()
-          next()
-        }
 
       ], function(err) {
         if (err) throw err
-        assert.equal(allMessages.length, 4)
+        assert.deepEqual(allMessages, [
+          [shared.subscribedAddress, ['/a']],
+          [shared.subscribedAddress, ['/a']],
+          [shared.subscribedAddress, ['/a']],
+          [shared.subscribedAddress, ['/a']]
+        ])
         assert.deepEqual(received, [
           'connection lost', 'reconnected',
           'connection lost', 'reconnected',

@@ -238,6 +238,11 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
+-0.4.3
+
+  - web client:
+    - bug fixes
+
 -0.4.2
 
   - Server:
