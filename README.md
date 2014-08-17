@@ -75,10 +75,16 @@ API
 
 The following messages are used for communication between one connection and the server
 
-  - `/sys/subscribe <address>` : subscribes the client to messages sent at `<address>`
-  - `/sys/resend <address>` : resends the last message sent at `address`.
+#### From OSC client
+
+  - `/sys/subscribe <appPort> <address>` : subscribes the OSC client to messages sent at `<address>`
+  - `/sys/resend <appPort> <address>` : resends the last message sent at `<address>`.
   - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server.
 
+#### From Web client
+
+  - `/sys/subscribe <address>` : subscribes the web client to messages sent at `<address>`
+  - `/sys/resend <address>` : resends the last message sent at `<address>`.
 
 ### Broadcast messages
 
