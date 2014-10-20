@@ -20,16 +20,16 @@ var config = {
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
   return function(done) {
-    var usingBlobClient = clients.filter(function(c) { return c.blobsPort !== undefined })
+    var usingBlobClient = clients.filter(function(c) { return c.useBlobClient })
     usingBlobClient.forEach(function(c) {
-      if (c.blobsPort) {
-        sendToServer.send(shared.configureAddress, [c.appPort, 'blobClient', c.blobsPort])
-      }
+      if (c.blobsPort) args = [c.appPort, 'blobClient', c.blobsPort]
+      else args = [c.appPort, 'blobClient']
+      sendToServer.send(shared.configureAddress, args)
     })
 
     helpers.dummyOSCClients(usingBlobClient.length, usingBlobClient, function(received) {
       helpers.assertSameElements(received, usingBlobClient.map(function(c) {
-        return [c.appPort, shared.configuredAddress, [c.blobsPort]]
+        return [c.appPort, shared.configuredAddress, [c.blobsPort || 44444]]
       }))
       done()
     })
@@ -49,8 +49,8 @@ describe('osc', function() {
     it('should transmit to osc connections subscribed to that address', function(done) {
       // List of OSC clients
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true}, // default value should be used
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445, useBlobClient: true},
         {ip: '127.0.0.1', appPort: 9003}
       ]
 
@@ -104,8 +104,8 @@ describe('osc', function() {
       ]
 
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444, useBlobClient: true},
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445, useBlobClient: true},
         {ip: '127.0.0.1', appPort: 9003}
       ]
 
@@ -155,8 +155,8 @@ describe('osc', function() {
 
     it('should request the blob client to send a blob when asked for it', function(done) {
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444, useBlobClient: true},
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445, useBlobClient: true},
       ]
 
       var blobClients = [
@@ -184,7 +184,7 @@ describe('osc', function() {
 
     it('should return an error if invalid address', function(done) {
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444}
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444, useBlobClient: true}
       ]
 
       async.series([
