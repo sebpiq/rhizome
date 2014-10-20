@@ -30,7 +30,8 @@ var defaultConfig = {
 
   // <appPorts> List of ports on which the application (Pd, Processing...) receives OSC messages.
   // <blobsDirName> Directory where blobs are stored.
-
+  // <fileExtension> Blobs will be saved with the given file extension
+  
   // Port on which the blob client receives OSC messages.
   blobsPort: 44444,
 
@@ -59,6 +60,11 @@ module.exports = function(config, done) {
     },
     done: done
   }, {
+
+    fileExtension: function() {
+
+    },
+
     appPorts: function(val) {
       expect(val).to.be.an('array')
       val.forEach(function(appPort, i) {

@@ -81,6 +81,15 @@ describe('utils', function() {
       })
     })
 
+    it('should create the file with the given extension', function(done) {
+      utils.getFreeFilePath('/tmp', function(err, path) {
+        if (err) throw err
+        assert.ok(path.length > 4)
+        assert.equal(path.slice(-4), '.wav')
+        done()
+      }, '.wav')
+    })
+
     it('should fail if there is not file path available', function(done) {
       // We make so that there is no file path available.
       // For this we create all the filepaths possibles (except one : /tmp/255), symlinks and real files.
@@ -99,7 +108,7 @@ describe('utils', function() {
           if (err) throw err
           assert.equal(path, '/tmp/255')
           next()
-        }, 1)
+        }, '', 1)
       })
       async.series(series, done)
     })
@@ -114,6 +123,23 @@ describe('utils', function() {
       async.waterfall([
         function(next) { utils.saveBlob('/tmp', buf, next) },
         function(filePath, next) { fs.readFile(filePath, next) }
+      ], function(err, readBuf) {
+        if (err) throw err
+        assert.equal(readBuf.toString(), 'blabla')
+        done()
+      })
+
+    })
+
+    it('should save the blob with the given extension', function(done) {
+      var buf = new Buffer('blabla')
+
+      async.waterfall([
+        function(next) { utils.saveBlob('/tmp', buf, next, '.wav') },
+        function(filePath, next) {
+          assert.equal(filePath.slice(-4), '.wav')
+          fs.readFile(filePath, next)
+        }
       ], function(err, readBuf) {
         if (err) throw err
         assert.equal(readBuf.toString(), 'blabla')

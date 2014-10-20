@@ -82,6 +82,29 @@ describe('blob-client', function() {
       sendToBlobClient.send('/', [56789, new Buffer('hihihi')])
     })
 
+    it('should save the blob with the given extension', function(done) {
+      var oscClients = [ { appPort: 9001 } ]
+
+      async.series([
+        client.stop.bind(client),
+        client.start.bind(client, _.extend({}, clientConfig, { fileExtension: '.wav' })),
+
+        function(next) {
+          helpers.dummyOSCClients(1, oscClients, function(received) {
+            var filePath = received[0][2][0]
+            received[0][2][0] = null
+            helpers.assertSameElements(received, [
+              [9001, '/bla/blob', [null, 111]]
+            ])
+            assert.equal(filePath.slice(-4), '.wav')
+            done()
+          })
+
+          sendToBlobClient.send('/bla/blob', [new Buffer('bloblo'), 111])
+        }
+      ])
+    })
+
   })
 
   describe('send blob', function() {
