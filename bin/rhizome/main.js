@@ -26,6 +26,13 @@ var path = require('path')
   , async = require('async')
   , express = require('express')
   , clc = require('cli-color')
+  , browserify = require('browserify')
+  , gulp = require('gulp')
+  , uglify = require('gulp-uglify')
+  , gutil = require('gulp-util')
+  , source = require('vinyl-source-stream')
+  , buffer = require('vinyl-buffer')
+
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
   , validateConfig = require('./validate-config')
@@ -44,8 +51,6 @@ var app = express()
   , server = require('http').createServer(app)
   , packageRootPath = path.join(__dirname, '..', '..')
   , buildDir = path.join(packageRootPath, 'build')
-  , gruntExecPath = path.join(packageRootPath, 'node_modules', 'grunt-cli', 'bin', 'grunt')
-  , gruntFilePath = path.join(packageRootPath, 'Gruntfile.js')
   , configFilePath = path.join(process.cwd(), process.argv[2])
 
 validateConfig(require(configFilePath), function(err, config, configErrors) {
@@ -82,14 +87,14 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
           else next2()
         },
         function(next2) {
-          var grunt  = spawn(gruntExecPath, ['--gruntfile', gruntFilePath])
-            , output = ''
-          grunt.stdout.on('data', function(data) { output += data })
-          grunt.stderr.on('data', function(data) { output += data })
-          grunt.on('close', function (code, signal) {
-            if (code === 0) next2()
-            else next2(new Error('grunt terminated with error : ' + output))
-          })
+          browserify({ entries: '../../lib/web-client/index.js' })
+            .bundle()
+            .on('error', gutil.log)
+            .pipe(source('rhizome.js'))
+            .pipe(buffer())
+            .pipe(uglify())
+            .pipe(gulp.dest(buildDir))
+            .on('finish', next2)
         }
       ], next)
     },
@@ -116,14 +121,6 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
         console.log(clc.italic('  http://<serverIP>:' + config.webPort + clc.bold(page.rootUrl)))
       })
     } else console.log(clc.bold('(2) Warning : no web pages declared'))
-
-    if (config.clients.length) {
-      console.log(clc.bold('(3)'), 'sending to client applications at')
-      config.clients.forEach(function(client) {
-        console.log(clc.italic('  IP=' + clc.bold(client.ip) + ', appPort=' + clc.bold(client.appPort)
-          + (client.useBlobClient ? ', blobsPort=' + clc.bold(client.blobsPort) : '')))
-      })
-    } else console.log(clc.bold('(3) Warning : no OSC clients declared'))
   })
 
 })
