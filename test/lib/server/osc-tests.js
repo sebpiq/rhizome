@@ -17,14 +17,19 @@ var config = {
   usersLimit: 5
 }
 
+// Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
   return function(done) {
-    clients.forEach(function(c) {
-      sendToServer.send(shared.connectAddress, [c.appPort, +c.useBlobClient, c.blobsPort || 44444])
+    var usingBlobClient = clients.filter(function(c) { return c.blobsPort !== undefined })
+    usingBlobClient.forEach(function(c) {
+      if (c.blobsPort) {
+        sendToServer.send(shared.configureAddress, [c.appPort, 'blobClient', c.blobsPort])
+      }
     })
-    helpers.dummyOSCClients(clients.length, clients, function(received) {
-      helpers.assertSameElements(received, clients.map(function(c) {
-        return [c.appPort, shared.connectedAddress, [c.appPort]]
+
+    helpers.dummyOSCClients(usingBlobClient.length, usingBlobClient, function(received) {
+      helpers.assertSameElements(received, usingBlobClient.map(function(c) {
+        return [c.appPort, shared.configuredAddress, [c.blobsPort]]
       }))
       done()
     })
@@ -44,9 +49,9 @@ describe('osc', function() {
     it('should transmit to osc connections subscribed to that address', function(done) {
       // List of OSC clients
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
-        {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9003}
       ]
 
       // Adding dummy clients (simulate websockets)
@@ -99,9 +104,9 @@ describe('osc', function() {
       ]
 
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
-        {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9003}
       ]
 
       async.waterfall([
@@ -144,41 +149,14 @@ describe('osc', function() {
       ])
     })
 
-    it('should return an error if sending to an invalid address', function(done) {
-      var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001}, // Fakes some app client
-        {ip: '127.0.0.1', appPort: 9002} // Fakes some app client
-      ]
-
-      async.series([
-        doConnection(oscClients),
-
-        function(next) {
-          sendToServer.send('/broadcast/bla', [11, 22, 33])
-          helpers.dummyOSCClients(2, oscClients, function(received) {
-            received.forEach(function(r) {
-              var args = _.last(r)
-              assert.ok(_.isString(args[0]))
-              args.pop()
-            })
-            helpers.assertSameElements(received, [
-              [9001, shared.errorAddress, []],
-              [9002, shared.errorAddress, []]
-            ])
-            done()
-          })
-        }
-      ])
-    })
-
   })
 
   describe('receive a blob', function() {
 
     it('should request the blob client to send a blob when asked for it', function(done) {
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
-        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445},
       ]
 
       var blobClients = [
@@ -206,7 +184,7 @@ describe('osc', function() {
 
     it('should return an error if invalid address', function(done) {
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444}
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 44444}
       ]
 
       async.series([
