@@ -47,16 +47,7 @@ var defaultConfig = {
   pages: [],
 
   // The root of the rhizome application on the server
-  rootUrl: '/',
-
-  // A list of OSC clients to transmit user messages to. Valid argument for each client is :
-  clients: [
-    //    - <ip> : the IP address of the client
-    //    - <appPort> : the port on which the application (Pd, Processing, ...) will receive OSC messages
-    //    - <useBlobClient> : true or false.
-    //    - <blobsPort> : the port on which the blob client will receive OSC messages
-
-  ]
+  rootUrl: '/'
 
 }
 
@@ -92,40 +83,6 @@ module.exports = function(config, done) {
       }
     )
 
-  }
-
-  var validateClient = function(prefix, client) {
-    validate(prefix, client, validationErrors,
-      {
-        before: function() {
-          expect(this).to.contain.keys(['ip', 'appPort'])
-        },
-
-        after: function() {
-          if (this.useBlobClient && (this.blobsPort === this.appPort))
-            new chai.AssertionError('appPort and blobsPort should be different')
-        }
-      },
-      {
-        appPort: function(val) {
-          expect(val).to.be.a('number')
-          expect(val).to.be.within(1025, 49150)
-        },
-
-        ip: function(val) {
-          expect(val).to.be.an.ip
-        },
-
-        useBlobClient: function(val) {
-          expect(val).to.be.a('Boolean')
-        },
-
-        blobsPort: function(val) {
-          expect(val).to.be.a('number')
-          expect(val).to.be.within(1025, 49150)
-        }
-      }
-    )
   }
 
   validate('config', config, validationErrors,
@@ -169,15 +126,8 @@ module.exports = function(config, done) {
             validatePage('config.pages['+i+']', page, next)
           }
         }), donePages)
-      },
-
-      clients: function(val) {
-        expect(val).to.be.an('array')
-        config.clients.forEach(function(client, i) {
-          _.defaults(client, {useBlobClient: false, blobsPort: 44444})
-          validateClient('config.clients['+i+']', client)
-        })
       }
+
     }
   )
 

@@ -10,18 +10,26 @@ var _ = require('underscore')
   , helpers = require('../../helpers')
 
 var config = {
-
   webPort: 8000,
   oscPort: 9000,
   blobsPort: 33333,
   rootUrl: '/', 
-  usersLimit: 5,
+  usersLimit: 5
+}
 
-  clients: [
-    {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
-    {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
-    {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
-  ]
+var doConnection = function(clients) {
+  return function(done) {
+    clients.forEach(function(c) {
+      sendToServer.send(shared.connectAddress, [c.appPort, +c.useBlobClient, c.blobsPort || 44444])
+    })
+    helpers.dummyOSCClients(clients.length, clients, function(received) {
+      helpers.assertSameElements(received, clients.map(function(c) {
+        return [c.appPort, shared.connectedAddress, [c.appPort]]
+      }))
+      done()
+    })
+  }
+
 }
 
 var sendToServer = new oscCore.createOSCClient('localhost', config.oscPort, 'udp')
@@ -34,19 +42,25 @@ describe('osc', function() {
   describe('send', function() {
 
     it('should transmit to osc connections subscribed to that address', function(done) {
-      // Subscribing our osc clients
-      sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
-      sendToServer.send(shared.subscribeAddress, [9002, '/'])
+      // List of OSC clients
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
+      ]
 
-      // Adding other dummy clients (simulate websockets)
+      // Adding dummy clients (simulate websockets)
       var dummyConn = { send: function(address, args) { this.received.push([address, args]) }, received: [] }
       connections.subscribe(dummyConn, '/blo')
 
       async.waterfall([
+        doConnection(oscClients),
 
-        // Waiting for subscription acknowledgement
+        // Do subscribe
         function(next) {
-          helpers.dummyOSCClients(2, config.clients, next.bind(this, null))
+          sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
+          sendToServer.send(shared.subscribeAddress, [9002, '/'])
+          helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
         },
 
         // Checking received and sending some messages
@@ -55,7 +69,7 @@ describe('osc', function() {
             [9001, shared.subscribedAddress, ['/bla']],
             [9002, shared.subscribedAddress, ['/']]
           ])
-          helpers.dummyOSCClients(4, config.clients, next.bind(this, null))
+          helpers.dummyOSCClients(4, oscClients, next.bind(this, null))
           sendToServer.send('/bla', ['haha', 'hihi'])
           sendToServer.send('/blo/bli', ['non', 'oui', 1, 2])
           sendToServer.send('/empty')
@@ -78,29 +92,37 @@ describe('osc', function() {
     })
 
     it('should transmit blobs to blob clients', function(done) {
-      var oscClients = [
+      var blobClients = [
         {ip: '127.0.0.1', appPort: 44444, transport: 'tcp'}, // fake the blob client 1
         {ip: '127.0.0.1', appPort: 44445, transport: 'tcp'}, // fake the blob client 2
-        config.clients[2]                  // app client that doesn't use blob client
+        {ip: '127.0.0.1', appPort: 9003, transport: 'udp'} // client 9003 is receiving blobs directly
       ]
 
-      sendToServer.send(shared.subscribeAddress, [9001, '/blo'])
-      sendToServer.send(shared.subscribeAddress, [9002, '/blo'])
-      sendToServer.send(shared.subscribeAddress, [9003, '/blo'])
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
+        {ip: '127.0.0.1', appPort: 9003, useBlobClient: false}
+      ]
 
       async.waterfall([
+        doConnection(oscClients),
 
-        // Waiting for subscription acknowledgement
+        // Subscribing OSC clients
         function(next) {
-          helpers.dummyOSCClients(1, oscClients, next.bind(this, null))
+          sendToServer.send(shared.subscribeAddress, [9001, '/blo'])
+          sendToServer.send(shared.subscribeAddress, [9002, '/blo'])
+          sendToServer.send(shared.subscribeAddress, [9003, '/blo'])
+          helpers.dummyOSCClients(3, oscClients, next.bind(this, null))
         },
 
         // Checking received and sending some messages with blobs
         function(received, next) {
           helpers.assertSameElements(received, [
+            [9001, shared.subscribedAddress, ['/blo']],
+            [9002, shared.subscribedAddress, ['/blo']],
             [9003, shared.subscribedAddress, ['/blo']]
           ])
-          helpers.dummyOSCClients(6, oscClients, next.bind(this, null))
+          helpers.dummyOSCClients(6, blobClients, next.bind(this, null))
           sendToServer.send('/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')])
           sendToServer.send('/blo/bli', [new Buffer('qwerty')])
         },
@@ -128,20 +150,25 @@ describe('osc', function() {
         {ip: '127.0.0.1', appPort: 9002} // Fakes some app client
       ]
 
-      helpers.dummyOSCClients(2, oscClients, function(received) {
-        received.forEach(function(r) {
-          var args = _.last(r)
-          assert.ok(_.isString(args[0]))
-          args.pop()
-        })
-        helpers.assertSameElements(received, [
-          [9001, shared.errorAddress, []],
-          [9002, shared.errorAddress, []]
-        ])
-        done()
-      })
+      async.series([
+        doConnection(oscClients),
 
-      sendToServer.send('/broadcast/bla', [11, 22, 33])
+        function(next) {
+          sendToServer.send('/broadcast/bla', [11, 22, 33])
+          helpers.dummyOSCClients(2, oscClients, function(received) {
+            received.forEach(function(r) {
+              var args = _.last(r)
+              assert.ok(_.isString(args[0]))
+              args.pop()
+            })
+            helpers.assertSameElements(received, [
+              [9001, shared.errorAddress, []],
+              [9002, shared.errorAddress, []]
+            ])
+            done()
+          })
+        }
+      ])
     })
 
   })
@@ -150,40 +177,58 @@ describe('osc', function() {
 
     it('should request the blob client to send a blob when asked for it', function(done) {
       var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444},
+        {ip: '127.0.0.1', appPort: 9002, useBlobClient: true, blobsPort: 44445},
+      ]
+
+      var blobClients = [
         {ip: '127.0.0.1', appPort: 44444, transport: 'tcp'}, // fake the blob client 1
         {ip: '127.0.0.1', appPort: 44445, transport: 'tcp'}, // fake the blob client 2
       ]
 
-      helpers.dummyOSCClients(1, oscClients, function(received) {
-        helpers.assertSameElements(received, [
-          [44445, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
-        ])
-        done()
-      })
+      async.series([
+        doConnection(oscClients),
 
-      // Simulate request to send a blob
-      sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
+        function(next) {
+          // Simulate request to send a blob
+          sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
+
+          helpers.dummyOSCClients(1, blobClients, function(received) {
+            helpers.assertSameElements(received, [
+              [44445, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
+            ])
+            done()
+          })
+        }
+      ])
+
     })
 
     it('should return an error if invalid address', function(done) {
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001}, // fakes an app client
+        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true, blobsPort: 44444}
       ]
 
-      helpers.dummyOSCClients(1, oscClients, function(received) {
-        received.forEach(function(r) {
-          var args = _.last(r)
-          assert.ok(_.isString(args[0]))
-          args.pop()
-        })
-        helpers.assertSameElements(received, [
-          [9001, shared.errorAddress, []]
-        ])
-        done()
-      })
+      async.series([
+        doConnection(oscClients),
 
-      // Simulate request to send a blob
-      sendToServer.send(shared.sendBlobAddress, [9001, 'bla', '/tmp/hihi'])      
+        function(next) {
+          // Simulate request to send a blob
+          sendToServer.send(shared.sendBlobAddress, [9001, 'bla', '/tmp/hihi'])
+
+          helpers.dummyOSCClients(1, oscClients, function(received) {
+            received.forEach(function(r) {
+              var args = _.last(r)
+              assert.ok(_.isString(args[0]))
+              args.pop()
+            })
+            helpers.assertSameElements(received, [
+              [9001, shared.errorAddress, []]
+            ])
+            done()
+          })
+        }
+      ])
     })
 
   })

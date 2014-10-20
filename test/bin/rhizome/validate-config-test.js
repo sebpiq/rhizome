@@ -17,10 +17,6 @@ describe('rhizome validate-config', function() {
       pages: [
         {rootUrl: '/page1', dirName: __dirname},
         {rootUrl: '/page2', dirName: '/tmp'}
-      ],
-      clients: [
-        {ip: '120.120.0.5', appPort: 9002, useBlobClient: true, blobsPort: 9003},
-        {ip: '203.1.76.84', appPort: 9004}
       ]
     }
     validate(config, function(err, finalConfig, validationErrors) {
@@ -36,9 +32,6 @@ describe('rhizome validate-config', function() {
     var config = {
       pages: [
         {rootUrl: '/page1', dirName: path.dirname(__dirname + '/yt')}
-      ],
-      clients: [
-        {ip: '120.120.0.5', appPort: 9002}
       ]
     }
     var expectedConfig = {
@@ -49,9 +42,6 @@ describe('rhizome validate-config', function() {
       rootUrl: '/',
       pages: [
         {rootUrl: '/page1', dirName: __dirname}
-      ],
-      clients: [
-        {ip: '120.120.0.5', appPort: 9002, useBlobClient: false, blobsPort: 44444}
       ]
     }
     validate(config, function(err, finalConfig, validationErrors) {
@@ -71,16 +61,14 @@ describe('rhizome validate-config', function() {
           oscPort: 'bla',
           usersLimit: null,
           rootUrl: 1234,
-          pages: [{rootUrl: 1234, dirName: 1234}],
-          clients: [{ip: '120', appPort: 'hello', useBlobClient: 678, blobsPort: 'bla'}]
+          pages: [{rootUrl: 1234, dirName: 1234}]
         }
 
         validate(config, function(err, finalConfig, validationErrors) {
           assert.deepEqual(config, finalConfig)
           assert.deepEqual(Object.keys(validationErrors).sort(), ([
             'config.webPort', 'config.oscPort', 'config.usersLimit', 'config.rootUrl',
-            'config.pages[0].rootUrl', 'config.pages[0].dirName',
-            'config.clients[0].ip', 'config.clients[0].appPort', 'config.clients[0].useBlobClient', 'config.clients[0].blobsPort'
+            'config.pages[0].rootUrl', 'config.pages[0].dirName'
           ]).sort())
           next(err)
         })
@@ -92,9 +80,6 @@ describe('rhizome validate-config', function() {
           pages: [
             {dirName: 1234},
             {rootUrl: '/page', dirName: '/mostprobablydoesnotexist/'}
-          ],
-          clients: [
-            {appPort: 8000, useBlobClient: true, blobsPort: 8000}
           ]
         }
 
@@ -103,8 +88,7 @@ describe('rhizome validate-config', function() {
           assert.deepEqual(Object.keys(validationErrors).sort(), [
             'config.webPort', 'config.oscPort',
             'config.pages[0]',
-            'config.pages[1].dirName',
-            'config.clients[0]'
+            'config.pages[1].dirName'
           ].sort())
           next(err)
         })
