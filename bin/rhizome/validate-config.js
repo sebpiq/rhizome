@@ -21,7 +21,7 @@ var fs = require('fs')
   , chai = require('chai')
   , expect = chai.expect
   , chaiHttp = require('chai-http')
-  , validate = require('../utils').validate
+  , validateObject = require('../utils').validateObject
 chai.use(chaiHttp)
 
 
@@ -58,7 +58,7 @@ module.exports = function(config, done) {
 
   var validatePage = function(prefix, page, donePage) {
 
-    validate(prefix, page, validationErrors,
+    validateObject(prefix, page, validationErrors,
       {
         before: function() {
           expect(this).to.have.keys(['rootUrl', 'dirName'])
@@ -85,7 +85,7 @@ module.exports = function(config, done) {
 
   }
 
-  validate('config', config, validationErrors,
+  validateObject('config', config, validationErrors,
     {
       after: function() {
         if (_.uniq([this.oscPort, this.webPort, this.blobsPort]))

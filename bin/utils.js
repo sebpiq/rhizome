@@ -29,14 +29,18 @@ exports.printConfigErrors = function(configErrors) {
   })
 }
 
-var validate = exports.validate = function(prefix, obj, validationErrors, beforeAfter, validators) {
+// Validates the object `obj`, by running all `validators` `{attrName: func(val[, done])}` on it.
+// Validation errors are then stored in `validationErrors` object.
+// The path of unvalid attributes is constructed by appending the name of the unvalid 
+// attribute to `prefix`.
+// `beforeAfter` contain hooks `before()`, `after()` and `done(err, obj, validationErrors)`
+var validateObject = exports.validateObject = function(prefix, obj, validationErrors, beforeAfter, validators) {
   var asyncValid = []
     , isValid = true
 
-  var _handleError = function(err, attrName) {
+  var _handleError = function(err) {
     if (err instanceof chai.AssertionError) {
-      if (attrName) validationErrors[prefix + '.' + attrName] = err.message
-      else validationErrors[prefix] = err.message
+      validationErrors[prefix] = err.message
       isValid = false
     } else throw err
   }
@@ -51,6 +55,7 @@ var validate = exports.validate = function(prefix, obj, validationErrors, before
     if (beforeAfter.done) beforeAfter.done(null, obj, validationErrors)
   }
 
+  // Run the `before` hook
   if (beforeAfter.before) {
     try { beforeAfter.before.call(obj) } catch (err) {
       _handleError(err)
@@ -59,37 +64,48 @@ var validate = exports.validate = function(prefix, obj, validationErrors, before
     }
   }
 
-  _.pairs(validators).forEach(function(p) {
+  // Run validators for all attributes
+  async.series(_.pairs(validators).map(function(p) {
     var attrName = p[0]
       , func = p[1]
       , val = obj[attrName]
-
-    // Both asynchronous and synchronous validation.
-    // For asynchronous validation, validation errors are returned as the first argument of the callback.
-    if (func.length === 2) {
-      asyncValid.push(function(next) {
-        try {
-          func.call(obj, val, function(err) {
-            if (err) _handleError(err, attrName)
-            next()
-          })
-        } catch (err) {
-          _handleError(err, attrName)
-          next()
-        }
-      })
-
-    // Synchronous validation only
-    } else {
-      try { func.call(obj, val) }
-      catch (err) { _handleError(err, attrName) }
-    }
-
+    return validate.bind(obj, prefix + '.' + attrName, validationErrors, val, func)
+  }), function(err, results) {
+    if (err) return _handleError(err)
+    if (_.some(results, function(r) { return r !== null })) isValid = false
+    _doFinally()
   })
+}
 
-  if (asyncValid.length) {
-    async.series(asyncValid, function(err) {
-      _doFinally()
-    })
-  } else _doFinally()
+// Validates `val` and if validation error, store it to `validationErrors[prefix]`
+// The validator is `func(val[, done])`.
+// Once the validation is finished, `done(err, validationErr)` is called.
+var validate = exports.validate = function(prefix, validationErrors, val, func, done) {
+
+  var _handleError = function(err) {
+    if (err instanceof chai.AssertionError) {
+      validationErrors[prefix] = err.message
+      if (done) done(null, err)
+    } else if (done) done(err, null)
+    else throw err
+  }
+
+  // Both async and sync validation, in case calling the function directly throws an error.
+  // For asynchronous validation, errors are returned as the first argument of the callback.
+  if (func.length === 2) {
+    try {
+      func.call(this, val, function(err) {
+        if (err) _handleError(err)
+        else if (done) done(null, null)
+      })
+    } catch (err) { _handleError(err) }
+
+  // Synchronous validation only
+  } else {
+    try {
+      func.call(this, val)
+      if (done) done(null, null)
+    }
+    catch (err) { _handleError(err) }
+  }
 }

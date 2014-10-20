@@ -21,13 +21,14 @@ var fs = require('fs')
   , chai = require('chai')
   , expect = chai.expect
   , chaiHttp = require('chai-http')
+  , validateObject = require('../utils').validateObject
   , validate = require('../utils').validate
 chai.use(chaiHttp)
 
 
 var defaultConfig = {
 
-  // <appPort> Port on which the application (Pd, Processing...) receives OSC messages.
+  // <appPorts> List of ports on which the application (Pd, Processing...) receives OSC messages.
   // <blobsDirName> Directory where blobs are stored.
 
   // Port on which the blob client receives OSC messages.
@@ -50,16 +51,22 @@ module.exports = function(config, done) {
   _.defaults(config, defaultConfig)
   var validationErrors = {}
 
-  validate('config', config, validationErrors, {
+  validateObject('config', config, validationErrors, {
     after: function() {
-      if (this.appPort === this.blobsPort)
-        throw new chai.AssertionError('appPort and blobsPort should be different')
+      var blobsPort = this.blobsPort
+      if (_.some(this.appPorts, function(appPort) { return appPort === blobsPort }))
+        throw new chai.AssertionError('appPorts and blobsPort should be different')
     },
     done: done
   }, {
-    appPort: function(val) {
-      expect(val).to.be.a('number')
-      expect(val).to.be.within(1025, 49150)
+    appPorts: function(val) {
+      expect(val).to.be.an('array')
+      val.forEach(function(appPort, i) {
+        validate('config.appPorts[' + i + ']', validationErrors, appPort, function() {
+          expect(appPort).to.be.a('number')
+          expect(appPort).to.be.within(1025, 49150)
+        })
+      })
     },
 
     blobsPort: function(val) {
@@ -81,7 +88,7 @@ module.exports = function(config, done) {
       expect(val).to.contain.keys(['ip'])
       _.defaults(val, {blobsPort: 44445})
 
-      validate('config.server', val, validationErrors, {}, {
+      validateObject('config.server', val, validationErrors, {}, {
         blobsPort: function(val) {
           expect(val).to.be.a('number')
           expect(val).to.be.within(1025, 49150)

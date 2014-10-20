@@ -10,8 +10,7 @@ var _ = require('underscore')
 
 
 var clientConfig = {
-
-  appPort: 9001,
+  appPorts: [9001, 9002],
   blobsPort: 44444,
   blobsDirName: '/tmp',
 
@@ -19,7 +18,6 @@ var clientConfig = {
     ip: '127.0.0.1',
     blobsPort: 44445
   }
-
 }
 
 var sendToBlobClient = new oscCore.createOSCClient('localhost', clientConfig.blobsPort, 'tcp')
@@ -47,8 +45,12 @@ describe('blob-client', function() {
 
     it('should save the blob and send a message to the app client (Pd, Processing...)', function(done) {
       var bigBuf = new Buffer(Math.pow(2, 15))
+        , oscClients = [
+          { appPort: 9001 },
+          { appPort: 9002 }
+        ]
 
-      helpers.dummyOSCClients(2, [clientConfig], function(received) {
+      helpers.dummyOSCClients(4, oscClients, function(received) {
         // We collect the filePaths so that we can open them and replace the filepath
         // by the actual content of the file in our test. 
         var filePaths = _.chain(received).pluck(2).reduce(function(all, args, i) {
@@ -68,7 +70,9 @@ describe('blob-client', function() {
           })
           helpers.assertSameElements(received, [
             [9001, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
-            [9001, '/', [56789, new Buffer('hihihi')]]
+            [9001, '/', [56789, new Buffer('hihihi')]],
+            [9002, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
+            [9002, '/', [56789, new Buffer('hihihi')]]
           ])
           done()
         })
