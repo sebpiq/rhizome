@@ -1,6 +1,7 @@
 module.exports = {
 
-  appPort: 9001,
-  blobsDirName: '/tmp'
+  appPorts: [9001],
+  blobsDirName: '/tmp',
+  fileExtension: '.png'
 
 }

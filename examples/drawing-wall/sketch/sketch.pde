@@ -30,6 +30,12 @@ void setup() {
   subscribeMsg.add("/drawing");
   oscP5.send(subscribeMsg, rhizomeLocation);
   
+  // Configure the server to use rhizome-blobs to send/receive images
+  OscMessage configMsg = new OscMessage("/sys/config");
+  configMsg.add(appPort);
+  configMsg.add("blobClient");
+  oscP5.send(configMsg, rhizomeLocation);
+  
   noLoop();
 }
 
@@ -38,6 +44,9 @@ void draw() {}
 void oscEvent(OscMessage msg) {
   if (msg.addrPattern().equals("/sys/subscribed")) {
     println("subscribed successfully to /drawing");
+     
+  } else if (msg.addrPattern().equals("/sys/configured")) {
+    println("successfully configured the blob client");
      
   } else if (msg.addrPattern().equals("/drawing")) {
     String imgPath = msg.get(0).stringValue();
