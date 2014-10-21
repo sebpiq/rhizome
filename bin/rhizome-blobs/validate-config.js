@@ -28,7 +28,6 @@ chai.use(chaiHttp)
 
 var defaultConfig = {
 
-  // <appPorts> List of ports on which the application (Pd, Processing...) receives OSC messages.
   // <blobsDirName> Directory where blobs are stored.
   // <fileExtension> Blobs will be saved with the given file extension
   
@@ -52,27 +51,11 @@ module.exports = function(config, done) {
   _.defaults(config, defaultConfig)
   var validationErrors = {}
 
-  validateObject('config', config, validationErrors, {
-    after: function() {
-      var blobsPort = this.blobsPort
-      if (_.some(this.appPorts, function(appPort) { return appPort === blobsPort }))
-        throw new chai.AssertionError('appPorts and blobsPort should be different')
-    },
-    done: done
-  }, {
+  validateObject('config', config, validationErrors, { done: done }, {
 
-    fileExtension: function() {
-
-    },
-
-    appPorts: function(val) {
-      expect(val).to.be.an('array')
-      val.forEach(function(appPort, i) {
-        validate('config.appPorts[' + i + ']', validationErrors, appPort, function() {
-          expect(appPort).to.be.a('number')
-          expect(appPort).to.be.within(1025, 49150)
-        })
-      })
+    fileExtension: function(val) {
+      if (val !== undefined)
+        expect(val).to.be.a('string')
     },
 
     blobsPort: function(val) {

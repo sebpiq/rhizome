@@ -135,12 +135,12 @@ describe('osc', function() {
         // Checking the messages received
         function(received, next) {
           helpers.assertSameElements(received, [
-            [44444, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
-            [44445, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
+            [44444, '/blo', [9001, new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
+            [44445, '/blo', [9002, new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
             [9003, '/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')]],
 
-            [44444, '/blo/bli', [new Buffer('qwerty')]],
-            [44445, '/blo/bli', [new Buffer('qwerty')]],
+            [44444, '/blo/bli', [9001, new Buffer('qwerty')]],
+            [44445, '/blo/bli', [9002, new Buffer('qwerty')]],
             [9003, '/blo/bli', [new Buffer('qwerty')]]
           ])
           done()

@@ -10,7 +10,6 @@ var _ = require('underscore')
 
 
 var clientConfig = {
-  appPorts: [9001, 9002],
   blobsPort: 44444,
   blobsDirName: '/tmp',
 
@@ -50,7 +49,7 @@ describe('blob-client', function() {
           { appPort: 9002 }
         ]
 
-      helpers.dummyOSCClients(4, oscClients, function(received) {
+      helpers.dummyOSCClients(2, oscClients, function(received) {
         // We collect the filePaths so that we can open them and replace the filepath
         // by the actual content of the file in our test. 
         var filePaths = _.chain(received).pluck(2).reduce(function(all, args, i) {
@@ -70,16 +69,14 @@ describe('blob-client', function() {
           })
           helpers.assertSameElements(received, [
             [9001, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
-            [9001, '/', [56789, new Buffer('hihihi')]],
-            [9002, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
-            [9002, '/', [56789, new Buffer('hihihi')]]
+            [9001, '/', [56789, new Buffer('hihihi')]]
           ])
           done()
         })
       })
 
-      sendToBlobClient.send('/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')])
-      sendToBlobClient.send('/', [56789, new Buffer('hihihi')])
+      sendToBlobClient.send('/bla/blob', [9001, bigBuf, 'holle', 12345, new Buffer('bloblo')])
+      sendToBlobClient.send('/', [9001, 56789, new Buffer('hihihi')])
     })
 
     it('should save the blob with the given extension', function(done) {
@@ -100,7 +97,7 @@ describe('blob-client', function() {
             done()
           })
 
-          sendToBlobClient.send('/bla/blob', [new Buffer('bloblo'), 111])
+          sendToBlobClient.send('/bla/blob', [9001, new Buffer('bloblo'), 111])
         }
       ])
     })
