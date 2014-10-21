@@ -5,7 +5,7 @@ rhizome
 
 **rhizome** is a web server for participative performances and installations.
 
-**rhizome** is a solution for transmitting messages from **OSC** to a **web page** and back, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**.
+**rhizome** is a solution for transmitting messages and files between **OSC** applications and **web pages**, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**.
 
 **rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...). 
 
@@ -16,14 +16,6 @@ While **rhizome** provides you with a solid architecture for communication, you 
 - *the installation / performance setup*. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...).
 
 - *the web page*. It should be implemented with **JavaScript** and **HTML**. **rhizome** comes with a JavaScript client handling all the communication for you. So you shouldn't have to worry about this, and instead, focus on implementing a nice user interface / cool visuals / cool sounds.
-
-
-Status of the project
-----------------------
-
-This project is brand new, and it is currently under heavy development. As the API will become more stable over time, the documentation should follow.
-
-Meanwhile, don't hesitate to contact me if you have any questions. 
 
 
 Getting started
@@ -56,7 +48,7 @@ Gallery
 
 **rhizome** was used to realize the following projects :
 
-- *Fields*. Diffusion of field recordings through the smartphones from people in the audience. The connected devices become a giant granular synthesizer that the performers can manipulate live with a midi controller. [Watch excerpt](https://vimeo.com/92586493)
+- *Fields*. Sound diffusion through audience's mobile devices. The connected phones and tablets become an array of speakers that the performers can control live. [Watch excerpt](https://vimeo.com/92586493)
 - *The Projectionist Orchestra*. Live audio-visual performance, where the audience can control sound and visuals with their smartphones. [Watch excerpt](https://vimeo.com/91108668)
 
 
@@ -65,7 +57,7 @@ Transferring files
 
 **rhizome** supports transferring [OSC blobs](http://opensoundcontrol.org/spec-1_0) and [JavaScript blobs](https://developer.mozilla.org/en-US/docs/Web/API/Blob) without any problem. This means that you can transfer files (audio, images, ...) between your OSC application and the web page.
 
-However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
+However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool called **rhizome-blobs** that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
 
 
 API
@@ -79,7 +71,9 @@ The following messages are used for communication between one connection and the
 
   - `/sys/subscribe <appPort> <address>` : subscribes the OSC client to messages sent at `<address>`
   - `/sys/resend <appPort> <address>` : resends the last message sent at `<address>`.
-  - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server.
+  - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server using **rhizome-blobs**.
+  - `/sys/config <appPort> <parameter> [<arg1> <arg2> ...]` : configures the OSC connection on the server. Available parameters are :
+    - `blobClient [<blobsPort>]` : tell the server that the OSC client uses **rhizome-blobs** for file transfers. `blobsPort` is the port on which **rhizome-blobs** is listening for incoming files. If not provided a default value will be chosen.
 
 #### From Web client
 
@@ -215,7 +209,7 @@ For contributors
 #### Activate logging
 
 ```
-export DEBUG=rhizome.*
+export DEBUG=rhizome*
 ```
 
 
@@ -243,6 +237,17 @@ istanbul cover _mocha -- test --recursive
 
 Changelog
 -----------
+
+-0.5.0
+
+  - Server:
+    - option `clients` removed. Now OSC connection are created on the fly instead of being declared in the config file.
+    - building the web client with gulp instead of grunt
+  
+  - Blob client:
+    - option `appPort` removed. Clients don't need to be declared anymore
+    - option `fileExtension` to save files with a given extension
+  
 
 -0.4.3
 
