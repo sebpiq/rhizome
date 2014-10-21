@@ -13,12 +13,14 @@ describe('shared', function() {
 
       var pushValue = helpers.waitForAnswers(5, function(received) {
         clearInterval(sendInterval)
-        var avg = 0
-        received.forEach(function(value, i) {
-          avg += Math.abs(value - (i * 100))
-        })
-        avg /= received.length
-        assert.ok(avg < 5)
+        var diffs = []
+          , avgDiffs
+          , i
+        for (i = 1; i < received.length; i++)
+          diffs.push(received[i] - received[i-1])
+        avgDiffs = diffs.reduce(function(a, b) { return a + b }, 0) / diffs.length
+        assert.ok(avgDiffs < 110)
+        assert.ok(avgDiffs > 90)
         done()
       })
 
