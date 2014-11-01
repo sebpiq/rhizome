@@ -240,6 +240,10 @@ Changelog
 
 -0.5.0
 
+  - Server: fixed a bug with gulp
+
+-0.5.0
+
   - Server:
     - option `clients` removed. Now OSC connection are created on the fly instead of being declared in the config file.
     - building the web client with gulp instead of grunt
