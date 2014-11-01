@@ -26,12 +26,6 @@ var path = require('path')
   , async = require('async')
   , express = require('express')
   , clc = require('cli-color')
-  , browserify = require('browserify')
-  , gulp = require('gulp')
-  , uglify = require('gulp-uglify')
-  , gutil = require('gulp-util')
-  , source = require('vinyl-source-stream')
-  , buffer = require('vinyl-buffer')
 
   , wsServer = require('../../lib/server/websockets')
   , oscServer = require('../../lib/server/osc')
@@ -79,29 +73,9 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
   // Start servers
   async.parallel([
 
-    function(next) {
-      async.waterfall([
-        function(next2) { fs.exists(buildDir, function(exists) { next2(null, exists) }) },
-        function(exists, next2) {
-          if (!exists) fs.mkdir(buildDir, next2)
-          else next2()
-        },
-        function(next2) {
-          browserify({ entries: '../../lib/web-client/index.js' })
-            .bundle()
-            .on('error', gutil.log)
-            .pipe(source('rhizome.js'))
-            .pipe(buffer())
-            .pipe(uglify())
-            .pipe(gulp.dest(buildDir))
-            .on('finish', next2)
-        }
-      ], next)
-    },
-
-    function(next) { wsServer.start(config, next) },
-
-    function(next) { oscServer.start(config, next) },
+    wsServer.renderClient.bind(wsServer, buildDir),
+    wsServer.start.bind(wsServer, config),
+    oscServer.start.bind(oscServer, config),
 
     function(next) {
       server.listen(app.get('port'), function() {

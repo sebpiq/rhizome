@@ -148,4 +148,23 @@ describe('websockets', function() {
 
   })
 
+  describe('renderClient', function() {
+
+    it('should render the client js file to the given folder', function(done) {
+      async.series([
+        wsServer.renderClient.bind(wsServer, '/tmp'),
+        fs.unlink.bind(fs, '/tmp/rhizome.js')
+      ], done)
+    })
+
+    it('should return errors', function(done) {
+      wsServer.renderClient('/forbidden', function(err) {
+        assert.ok(err)
+        assert.equal(err.code, 'EACCES')
+        done()
+      })
+    })
+
+  })
+
 })
