@@ -27,14 +27,14 @@ var path = require('path')
   , express = require('express')
   , clc = require('cli-color')
 
-  , wsServer = require('../../lib/server/websockets')
-  , oscServer = require('../../lib/server/osc')
+  , websockets = require('../../lib/server/websockets')
+  , osc = require('../../lib/server/osc')
   , validateConfig = require('./validate-config')
   , utils = require('../utils')
 
 program
   .version(version)
-  .parse(process.argv);
+  .parse(process.argv)
 
 if (process.argv.length !== 3) {
   console.log('usage : rhizome <config.js>')
@@ -48,6 +48,9 @@ var app = express()
   , configFilePath = path.join(process.cwd(), process.argv[2])
 
 validateConfig(require(configFilePath), function(err, config, configErrors) {
+
+  var wsServer = new websockets.WebSocketServer()
+    , oscServer = new osc.OSCServer()
 
   if (_.keys(configErrors).length) {
     utils.printConfigErrors(configErrors)
@@ -73,7 +76,7 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
   // Start servers
   async.parallel([
 
-    wsServer.renderClient.bind(wsServer, buildDir),
+    websockets.renderClient.bind(websockets, buildDir),
     wsServer.start.bind(wsServer, config),
     oscServer.start.bind(oscServer, config),
 
