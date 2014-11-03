@@ -2,7 +2,7 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , oscServer = require('../../../lib/server/osc')
+  , osc = require('../../../lib/server/osc')
   , connections = require('../../../lib/server/connections')
   , utils = require('../../../lib/server/core/utils')
   , oscCore = require('../../../lib/server/core/osc-core')
@@ -16,6 +16,8 @@ var config = {
   rootUrl: '/', 
   usersLimit: 5
 }
+
+var oscServer = new osc.OSCServer()
 
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
@@ -42,7 +44,7 @@ var sendToServer = new oscCore.createOSCClient('localhost', config.oscPort, 'udp
 describe('osc', function() {
 
   beforeEach(function(done) { oscServer.start(config, done) })
-  afterEach(function(done) { helpers.afterEach(done) })
+  afterEach(function(done) { helpers.afterEach([oscServer], done) })
 
   describe('send', function() {
 

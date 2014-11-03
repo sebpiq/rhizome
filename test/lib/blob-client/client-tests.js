@@ -36,7 +36,7 @@ describe('blob-client', function() {
   afterEach(function(done) {
     async.series([
       fakeServer.stop.bind(fakeServer),
-      helpers.afterEach
+      helpers.afterEach.bind(helpers, [client])
     ], done)
   })
 

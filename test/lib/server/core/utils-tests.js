@@ -4,7 +4,6 @@ var fs = require('fs')
   , async = require('async')
   , utils = require('../../../../lib/server/core/utils')
   , shared = require('../../../../lib/shared')
-  , helpers = require('../../../helpers')
 
 describe('utils', function() {
   

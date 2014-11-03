@@ -2,7 +2,7 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , wsServer = require('../../../lib/server/websockets')
+  , websockets = require('../../../lib/server/websockets')
   , connections = require('../../../lib/server/connections')
   , client = require('../../../lib/web-client/client')
   , shared = require('../../../lib/shared')
@@ -20,6 +20,8 @@ var config = {
   clients: []
 }
 
+var wsServer = new websockets.WebSocketServer()
+
 describe('web-client.client', function() {
 
   beforeEach(function(done) {
@@ -29,7 +31,7 @@ describe('web-client.client', function() {
   })
   afterEach(function(done) {
     client.debug = function() {}
-    helpers.afterEach(done)
+    helpers.afterEach([wsServer, client], done)
   })
 
   describe('start', function() {
@@ -88,7 +90,7 @@ describe('web-client.client', function() {
       client.config.queueIfFull(false)
       assertDisconnected()
 
-      helpers.dummyWebClients(config.webPort, 1, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, config.webPort, 1, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
 
@@ -107,7 +109,7 @@ describe('web-client.client', function() {
 
       async.waterfall([
 
-        helpers.dummyWebClients.bind(this, config.webPort, 1),
+        helpers.dummyWebClients.bind(this, wsServer, config.webPort, 1),
 
         function(sockets, next) {
           client.start()
@@ -310,7 +312,7 @@ describe('web-client.client', function() {
       async.series([
         function(next) {
           client.once('connection lost', next)
-          wsServer.sockets()[0].rhizome.close()
+          wsServer.removeConnection(wsServer.connections[0])
         },
         function(next) {
           assertDisconnected()
@@ -390,11 +392,11 @@ describe('web-client.client', function() {
       assertConnected()
       async.series([
         function(next) {
-          wsServer.sockets()[0].rhizome.close()
+          wsServer.removeConnection(wsServer.connections[0])
           setTimeout(next, 10)
         },
         function(next) {
-          helpers.dummyWebClients(config.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, config.webPort, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })
@@ -415,7 +417,7 @@ describe('web-client.client', function() {
         function(next) {
           wsServer.start(config, next)
           assertDisconnected()
-          helpers.dummyWebClients(config.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, config.webPort, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })

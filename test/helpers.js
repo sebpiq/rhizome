@@ -2,7 +2,6 @@ var assert = require('assert')
   , _ = require('underscore')
   , async = require('async')
   , WebSocket = require('ws')
-  , wsServer = require('../lib/server/websockets')
   , oscServer = require('../lib/server/osc')
   , webClient = require('../lib/web-client/client')
   , blobClient = require('../lib/blob-client/client')
@@ -22,7 +21,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 }
 
 // Helper to create dummy web clients
-exports.dummyWebClients = function(port, count, done) {
+exports.dummyWebClients = function(wsServer, port, count, done) {
   var countBefore = wsServer.sockets().length
   async.series(_.range(count).map(function(i) {
     return function(next) {
@@ -86,12 +85,18 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
 }
 
 // Helper with common operations to clean after a test
-exports.afterEach = function(done) {
+exports.afterEach = function(toStop, done) {
+  if (arguments.length === 1) {
+    done = toStop
+    toStop = null
+  }
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
   connections.removeAll()
   webClient.removeAllListeners()
-  async.series([ wsServer.stop, webClient.stop, oscServer.stop, blobClient.stop ], done)
+  if (toStop)
+    async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
+  else done()
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)

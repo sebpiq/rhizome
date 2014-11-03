@@ -5,7 +5,7 @@ var _ = require('underscore')
   , shared = require('../../../../lib/shared')
   , helpers = require('../../../helpers')
 
-afterEach(helpers.afterEach)
+afterEach(function(done) { helpers.afterEach(done) })
 
 describe('Connection', function() {
 

@@ -3,7 +3,7 @@ var _ = require('underscore')
   , WebSocket = require('ws')
   , async = require('async')
   , assert = require('assert')
-  , wsServer = require('../../../lib/server/websockets')
+  , websockets = require('../../../lib/server/websockets')
   , connections = require('../../../lib/server/connections')
   , utils = require('../../../lib/server/core/utils')
   , shared = require('../../../lib/shared')
@@ -19,11 +19,14 @@ var config = {
   clients: []
 }
 
+var wsServer = new websockets.WebSocketServer()
+helpers.wsServer = wsServer
+
 
 describe('websockets', function() {
 
   beforeEach(function(done) { wsServer.start(config, done) })
-  afterEach(function(done) { helpers.afterEach(done) })
+  afterEach(function(done) { helpers.afterEach([wsServer], done) })
 
   describe('connection', function() {
 
@@ -33,7 +36,7 @@ describe('websockets', function() {
       async.waterfall([
 
         function(next) {
-          helpers.dummyWebClients(config.webPort, 6, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, config.webPort, 6, function(err, sockets) {
             if (err) return next(err)
             assert.deepEqual(
               _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
@@ -74,7 +77,7 @@ describe('websockets', function() {
       connections.subscribe(dummyConnections[2], shared.connectionOpenAddress)
 
       // Create dummy web clients, so that new connections are open
-      helpers.dummyWebClients(config.webPort, 3)
+      helpers.dummyWebClients(wsServer, config.webPort, 3)
     })
 
   })
@@ -84,15 +87,19 @@ describe('websockets', function() {
     it('should forget the sockets', function(done) {
       assert.equal(wsServer.sockets().length, 0)
       async.waterfall([
-        function(next) { helpers.dummyWebClients(config.webPort, 3, next) },
+        function(next) { helpers.dummyWebClients(wsServer, config.webPort, 3, next) },
         function(sockets, next) {
-          connections.subscribe(wsServer.sockets()[0].rhizome, '/someAddr')
-          connections.subscribe(wsServer.sockets()[1].rhizome, '/someOtherAddr')
+          var connection1 = wsServer.connections[0]
+            , connection2 = wsServer.connections[1]
+          connection1.onOpened()
+          connection2.onOpened()
+          connections.subscribe(connection1, '/someAddr')
+          connections.subscribe(connection2, '/someOtherAddr')
           assert.equal(connections._nsTree.get('/someAddr').connections.length, 1)
           assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
           assert.equal(wsServer.sockets().length, 3)
-          sockets[0].close()
-          sockets[0].on('close', function() { next() })
+          connection1.socket.close()
+          connection1.on('closed', function() { next() })
         }
       ], function(err) {
         if (err) throw err
@@ -107,7 +114,7 @@ describe('websockets', function() {
       assert.equal(wsServer.sockets().length, 0)
 
       // Create dummy web clients, and immediately close one of them
-      helpers.dummyWebClients(config.webPort, 3, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, config.webPort, 3, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets().length, 3)
         sockets[2].close()
@@ -134,13 +141,13 @@ describe('websockets', function() {
       assert.equal(wsServer.sockets().length, 0)
 
       // Create dummy web clients, and immediately close one of them
-      helpers.dummyWebClients(config.webPort, 1, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, config.webPort, 1, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets().length, 1)
         var serverSocket = wsServer.sockets()[0]
         serverSocket.close()
-        console.log('DO NOT PANIC : this is just a test')
-        serverSocket.rhizome.send('/bla', [1, 2, 3])
+        console.log('DO NOT PANIC : this is just a test (should say "web socket send failed")')
+        wsServer.connections[0].send('/bla', [1, 2, 3])
         done()
       })
 
@@ -152,13 +159,13 @@ describe('websockets', function() {
 
     it('should render the client js file to the given folder', function(done) {
       async.series([
-        wsServer.renderClient.bind(wsServer, '/tmp'),
+        websockets.renderClient.bind(wsServer, '/tmp'),
         fs.unlink.bind(fs, '/tmp/rhizome.js')
       ], done)
     })
 
     it('should return errors', function(done) {
-      wsServer.renderClient('/forbidden', function(err) {
+      websockets.renderClient('/forbidden', function(err) {
         assert.ok(err)
         assert.equal(err.code, 'EACCES')
         done()
