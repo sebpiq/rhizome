@@ -2,13 +2,13 @@ var assert = require('assert')
   , _ = require('underscore')
   , async = require('async')
   , WebSocket = require('ws')
+  , moscow = require('moscow')
   , oscServer = require('../lib/server/osc')
   , webClient = require('../lib/web-client/client')
   , blobClient = require('../lib/blob-client/client')
   , connections = require('../lib/server/connections')
   , Connection = require('../lib/server/core/Connection')
   , utils = require('../lib/server/core/utils')
-  , oscCore = require('../lib/server/core/osc-core')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -49,7 +49,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   })
 
   var servers = clients.map(function(client, i) {
-    var server = new oscCore.createOSCServer(client.appPort, client.transport || 'udp')
+    var server = new moscow.createServer(client.appPort, client.transport || 'udp')
     server.start(function(err) { if (err) throw err })
     server.on('message', function(address, args) {
       answerReceived(client.appPort, address, args)

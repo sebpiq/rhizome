@@ -12,6 +12,7 @@
     "underscore": "1.5.x",
     "debug": "0.7.x",
     "ws": "0.4.x",
+    "moscow": "x",
     "express": "3.3.x",
     "async": "0.2.x",
     "hbs": "2.3.x",

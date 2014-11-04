@@ -2,10 +2,10 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
+  , moscow = require('moscow')
   , osc = require('../../../lib/server/osc')
   , connections = require('../../../lib/server/connections')
   , utils = require('../../../lib/server/core/utils')
-  , oscCore = require('../../../lib/server/core/osc-core')
   , shared = require('../../../lib/shared')
   , helpers = require('../../helpers')
 
@@ -39,7 +39,7 @@ var doConnection = function(clients) {
 
 }
 
-var sendToServer = new oscCore.createOSCClient('localhost', config.oscPort, 'udp')
+var sendToServer = new moscow.createClient('localhost', config.oscPort, 'udp')
 
 describe('osc', function() {
 

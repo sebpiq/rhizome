@@ -2,10 +2,10 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
+  , moscow = require('moscow')
   , shared = require('../../../lib/shared')
   , client = require('../../../lib/blob-client/client')
   , utils = require('../../../lib/server/core/utils')
-  , oscCore = require('../../../lib/server/core/osc-core')
   , helpers = require('../../helpers')
 
 
@@ -19,9 +19,9 @@ var clientConfig = {
   }
 }
 
-var sendToBlobClient = new oscCore.createOSCClient('localhost', clientConfig.blobsPort, 'tcp')
-  , fakeServer = new oscCore.createOSCServer(clientConfig.server.blobsPort, 'tcp')
-  , sendToServer = new oscCore.createOSCClient(clientConfig.server.ip, clientConfig.server.blobsPort, 'tcp')
+var sendToBlobClient = new moscow.createClient('localhost', clientConfig.blobsPort, 'tcp')
+  , fakeServer = new moscow.createServer(clientConfig.server.blobsPort, 'tcp')
+  , sendToServer = new moscow.createClient(clientConfig.server.ip, clientConfig.server.blobsPort, 'tcp')
 
 
 describe('blob-client', function() {
