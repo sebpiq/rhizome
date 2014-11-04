@@ -312,7 +312,7 @@ describe('web-client.client', function() {
       async.series([
         function(next) {
           client.once('connection lost', next)
-          wsServer.removeConnection(wsServer.connections[0])
+          wsServer.connections[0].close()
         },
         function(next) {
           assertDisconnected()
@@ -392,7 +392,7 @@ describe('web-client.client', function() {
       assertConnected()
       async.series([
         function(next) {
-          wsServer.removeConnection(wsServer.connections[0])
+          wsServer.connections[0].close()
           setTimeout(next, 10)
         },
         function(next) {

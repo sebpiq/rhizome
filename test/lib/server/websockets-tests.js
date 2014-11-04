@@ -91,15 +91,13 @@ describe('websockets', function() {
         function(sockets, next) {
           var connection1 = wsServer.connections[0]
             , connection2 = wsServer.connections[1]
-          connection1.onOpened()
-          connection2.onOpened()
           connections.subscribe(connection1, '/someAddr')
           connections.subscribe(connection2, '/someOtherAddr')
           assert.equal(connections._nsTree.get('/someAddr').connections.length, 1)
           assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
           assert.equal(wsServer.sockets().length, 3)
           connection1.socket.close()
-          connection1.on('closed', function() { next() })
+          connection1.on('close', function() { next() })
         }
       ], function(err) {
         if (err) throw err
