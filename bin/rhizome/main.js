@@ -18,7 +18,6 @@
 
 var path = require('path')
   , fs = require('fs')
-  , spawn = require('child_process').spawn
   , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
   , program = require('commander')
