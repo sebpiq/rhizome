@@ -151,6 +151,27 @@ describe('osc', function() {
       ])
     })
 
+    it('shouldnt crash if the client has thrown an error', function(done) {
+      // OSC client with a forbidden `blobsPort`.
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001, blobsPort: 81, useBlobClient: true}
+      ]
+
+      async.waterfall([
+        doConnection(oscClients),
+
+        // Subscribing an OSC connection, and cause the blob to be sent to that
+        // forbidden port
+        function(next) {
+          var oscConn = oscServer.connections[0]
+          connections.subscribe(oscConn, '/bla')
+          sendToServer.send('/bla', [new Buffer('blo')])
+          setTimeout(done, 1000)
+        }
+
+      ])
+    })
+
   })
 
   describe('receive a blob', function() {

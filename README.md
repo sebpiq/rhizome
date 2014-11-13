@@ -238,7 +238,14 @@ istanbul cover _mocha -- test --recursive
 Changelog
 -----------
 
--0.5.0
+-0.5.2
+
+  - Exposed clients and servers so that library can be used as a package
+  - Server:
+    - moved OSC server/clients to a separate library `node-moscow`
+    - Refactored servers to implement `Server` and `Connection` base classes.
+
+-0.5.1
 
   - Server: fixed a bug with gulp
 
