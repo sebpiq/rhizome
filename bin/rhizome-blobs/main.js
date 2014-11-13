@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with rhizome.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 var path = require('path')
   , _ = require('underscore')
-  , debug = require('debug')('rhizome-blobs.main')
+  , debug = require('debug')('rhizome.blob-client')
   , program = require('commander')
   , version = require('../../package.json').version  
   , clc = require('cli-color')
