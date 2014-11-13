@@ -20,6 +20,9 @@ var config = {
   clients: []
 }
 
+client.config.port(8000)
+client.config.hostname('localhost')
+
 var wsServer = new websockets.WebSocketServer()
 
 describe('web-client.client', function() {
