@@ -9,7 +9,7 @@ rhizome
 
 **rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...). 
 
-![rhizome](https://raw2.github.com/sebpiq/rhizome/master/images/schema.png)
+![rhizome](https://raw.githubusercontent.com/sebpiq/rhizome/master/images/schema.png)
 
 While **rhizome** provides you with a solid architecture for communication, you still have to implement what's on both ends of the chain :
 
