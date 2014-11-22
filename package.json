@@ -29,7 +29,8 @@
     "vinyl-buffer": "1.0.x"
   },
   "devDependencies": {
-    "mocha": "1.17.x"
+    "mocha": "1.17.x",
+    "jetty": "0.2.x"
   },
   "bin" : { "rhizome" : "./bin/rhizome/main.js", "rhizome-blobs" : "./bin/rhizome-blobs/main.js" },
   "license": "MIT",
