@@ -1,0 +1,3 @@
+[submodule "node-moscow"]
+	path = node-moscow
+	url = https://github.com/sebpiq/node-moscow.git

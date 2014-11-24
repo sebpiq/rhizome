@@ -4,7 +4,7 @@ var _ = require('underscore')
   , assert = require('assert')
   , websockets = require('../../../lib/server/websockets')
   , connections = require('../../../lib/server/connections')
-  , client = require('../../../lib/web-client/client')
+  , Client = require('../../../lib/web-client/Client')
   , shared = require('../../../lib/shared')
   , utils = require('../../../lib/server/core/utils')
   , helpers = require('../../helpers')
@@ -20,10 +20,12 @@ var config = {
   clients: []
 }
 
-client.config.port(8000)
-client.config.hostname('localhost')
-
 var wsServer = new websockets.WebSocketServer()
+  , client = new Client
+
+client.config('port', 8000)
+client.config('hostname', 'localhost')
+
 
 describe('web-client.client', function() {
 
@@ -34,6 +36,7 @@ describe('web-client.client', function() {
   })
   afterEach(function(done) {
     client.debug = function() {}
+    client.removeAllListeners()
     helpers.afterEach([wsServer, client], done)
   })
 
@@ -41,7 +44,7 @@ describe('web-client.client', function() {
     
     beforeEach(function(done) {
       config.usersLimit = 1
-      client.config.reconnect(0)
+      client.config('reconnect', 0)
       wsServer.start(config, done)
     })
     afterEach(function() {
@@ -90,7 +93,7 @@ describe('web-client.client', function() {
     it('should reject connection when server is full and queue is false', function(done) {
       var received
       client.on('server full', function() { received = 'server full' })
-      client.config.queueIfFull(false)
+      client.config('queueIfFull', false)
       assertDisconnected()
 
       helpers.dummyWebClients(wsServer, config.webPort, 1, function(err, sockets) {
@@ -107,7 +110,7 @@ describe('web-client.client', function() {
     })
 
     it('should put the client on queue when server is full and queue is true', function(done) {
-      client.config.queueIfFull(true)
+      client.config('queueIfFull', true)
       assertDisconnected()
 
       async.waterfall([
@@ -137,7 +140,7 @@ describe('web-client.client', function() {
   describe('message', function() {
     
     beforeEach(function(done) {
-      client.config.reconnect(0)
+      client.config('reconnect', 0)
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(done) }
@@ -206,7 +209,7 @@ describe('web-client.client', function() {
         { ip: '127.0.0.1', appPort: 9005 },
         { ip: '127.0.0.1', appPort: 9010 }
       ]
-      client.config.reconnect(0)
+      client.config('reconnect', 0)
       async.series([
         function(next) { wsServer.start(config, next) },
         function(next) { client.start(done) }
@@ -310,7 +313,7 @@ describe('web-client.client', function() {
     }
 
     it('should reconnect', function(done) {
-      client.config.reconnect(50)
+      client.config('reconnect', 50)
       assertConnected()
       async.series([
         function(next) {
@@ -330,7 +333,7 @@ describe('web-client.client', function() {
     })
 
     it('should work as well when reconnecting several times', function(done) {
-      client.config.reconnect(30)
+      client.config('reconnect', 30)
       assertConnected()
 
       // Test that we don't bind handlers several times when reconnection happens.
@@ -391,7 +394,7 @@ describe('web-client.client', function() {
 
     it('should work fine if the server is full when trying to reconnect', function(done) {
       var dummySockets
-      client.config.reconnect(100)
+      client.config('reconnect', 100)
       assertConnected()
       async.series([
         function(next) {
