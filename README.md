@@ -244,6 +244,7 @@ Changelog
   - Server:
     - moved OSC server/clients to a separate library `node-moscow`
     - Refactored servers to implement `Server` and `Connection` base classes.
+    - fixed a bug causing server to crash when blob client refuses connection
 
 -0.5.1
 
