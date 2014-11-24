@@ -3,9 +3,8 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , moscow = require('moscow')
-  , shared = require('../../../lib/shared')
+  , coreMessages = require('../../../lib/core/messages')
   , client = require('../../../lib/blob-client/client')
-  , utils = require('../../../lib/server/core/utils')
   , helpers = require('../../helpers')
 
 
@@ -112,8 +111,8 @@ describe('blob-client', function() {
 
       fakeServer.on('message', function(address, args) {
 
-        if (address === shared.sendBlobAddress) {
-          sendToBlobClient.send(shared.sendBlobAddress, args)
+        if (address === coreMessages.sendBlobAddress) {
+          sendToBlobClient.send(coreMessages.sendBlobAddress, args)
 
         } else {
           received.push([address, args])
@@ -134,18 +133,18 @@ describe('blob-client', function() {
         fs.writeFile.bind(fs, '/tmp/blob3', 'blobbyC')
       ], function(err) {
         if (err) throw err
-        sendToServer.send(shared.sendBlobAddress, ['/bla/bli', '/tmp/blob1', 1234, 'blabla'])
-        sendToServer.send(shared.sendBlobAddress, ['/blo/', '/tmp/blob2'])
-        sendToServer.send(shared.sendBlobAddress, ['/BLO/b/', '/tmp/blob3', 5678])
+        sendToServer.send(coreMessages.sendBlobAddress, ['/bla/bli', '/tmp/blob1', 1234, 'blabla'])
+        sendToServer.send(coreMessages.sendBlobAddress, ['/blo/', '/tmp/blob2'])
+        sendToServer.send(coreMessages.sendBlobAddress, ['/BLO/b/', '/tmp/blob3', 5678])
       })
     })
 
     it('should refuse to send a blob that is not in the configured dirName', function(done) {
       fakeServer.on('message', function(address, args) {
-        assert.equal(address, shared.errorAddress)
+        assert.equal(address, coreMessages.errorAddress)
         done()
       })
-      sendToBlobClient.send(shared.sendBlobAddress, ['/bla', '/home/spiq/secret_file'])
+      sendToBlobClient.send(coreMessages.sendBlobAddress, ['/bla', '/home/spiq/secret_file'])
     })
 
   })

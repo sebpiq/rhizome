@@ -3,13 +3,13 @@ var assert = require('assert')
   , async = require('async')
   , WebSocket = require('ws')
   , moscow = require('moscow')
-  , oscServer = require('../lib/server/osc')
-  , WebClient = require('../lib/web-client/Client')
+  , oscServer = require('../lib/osc/Server')
+  , WebClient = require('../lib/websockets/Client')
   , webClient = new WebClient()
   , blobClient = require('../lib/blob-client/client')
-  , connections = require('../lib/server/connections')
-  , Connection = require('../lib/server/core/Connection')
-  , utils = require('../lib/server/core/utils')
+  , connections = require('../lib/connections')
+  , coreServer = require('../lib/core/server')
+  , utils = require('../lib/core/utils')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -63,9 +63,9 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
 // Helpers to create dummy server-side connections
 var DummyConnection = exports.DummyConnection = function(callback) {
   this.callback = callback
-  Connection.apply(this)
+  coreServer.Connection.apply(this)
 }
-_.extend(DummyConnection.prototype, Connection.prototype, {
+_.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
   send: function(address, args) { this.callback(address, args) }
 })
 

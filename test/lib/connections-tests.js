@@ -1,7 +1,7 @@
 var assert = require('assert')
   , _ = require('underscore')
-  , connections = require('../../../lib/server/connections')
-  , helpers = require('../../helpers')
+  , connections = require('../../lib/connections')
+  , helpers = require('../helpers')
 
 describe('connections', function() {
 

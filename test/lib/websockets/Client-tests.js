@@ -2,13 +2,11 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , websockets = require('../../../lib/server/websockets')
-  , connections = require('../../../lib/server/connections')
-  , Client = require('../../../lib/web-client/Client')
-  , shared = require('../../../lib/shared')
-  , utils = require('../../../lib/server/core/utils')
-  , helpers = require('../../helpers')
   , WebSocket = require('ws')
+  , websockets = require('../../../lib/websockets')
+  , connections = require('../../../lib/connections')
+  , coreMessages = require('../../../lib/core/messages')
+  , helpers = require('../../helpers')
 
 var config = {
   ip: '127.0.0.1',
@@ -20,14 +18,14 @@ var config = {
   clients: []
 }
 
-var wsServer = new websockets.WebSocketServer()
-  , client = new Client
+var wsServer = new websockets.Server()
+  , client = new websockets.Client
 
 client.config('port', 8000)
 client.config('hostname', 'localhost')
 
 
-describe('web-client.client', function() {
+describe('websockets.Client', function() {
 
   beforeEach(function(done) {
     //client.debug = console.log
@@ -151,7 +149,7 @@ describe('web-client.client', function() {
       assert.equal(connections._nsTree.has('/place1'), false)
 
       var subscribed = function(address, args) {
-        assert.equal(address, shared.subscribedAddress)
+        assert.equal(address, coreMessages.subscribedAddress)
         assert.deepEqual(args, ['/place1'])
         assert.equal(connections._nsTree.has('/place1'), true)
         assert.equal(connections._nsTree.get('/place1').connections.length, 1)
@@ -169,13 +167,13 @@ describe('web-client.client', function() {
         client.on('message', handler)
         subscribed(address, args)
       })
-      client.send(shared.subscribeAddress, ['/place1'])
+      client.send(coreMessages.subscribeAddress, ['/place1'])
     })
 
     it('should receive blobs', function(done) {
 
       var subscribed = function(address, args) {
-        assert.equal(address, shared.subscribedAddress)
+        assert.equal(address, coreMessages.subscribedAddress)
         assert.deepEqual(args, ['/a'])
         connections.send('/a', [new Buffer('hahaha'), 1234, 'blabla'])
         connections.send('/a/b', [new Buffer('hello')])
@@ -197,7 +195,7 @@ describe('web-client.client', function() {
         client.on('message', helpers.waitForAnswers(4, handler))
         subscribed(address, args)
       })
-      client.send(shared.subscribeAddress, ['/a'])
+      client.send(coreMessages.subscribeAddress, ['/a'])
     })
 
   })
@@ -341,8 +339,8 @@ describe('web-client.client', function() {
       // the expected messages in the end
       var allMessages = []
       client.on('message', function(address, args) { allMessages.push([ address, args ]) })
-      client.on('reconnected', function() { client.send(shared.subscribeAddress, ['/a']) })
-      client.send(shared.subscribeAddress, ['/a'])
+      client.on('reconnected', function() { client.send(coreMessages.subscribeAddress, ['/a']) })
+      client.send(coreMessages.subscribeAddress, ['/a'])
 
       var disconnectReconnect = function(done) {
         async.series([
@@ -378,10 +376,10 @@ describe('web-client.client', function() {
       ], function(err) {
         if (err) throw err
         assert.deepEqual(allMessages, [
-          [shared.subscribedAddress, ['/a']],
-          [shared.subscribedAddress, ['/a']],
-          [shared.subscribedAddress, ['/a']],
-          [shared.subscribedAddress, ['/a']]
+          [coreMessages.subscribedAddress, ['/a']],
+          [coreMessages.subscribedAddress, ['/a']],
+          [coreMessages.subscribedAddress, ['/a']],
+          [coreMessages.subscribedAddress, ['/a']]
         ])
         assert.deepEqual(received, [
           'connection lost', 'reconnected',

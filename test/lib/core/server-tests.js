@@ -1,13 +1,13 @@
 var _ = require('underscore')
   , assert = require('assert')
-  , Connection = require('../../../../lib/server/core/Connection')
-  , connections = require('../../../../lib/server/connections') 
-  , shared = require('../../../../lib/shared')
-  , helpers = require('../../../helpers')
+  , Connection = require('../../../lib/core/server').Connection
+  , connections = require('../../../lib/connections') 
+  , coreMessages = require('../../../lib/core/messages')
+  , helpers = require('../../helpers')
 
 afterEach(function(done) { helpers.afterEach(done) })
 
-describe('Connection', function() {
+describe('core.server.Connection', function() {
 
   describe('subscribe', function() {
 
@@ -20,14 +20,14 @@ describe('Connection', function() {
       var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
         received.push([2, address, args])
       })
-      dummyConnection1.onSysMessage(shared.subscribeAddress, ['/bla'])
-      dummyConnection2.onSysMessage(shared.subscribeAddress, ['/bla/'])
-      dummyConnection1.onSysMessage(shared.subscribeAddress, ['/'])
+      dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+      dummyConnection2.onSysMessage(coreMessages.subscribeAddress, ['/bla/'])
+      dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/'])
 
       helpers.assertSameElements(received, [
-        [1, shared.subscribedAddress, ['/bla']],
-        [2, shared.subscribedAddress, ['/bla/']],
-        [1, shared.subscribedAddress, ['/']]
+        [1, coreMessages.subscribedAddress, ['/bla']],
+        [2, coreMessages.subscribedAddress, ['/bla/']],
+        [1, coreMessages.subscribedAddress, ['/']]
       ])
       assert.equal(connections._nsTree.get('/bla').connections.length, 2)
       assert.equal(connections._nsTree.get('/').connections.length, 1)
@@ -53,10 +53,10 @@ describe('Connection', function() {
       connections.send('/bla', [2, 'tutu', new Buffer('hello')])
       connections.send('/bla/blo', [333])
 
-      dummyConnection.onSysMessage(shared.resendAddress, ['/bla']) // Blobs
-      dummyConnection.onSysMessage(shared.resendAddress, ['/bla/blo'])
-      dummyConnection.onSysMessage(shared.resendAddress, ['/bli']) // Empty messages
-      dummyConnection.onSysMessage(shared.resendAddress, ['/neverSeenBefore']) // Address that never received a message
+      dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla']) // Blobs
+      dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla/blo'])
+      dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bli']) // Empty messages
+      dummyConnection.onSysMessage(coreMessages.resendAddress, ['/neverSeenBefore']) // Address that never received a message
 
       helpers.assertSameElements(received, [
         ['/bla', [2, 'tutu', new Buffer('hello')]],
@@ -73,8 +73,8 @@ describe('Connection', function() {
         received.push([address, args])
       })
 
-      dummyConnection.onSysMessage(shared.subscribeAddress, ['/bla'])
-      dummyConnection.onSysMessage(shared.resendAddress, ['/bla'])
+      dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+      dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla'])
 
       helpers.assertSameElements(received, [
         ['/sys/subscribed', ['/bla']],

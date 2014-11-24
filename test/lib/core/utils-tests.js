@@ -2,10 +2,9 @@ var fs = require('fs')
   , assert = require('assert')
   , _ = require('underscore')
   , async = require('async')
-  , utils = require('../../../../lib/server/core/utils')
-  , shared = require('../../../../lib/shared')
+  , utils = require('../../../lib/core/utils')
 
-describe('utils', function() {
+describe('core.utils', function() {
   
   describe('IdManager', function() {
 

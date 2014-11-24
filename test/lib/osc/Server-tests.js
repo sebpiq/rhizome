@@ -3,10 +3,9 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , moscow = require('moscow')
-  , osc = require('../../../lib/server/osc')
-  , connections = require('../../../lib/server/connections')
-  , utils = require('../../../lib/server/core/utils')
-  , shared = require('../../../lib/shared')
+  , osc = require('../../../lib/osc')
+  , connections = require('../../../lib/connections')
+  , coreMessages = require('../../../lib/core/messages')
   , helpers = require('../../helpers')
 
 var config = {
@@ -17,7 +16,7 @@ var config = {
   usersLimit: 5
 }
 
-var oscServer = new osc.OSCServer()
+var oscServer = new osc.Server()
 
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
@@ -26,12 +25,12 @@ var doConnection = function(clients) {
     usingBlobClient.forEach(function(c) {
       if (c.blobsPort) args = [c.appPort, 'blobClient', c.blobsPort]
       else args = [c.appPort, 'blobClient']
-      sendToServer.send(shared.configureAddress, args)
+      sendToServer.send(coreMessages.configureAddress, args)
     })
 
     helpers.dummyOSCClients(usingBlobClient.length, usingBlobClient, function(received) {
       helpers.assertSameElements(received, usingBlobClient.map(function(c) {
-        return [c.appPort, shared.configuredAddress, [c.blobsPort || 44444]]
+        return [c.appPort, coreMessages.configuredAddress, [c.blobsPort || 44444]]
       }))
       done()
     })
@@ -41,7 +40,7 @@ var doConnection = function(clients) {
 
 var sendToServer = new moscow.createClient('localhost', config.oscPort, 'udp')
 
-describe('osc', function() {
+describe('osc.Server', function() {
 
   beforeEach(function(done) { oscServer.start(config, done) })
   afterEach(function(done) { helpers.afterEach([oscServer], done) })
@@ -65,16 +64,16 @@ describe('osc', function() {
 
         // Do subscribe
         function(next) {
-          sendToServer.send(shared.subscribeAddress, [9001, '/bla'])
-          sendToServer.send(shared.subscribeAddress, [9002, '/'])
+          sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
+          sendToServer.send(coreMessages.subscribeAddress, [9002, '/'])
           helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
         },
 
         // Checking received and sending some messages
         function(received, next) {
           helpers.assertSameElements(received, [
-            [9001, shared.subscribedAddress, ['/bla']],
-            [9002, shared.subscribedAddress, ['/']]
+            [9001, coreMessages.subscribedAddress, ['/bla']],
+            [9002, coreMessages.subscribedAddress, ['/']]
           ])
           helpers.dummyOSCClients(4, oscClients, next.bind(this, null))
           sendToServer.send('/bla', ['haha', 'hihi'])
@@ -116,18 +115,18 @@ describe('osc', function() {
 
         // Subscribing OSC clients
         function(next) {
-          sendToServer.send(shared.subscribeAddress, [9001, '/blo'])
-          sendToServer.send(shared.subscribeAddress, [9002, '/blo'])
-          sendToServer.send(shared.subscribeAddress, [9003, '/blo'])
+          sendToServer.send(coreMessages.subscribeAddress, [9001, '/blo'])
+          sendToServer.send(coreMessages.subscribeAddress, [9002, '/blo'])
+          sendToServer.send(coreMessages.subscribeAddress, [9003, '/blo'])
           helpers.dummyOSCClients(3, oscClients, next.bind(this, null))
         },
 
         // Checking received and sending some messages with blobs
         function(received, next) {
           helpers.assertSameElements(received, [
-            [9001, shared.subscribedAddress, ['/blo']],
-            [9002, shared.subscribedAddress, ['/blo']],
-            [9003, shared.subscribedAddress, ['/blo']]
+            [9001, coreMessages.subscribedAddress, ['/blo']],
+            [9002, coreMessages.subscribedAddress, ['/blo']],
+            [9003, coreMessages.subscribedAddress, ['/blo']]
           ])
           helpers.dummyOSCClients(6, blobClients, next.bind(this, null))
           sendToServer.send('/blo', [new Buffer('hahaha'), 'hihi', new Buffer('poil')])
@@ -192,11 +191,11 @@ describe('osc', function() {
 
         function(next) {
           // Simulate request to send a blob
-          sendToServer.send(shared.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
+          sendToServer.send(coreMessages.sendBlobAddress, [9002, '/bla/blo', '/tmp/hihi', 11, 22, 33])
 
           helpers.dummyOSCClients(1, blobClients, function(received) {
             helpers.assertSameElements(received, [
-              [44445, shared.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
+              [44445, coreMessages.sendBlobAddress, ['/bla/blo', '/tmp/hihi', 11, 22, 33]]
             ])
             done()
           })
@@ -215,7 +214,7 @@ describe('osc', function() {
 
         function(next) {
           // Simulate request to send a blob
-          sendToServer.send(shared.sendBlobAddress, [9001, 'bla', '/tmp/hihi'])
+          sendToServer.send(coreMessages.sendBlobAddress, [9001, 'bla', '/tmp/hihi'])
 
           helpers.dummyOSCClients(1, oscClients, function(received) {
             received.forEach(function(r) {
@@ -224,7 +223,7 @@ describe('osc', function() {
               args.pop()
             })
             helpers.assertSameElements(received, [
-              [9001, shared.errorAddress, []]
+              [9001, coreMessages.errorAddress, []]
             ])
             done()
           })

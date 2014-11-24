@@ -3,10 +3,9 @@ var _ = require('underscore')
   , WebSocket = require('ws')
   , async = require('async')
   , assert = require('assert')
-  , websockets = require('../../../lib/server/websockets')
-  , connections = require('../../../lib/server/connections')
-  , utils = require('../../../lib/server/core/utils')
-  , shared = require('../../../lib/shared')
+  , websockets = require('../../../lib/websockets')
+  , connections = require('../../../lib/connections')
+  , coreMessages = require('../../../lib/core/messages')
   , helpers = require('../../helpers')
 
 var config = {
@@ -19,11 +18,11 @@ var config = {
   clients: []
 }
 
-var wsServer = new websockets.WebSocketServer()
+var wsServer = new websockets.Server()
 helpers.wsServer = wsServer
 
 
-describe('websockets', function() {
+describe('websockets.Server', function() {
 
   beforeEach(function(done) { wsServer.start(config, done) })
   afterEach(function(done) { helpers.afterEach([wsServer], done) })
@@ -63,18 +62,18 @@ describe('websockets', function() {
       // Create dummy connection to listen to the 'open' message
       var dummyConnections = helpers.dummyConnections(6, 3, function(received) {
         helpers.assertSameElements(received, [
-          [0, shared.connectionOpenAddress, [0]],
-          [0, shared.connectionOpenAddress, [1]],
-          [0, shared.connectionOpenAddress, [2]],
+          [0, coreMessages.connectionOpenAddress, [0]],
+          [0, coreMessages.connectionOpenAddress, [1]],
+          [0, coreMessages.connectionOpenAddress, [2]],
 
-          [2, shared.connectionOpenAddress, [0]],
-          [2, shared.connectionOpenAddress, [1]],
-          [2, shared.connectionOpenAddress, [2]]
+          [2, coreMessages.connectionOpenAddress, [0]],
+          [2, coreMessages.connectionOpenAddress, [1]],
+          [2, coreMessages.connectionOpenAddress, [2]]
         ])
         done()
       })
-      connections.subscribe(dummyConnections[0], shared.connectionOpenAddress)
-      connections.subscribe(dummyConnections[2], shared.connectionOpenAddress)
+      connections.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
+      connections.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
 
       // Create dummy web clients, so that new connections are open
       helpers.dummyWebClients(wsServer, config.webPort, 3)
@@ -121,13 +120,13 @@ describe('websockets', function() {
       // Create dummy connections to listen to the 'close' message
       var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
         helpers.assertSameElements(received, [
-          [0, shared.connectionCloseAddress, [2]],
-          [2, shared.connectionCloseAddress, [2]]
+          [0, coreMessages.connectionCloseAddress, [2]],
+          [2, coreMessages.connectionCloseAddress, [2]]
         ])
         done()
       })
-      connections.subscribe(dummyConnections[0], shared.connectionCloseAddress)
-      connections.subscribe(dummyConnections[2], shared.connectionCloseAddress)
+      connections.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
+      connections.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
 
     })
 
@@ -153,17 +152,17 @@ describe('websockets', function() {
 
   })
 
-  describe('renderClient', function() {
+  describe('renderClientBrowser', function() {
 
     it('should render the client js file to the given folder', function(done) {
       async.series([
-        websockets.renderClient.bind(wsServer, '/tmp'),
+        websockets.renderClientBrowser.bind(wsServer, '/tmp'),
         fs.unlink.bind(fs, '/tmp/rhizome.js')
       ], done)
     })
 
     it('should return errors', function(done) {
-      websockets.renderClient('/forbidden', function(err) {
+      websockets.renderClientBrowser('/forbidden', function(err) {
         assert.ok(err)
         assert.equal(err.code, 'EACCES')
         done()
