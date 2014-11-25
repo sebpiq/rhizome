@@ -59,15 +59,9 @@
         document.body.style.overflow = 'auto'
       }
 
-      rhizome.start()
-      showMessage('Connecting ...')
+      rhizome.start(function(err) {
+        if (err) return alert('client failed starting : ' + err)
 
-      rhizome.on('server full', function() {
-        showMessage('The server is full, please wait ...')
-      })
-
-      rhizome.on('connected', function() {
-        hideMessage()
         // When clicking on the "send" button, export the canvas to .jpeg with `toBlob`,
         // and send a message containg the file to the address `/drawing`.
         sendCanvasButton.onclick = function() {
@@ -75,17 +69,20 @@
             rhizome.send('/drawing', [jpegFile])
           })
         }
+      })
+      showMessage('Connecting ...')
 
+      rhizome.on('queued', function() {
+        showMessage('The server is full, please wait ...')
+      })
+
+      rhizome.on('connected', function() {
+        hideMessage()
         rhizome.send('/sys/subscribe', ['/mosaic'])
       })
 
       rhizome.on('connection lost', function() {
         showMessage('Reconnecting, please wait ...')
-      })
-
-      rhizome.on('reconnected', function() {
-        hideMessage()
-        rhizome.send('/sys/subscribe', ['/mosaic'])
       })
 
       rhizome.on('message', function(address, args) {

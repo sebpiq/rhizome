@@ -93,7 +93,7 @@ The following messages are sent by the server. To receive them, you should subsc
 
 #### Event: 'connected'
 
-This event is sent when the client successfully connected with the server.
+This event is sent when the client successfully connected (or re-connected) with the server.
 
 
 #### Event: 'message'
@@ -107,14 +107,14 @@ rhizome.on('message', function(address, args) {
 ```
 
 
-#### Event: 'server full'
+#### Event: 'queued'
 
 This event is sent when connection fails because the server is full.
 
 ```javascript
 rhizome.start()
 
-rhizome.on('server full', function() {
+rhizome.on('queued', function() {
   showMessage('Waiting for an available space')
 })
 
@@ -136,28 +136,9 @@ rhizome.on('connection lost', function() {
 ```
 
 
-#### Event: 'reconnected'
+#### rhizome.start(done)
 
-Emitted when the client has successfully reconnected to the server after having lost connection. Example :
-
-```javascript
-rhizome.on('reconnected', function() {
-  showControls()
-  hideMessage()
-})
-```
-
-
-#### rhizome.start([config, ] done)
-
-Starts the client, and executes `done(err)` when complete. If the client started successfully, `err` is `null`, and `rhizome.userId` is set with the user id. Example :
-
-```javascript
-rhizome.start(function(err) {
-  if (err) throw err
-  showControls() // a hypothetical function that sets-up your user interface
-})
-```
+Starts the client, and executes `done(err)` when complete. The fact that the client is started, doesn't mean that the client is connected. For example, if the server is full, the connection is queued.
 
 
 #### rhizome.send(address[, args])
@@ -237,6 +218,13 @@ istanbul cover _mocha -- test --recursive
 
 Changelog
 -----------
+
+-0.6.0
+
+  - Completely reorganized structure of the library
+  - websockets.Client :
+    - 'queued' event instead of 'server full'
+    - `start` just returns an error if server is full and `queueIfFull` is false
 
 -0.5.2
 

@@ -26,8 +26,8 @@ var path = require('path')
   , express = require('express')
   , clc = require('cli-color')
 
-  , websockets = require('../../lib/server/websockets')
-  , osc = require('../../lib/server/osc')
+  , websockets = require('../../lib/websockets')
+  , osc = require('../../lib/osc')
   , validateConfig = require('./validate-config')
   , utils = require('../utils')
 
