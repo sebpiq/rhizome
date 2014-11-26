@@ -48,8 +48,8 @@ var app = express()
 
 validateConfig(require(configFilePath), function(err, config, configErrors) {
 
-  var wsServer = new websockets.Server()
-    , oscServer = new osc.Server()
+  var wsServer = new websockets.Server(config)
+    , oscServer = new osc.Server(config)
 
   if (_.keys(configErrors).length) {
     utils.printConfigErrors(configErrors)
@@ -76,8 +76,8 @@ validateConfig(require(configFilePath), function(err, config, configErrors) {
   async.parallel([
 
     websockets.renderClientBrowser.bind(websockets, buildDir),
-    wsServer.start.bind(wsServer, config),
-    oscServer.start.bind(oscServer, config),
+    wsServer.start.bind(wsServer),
+    oscServer.start.bind(oscServer),
 
     function(next) {
       server.listen(app.get('port'), function() {

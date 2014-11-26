@@ -16,7 +16,7 @@ var config = {
   usersLimit: 5
 }
 
-var oscServer = new osc.Server()
+var oscServer = new osc.Server(config)
 
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
@@ -42,7 +42,7 @@ var sendToServer = new moscow.createClient('localhost', config.oscPort, 'udp')
 
 describe('osc.Server', function() {
 
-  beforeEach(function(done) { oscServer.start(config, done) })
+  beforeEach(function(done) { oscServer.start(done) })
   afterEach(function(done) { helpers.afterEach([oscServer], done) })
 
   describe('send', function() {

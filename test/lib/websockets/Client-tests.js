@@ -8,12 +8,12 @@ var _ = require('underscore')
   , coreMessages = require('../../../lib/core/messages')
   , helpers = require('../../helpers')
 
-var config = {
+var serverConfig = {
   ip: '127.0.0.1',
   webPort: 8000,
   oscPort: 9000,
   rootUrl: '/',
-  usersLimit: 40,
+  usersLimit: 2,
   blobsDirName: '/tmp',
   clients: []
 }
@@ -25,7 +25,7 @@ var client, clientConfig = {
   queueIfFull: true
 }
 
-var wsServer = new websockets.Server()
+var wsServer = new websockets.Server(serverConfig)
 
 
 describe('websockets.Client', function() {
@@ -35,6 +35,7 @@ describe('websockets.Client', function() {
     client.on('error', function() {}) // Just to avoid throwing
     done()
   })
+
   afterEach(function(done) {
     client.debug = function() {}
     client.removeAllListeners()
@@ -45,11 +46,7 @@ describe('websockets.Client', function() {
     client = new websockets.Client(clientConfig)
 
     beforeEach(function(done) {
-      config.usersLimit = 1
-      wsServer.start(config, done)
-    })
-    afterEach(function() {
-      config.usersLimit = 10
+      wsServer.start(done)
     })
 
     var assertConnected = function(otherClient) {
@@ -99,7 +96,7 @@ describe('websockets.Client', function() {
       assertDisconnected(clientNoQueue)
 
       async.waterfall([
-        helpers.dummyWebClients.bind(helpers, wsServer, config.webPort, 1),
+        helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.webPort, 2),
         function(sockets, next) {
           assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
           clientNoQueue.start(next)
@@ -115,7 +112,7 @@ describe('websockets.Client', function() {
 
       async.waterfall([
 
-        helpers.dummyWebClients.bind(this, wsServer, config.webPort, 1),
+        helpers.dummyWebClients.bind(this, wsServer, serverConfig.webPort, 2),
 
         function(sockets, next) {
           client.start()
@@ -140,14 +137,6 @@ describe('websockets.Client', function() {
   describe('stop', function() {
     client = new websockets.Client(clientConfig)
 
-    beforeEach(function(done) {
-      config.usersLimit = 1
-      wsServer.start(config, done)
-    })
-    afterEach(function() {
-      config.usersLimit = 10
-    })
-
     it('should call the callback even if client is already stopped', function(done) {
       client.stop(done)
     })
@@ -159,7 +148,7 @@ describe('websockets.Client', function() {
 
     beforeEach(function(done) {
       async.series([
-        function(next) { wsServer.start(config, next) },
+        function(next) { wsServer.start(next) },
         function(next) { client.start(done) }
       ])
     })
@@ -223,12 +212,8 @@ describe('websockets.Client', function() {
     client = new websockets.Client(clientConfig)
 
     beforeEach(function(done) {
-      config.clients = [
-        { ip: '127.0.0.1', appPort: 9005 },
-        { ip: '127.0.0.1', appPort: 9010 }
-      ]
       async.series([
-        function(next) { wsServer.start(config, next) },
+        function(next) { wsServer.start(next) },
         function(next) { client.start(done) }
       ], done)
     })
@@ -310,15 +295,10 @@ describe('websockets.Client', function() {
       client.on('connection lost', function() { received.push('connection lost') })
       client.on('connected', function() { received.push('connected') })
       received = []
-      config.usersLimit = 2
       async.series([
-        function(next) { wsServer.start(config, next) },
+        function(next) { wsServer.start(next) },
         function(next) { client.start(next) }
       ], done)
-    })
-
-    afterEach(function() {
-      config.usersLimit = 10
     })
 
     var assertConnected = function() {
@@ -382,7 +362,7 @@ describe('websockets.Client', function() {
           // Restart the server
           function(next) {
             assertDisconnected()
-            wsServer.start(config, next)
+            wsServer.start(next)
           },
 
           // Wait for the reconnection to happen
@@ -428,7 +408,7 @@ describe('websockets.Client', function() {
           setTimeout(next, 10)
         },
         function(next) {
-          helpers.dummyWebClients(wsServer, config.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, serverConfig.webPort, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })
@@ -447,9 +427,9 @@ describe('websockets.Client', function() {
           setTimeout(next, 150)
         },
         function(next) {
-          wsServer.start(config, next)
+          wsServer.start(next)
           assertDisconnected()
-          helpers.dummyWebClients(wsServer, config.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, serverConfig.webPort, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })

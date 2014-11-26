@@ -9,22 +9,19 @@ var _ = require('underscore')
   , helpers = require('../../helpers')
 
 var config = {
-
   webPort: 8000,
   oscPort: 9000, 
   rootUrl: '/',
-  usersLimit: 5,
-
-  clients: []
+  usersLimit: 5
 }
 
-var wsServer = new websockets.Server()
+var wsServer = new websockets.Server(config)
 helpers.wsServer = wsServer
 
 
 describe('websockets.Server', function() {
 
-  beforeEach(function(done) { wsServer.start(config, done) })
+  beforeEach(function(done) { wsServer.start(done) })
   afterEach(function(done) { helpers.afterEach([wsServer], done) })
 
   describe('connection', function() {
