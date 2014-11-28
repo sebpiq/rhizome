@@ -155,7 +155,7 @@ describe('websockets.Server', function() {
         assert.equal(wsServer.sockets().length, 1)
         var serverSocket = wsServer.sockets()[0]
         serverSocket.close()
-        console.log('DO NOT PANIC : this is just a test (should say "web socket send failed")')
+        console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
         wsServer.connections[0].send('/bla', [1, 2, 3])
         done()
       })

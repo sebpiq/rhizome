@@ -164,6 +164,7 @@ describe('osc.Server', function() {
         {ip: '127.0.0.1', appPort: 9001, blobsPort: 81, useBlobClient: true}
       ]
 
+      console.log('\nDO NOT PANIC : this is just a test (should say "blob client refused connection")')
       async.waterfall([
         doConnection(oscClients),
 
