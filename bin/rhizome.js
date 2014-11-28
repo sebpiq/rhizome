@@ -124,12 +124,13 @@ if (require.main === module) {
         app.use('/', express.static(config.http.staticDir))
 
         httpServer.listen(app.get('port'), function() {
-          successLog.push('HTTP server running pages served at',
-            clc.italic('http://<serverIP>:' + config.http.port + clc.bold(config.http.staticDir)))
+          successLog.push(['HTTP server running pages served at',
+            clc.italic('http://<serverIP>:' + config.http.port + clc.bold(config.http.staticDir))])
           next()
         })
       })
-    }
+    } else
+      successLog.unshift([clc.italic('warning : '), 'no config found for http'])
 
     // Websocket server
     if (config.websockets) {
@@ -143,7 +144,8 @@ if (require.main === module) {
           next(err)
         })
       })
-    }
+    } else
+      successLog.unshift([clc.italic('warning : '), 'no config found for websockets'])
 
     // OSC server
     if (config.osc) {
@@ -154,7 +156,8 @@ if (require.main === module) {
           next(err)
         })
       })
-    }
+    } else
+      successLog.unshift([clc.italic('warning : '), 'no config found for osc'])
 
     // Start servers
     async.parallel(asyncStartOps, function(err) {
