@@ -6,9 +6,9 @@ var assert = require('assert')
   , oscServer = require('../lib/osc/Server')
   , WebClient = require('../lib/websockets/Client')
   , webClient = new WebClient({ hostname: 'localhost', port: 8000 })
-  , blobClient = require('../lib/blob-client/client')
   , connections = require('../lib/connections')
   , coreServer = require('../lib/core/server')
+  , ValidationError = require('../lib/core/errors').ValidationError
   , utils = require('../lib/core/utils')
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
@@ -111,4 +111,23 @@ var _sortFunc = function(obj) {
       .pluck(1).value()
   }
   return vals.map(function(v) { return v.toString() }).join('')
+}
+
+var assertValidationError = exports.assertValidationError = function(err, expected) {
+  if (!(err instanceof ValidationError)) throw new Error('Expected ValidationError, got :' + err)
+  var actual = _.keys(err.fields)
+  actual.sort()
+  expected.sort()
+  assert.deepEqual(actual, expected)
+}
+
+exports.assertConfigErrors = function(testList, done) {
+  async.forEach(testList, function(p, next) {
+    var obj = p[0]
+      , expected = p[1]
+    obj.start(function(err) {
+      assertValidationError(err, expected)
+      next()
+    })
+  }, done)
 }

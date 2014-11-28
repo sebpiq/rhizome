@@ -9,13 +9,9 @@ var _ = require('underscore')
   , helpers = require('../../helpers')
 
 var serverConfig = {
-  ip: '127.0.0.1',
-  webPort: 8000,
-  oscPort: 9000,
+  port: 8000,
   rootUrl: '/',
-  usersLimit: 2,
-  blobsDirName: '/tmp',
-  clients: []
+  usersLimit: 2
 }
 
 var client, clientConfig = {
@@ -64,6 +60,13 @@ describe('websockets.Client', function() {
       assert.equal(c.userId, null)
     }
 
+    it('should return ValidationError if config is not valid', function(done) {
+      helpers.assertConfigErrors([
+        [new websockets.Client({}), ['.hostname', '.port']],
+        [new websockets.Client({hostname: 'localhost', port: 8000, queueIfFull: 7}), ['.queueIfFull']]
+      ], done)
+    })
+
     it('should open a socket connection to the server', function(done) {
       var received
       client.on('connected', function() { received = 'connected' })
@@ -96,7 +99,7 @@ describe('websockets.Client', function() {
       assertDisconnected(clientNoQueue)
 
       async.waterfall([
-        helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.webPort, 2),
+        helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.port, 2),
         function(sockets, next) {
           assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
           clientNoQueue.start(next)
@@ -112,10 +115,10 @@ describe('websockets.Client', function() {
 
       async.waterfall([
 
-        helpers.dummyWebClients.bind(this, wsServer, serverConfig.webPort, 2),
+        helpers.dummyWebClients.bind(this, wsServer, serverConfig.port, 2),
 
         function(sockets, next) {
-          client.start()
+          client.start(function(err) { if (err) throw err })
           client.once('queued', function(err) { next(err, sockets) })
         },
 
@@ -408,7 +411,7 @@ describe('websockets.Client', function() {
           setTimeout(next, 10)
         },
         function(next) {
-          helpers.dummyWebClients(wsServer, serverConfig.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, serverConfig.port, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })
@@ -429,7 +432,7 @@ describe('websockets.Client', function() {
         function(next) {
           wsServer.start(next)
           assertDisconnected()
-          helpers.dummyWebClients(wsServer, serverConfig.webPort, 2, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, serverConfig.port, 2, function(err, sockets) {
             dummySockets = sockets
             next()
           })

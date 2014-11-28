@@ -4,30 +4,29 @@ var _ = require('underscore')
   , assert = require('assert')
   , moscow = require('moscow')
   , coreMessages = require('../../../lib/core/messages')
-  , client = require('../../../lib/blob-client/client')
+  , BlobClient = require('../../../lib/osc/BlobClient')
   , helpers = require('../../helpers')
 
 
 var clientConfig = {
   blobsPort: 44444,
   blobsDirName: '/tmp',
-
-  server: {
-    ip: '127.0.0.1',
-    blobsPort: 44445
-  }
+  serverHostname: '127.0.0.1',
+  serverBlobsPort: 44445
 }
 
+
 var sendToBlobClient = new moscow.createClient('localhost', clientConfig.blobsPort, 'tcp')
-  , fakeServer = new moscow.createServer(clientConfig.server.blobsPort, 'tcp')
-  , sendToServer = new moscow.createClient(clientConfig.server.ip, clientConfig.server.blobsPort, 'tcp')
+  , fakeServer = new moscow.createServer(clientConfig.serverBlobsPort, 'tcp')
+  , sendToServer = new moscow.createClient(clientConfig.serverHostname, clientConfig.serverBlobsPort, 'tcp')
+  , client = new BlobClient(clientConfig)
 
 
 describe('blob-client', function() {
 
   beforeEach(function(done) {
     async.series([
-      client.start.bind(client, clientConfig), 
+      client.start.bind(client), 
       fakeServer.start.bind(fakeServer)
     ], done)
   })
@@ -37,6 +36,16 @@ describe('blob-client', function() {
       fakeServer.stop.bind(fakeServer),
       helpers.afterEach.bind(helpers, [client])
     ], done)
+  })
+
+  describe('start', function() {
+
+    it('should return ValidationError if config is not valid', function(done) {
+      helpers.assertConfigErrors([
+        [new BlobClient({blobsDirName: '/IdontExist'}), ['.blobsDirName']]
+      ], done)
+    })
+
   })
 
   describe('receive blob', function() {
@@ -80,25 +89,29 @@ describe('blob-client', function() {
 
     it('should save the blob with the given extension', function(done) {
       var oscClients = [ { appPort: 9001 } ]
+        , blobClient = new BlobClient(_.extend({}, clientConfig, { fileExtension: '.wav' }))
 
-      async.series([
+      async.waterfall([
         client.stop.bind(client),
-        client.start.bind(client, _.extend({}, clientConfig, { fileExtension: '.wav' })),
+        blobClient.start.bind(blobClient),
 
         function(next) {
-          helpers.dummyOSCClients(1, oscClients, function(received) {
-            var filePath = received[0][2][0]
-            received[0][2][0] = null
-            helpers.assertSameElements(received, [
-              [9001, '/bla/blob', [null, 111]]
-            ])
-            assert.equal(filePath.slice(-4), '.wav')
-            done()
-          })
-
+          helpers.dummyOSCClients(1, oscClients, function(received) { next(null, received) })
           sendToBlobClient.send('/bla/blob', [9001, new Buffer('bloblo'), 111])
-        }
-      ])
+        },
+
+        function(received, next) {
+          var filePath = received[0][2][0]
+          received[0][2][0] = null
+          helpers.assertSameElements(received, [
+            [9001, '/bla/blob', [null, 111]]
+          ])
+          assert.equal(filePath.slice(-4), '.wav')
+          next()
+        },
+
+        blobClient.stop.bind(blobClient)
+      ], done)
     })
 
   })

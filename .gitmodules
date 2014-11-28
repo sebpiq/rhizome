@@ -1,3 +1,6 @@
 [submodule "node-moscow"]
 	path = node-moscow
 	url = https://github.com/sebpiq/node-moscow.git
+[submodule "node-validation-pod"]
+	path = node-validation-pod
+	url = git@github.com:sebpiq/node-validation-pod.git

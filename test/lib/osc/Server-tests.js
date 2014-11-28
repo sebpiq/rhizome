@@ -9,11 +9,8 @@ var _ = require('underscore')
   , helpers = require('../../helpers')
 
 var config = {
-  webPort: 8000,
-  oscPort: 9000,
-  blobsPort: 33333,
-  rootUrl: '/', 
-  usersLimit: 5
+  port: 9000,
+  blobsPort: 33333
 }
 
 var oscServer = new osc.Server(config)
@@ -38,12 +35,23 @@ var doConnection = function(clients) {
 
 }
 
-var sendToServer = new moscow.createClient('localhost', config.oscPort, 'udp')
+var sendToServer = new moscow.createClient('localhost', config.port, 'udp')
 
 describe('osc.Server', function() {
 
   beforeEach(function(done) { oscServer.start(done) })
   afterEach(function(done) { helpers.afterEach([oscServer], done) })
+
+  describe('start', function() {
+
+    it('should return ValidationError if config is not valid', function(done) {
+      helpers.assertConfigErrors([
+        [new osc.Server({}), ['.port']],
+        [new osc.Server({blobsPort: 'bla'}), ['.port', '.blobsPort']]
+      ], done)
+    })
+
+  })
 
   describe('send', function() {
 

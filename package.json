@@ -10,6 +10,7 @@
   "keywords": [ "art", "osc", "websocket" ],
   "dependencies" : {
     "underscore": "1.5.x",
+    "validation-pod": "0.0.x",
     "debug": "0.7.x",
     "ws": "0.4.x",
     "moscow": "x",
@@ -32,13 +33,13 @@
     "mocha": "1.17.x",
     "jetty": "0.2.x"
   },
-  "bin" : { "rhizome" : "./bin/rhizome/main.js", "rhizome-blobs" : "./bin/rhizome-blobs/main.js" },
+  "bin" : { "rhizome" : "./bin/rhizome.js", "rhizome-blobs" : "./bin/rhizome-blobs.js" },
   "license": "MIT",
   "engines": {
     "node": ">=0.6"
   },
   "scripts": {
-    "test": "mocha --recursive --timeout 10000",
+    "test": "mocha test/ --recursive --timeout 10000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive"
   },
   "license": "GPL"

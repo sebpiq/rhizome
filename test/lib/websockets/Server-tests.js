@@ -6,11 +6,11 @@ var _ = require('underscore')
   , websockets = require('../../../lib/websockets')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
+  , ValidationError = require('../../../lib/core/errors').ValidationError
   , helpers = require('../../helpers')
 
 var config = {
-  webPort: 8000,
-  oscPort: 9000, 
+  port: 8000,
   rootUrl: '/',
   usersLimit: 5
 }
@@ -24,6 +24,21 @@ describe('websockets.Server', function() {
   beforeEach(function(done) { wsServer.start(done) })
   afterEach(function(done) { helpers.afterEach([wsServer], done) })
 
+  describe('start', function() {
+
+    it('should return ValidationError if config is not valid', function(done) {
+      helpers.assertConfigErrors([
+        [new websockets.Server({}), ['.port']],
+        [new websockets.Server({rootUrl: 12345}), ['.rootUrl', '.port']],
+        [new websockets.Server({rootUrl: '/'}), ['.port']],
+        [new websockets.Server({rootUrl: '/', port: 80, serverInstance: 34}), ['.serverInstance']],
+        [new websockets.Server({rootUrl: '/', port: 90, usersLimit: 'bla'}), ['.usersLimit']],
+        [new websockets.Server({rootUrl: '/', port: 90, wot: '???'}), ['.']]
+      ], done)
+    })
+
+  })
+
   describe('connection', function() {
 
     it('should reject connection when full', function(done) {
@@ -32,7 +47,7 @@ describe('websockets.Server', function() {
       async.waterfall([
 
         function(next) {
-          helpers.dummyWebClients(wsServer, config.webPort, 6, function(err, sockets) {
+          helpers.dummyWebClients(wsServer, config.port, 6, function(err, sockets) {
             if (err) return next(err)
             assert.deepEqual(
               _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
@@ -73,7 +88,7 @@ describe('websockets.Server', function() {
       connections.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
 
       // Create dummy web clients, so that new connections are open
-      helpers.dummyWebClients(wsServer, config.webPort, 3)
+      helpers.dummyWebClients(wsServer, config.port, 3)
     })
 
   })
@@ -83,7 +98,7 @@ describe('websockets.Server', function() {
     it('should forget the sockets', function(done) {
       assert.equal(wsServer.sockets().length, 0)
       async.waterfall([
-        function(next) { helpers.dummyWebClients(wsServer, config.webPort, 3, next) },
+        function(next) { helpers.dummyWebClients(wsServer, config.port, 3, next) },
         function(sockets, next) {
           var connection1 = wsServer.connections[0]
             , connection2 = wsServer.connections[1]
@@ -108,7 +123,7 @@ describe('websockets.Server', function() {
       assert.equal(wsServer.sockets().length, 0)
 
       // Create dummy web clients, and immediately close one of them
-      helpers.dummyWebClients(wsServer, config.webPort, 3, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, config.port, 3, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets().length, 3)
         sockets[2].close()
@@ -135,7 +150,7 @@ describe('websockets.Server', function() {
       assert.equal(wsServer.sockets().length, 0)
 
       // Create dummy web clients, and immediately close one of them
-      helpers.dummyWebClients(wsServer, config.webPort, 1, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, config.port, 1, function(err, sockets) {
         if (err) throw err
         assert.equal(wsServer.sockets().length, 1)
         var serverSocket = wsServer.sockets()[0]
