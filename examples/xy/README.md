@@ -7,7 +7,7 @@ It is a very simple example, where 6 users connected to the web page can control
 
 To start the example, open your terminal, go to the example folder and run `rhizome config.js`. This should start the server and print an extract of the configuration.
 
-Once the server is started, open your web browser, and go to the address [http://localhost:8000/example/index.html](http://localhost:8000/example/index.html). You should see a black web page.
+Once the server is started, open your web browser, and go to the address [http://localhost:8000/index.html](http://localhost:8000/index.html). You should see a black web page.
 
 Finally, open the Pure Data patch *lame-fm.pd*.
 

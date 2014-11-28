@@ -1,6 +1,6 @@
 module.exports = {
   // [required] : the path on your file system of the folder where you want to save blobs 
-  blobsDirName: '/tmp/',
+  blobsDir: '/tmp/',
 
   // [default=44444] : the port on which rhizome-blobs will receive blobs on your local machine
   blobsPort: 44444,

@@ -1,4 +1,4 @@
 module.exports = {
-  blobsDirName: '/tmp',
+  blobsDir: '/tmp',
   fileExtension: '.png'
 }

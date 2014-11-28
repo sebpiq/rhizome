@@ -11,7 +11,7 @@ int imgSize = 100;
 int imgPerSide = 8;
 int canvasWidth = imgPerSide * imgSize;
 int canvasHeight = imgPerSide * imgSize;
-// Must be inside the "blobsDirName" folder set in "config-blobs.js"
+// Must be inside the "blobsDir" folder set in "config-blobs.js"
 String saveImgPath = "/tmp/exportedImg.png";
 
 int imgCount = 0;

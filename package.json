@@ -36,7 +36,7 @@
     "node": ">=0.6"
   },
   "scripts": {
-    "test": "mocha test/ --recursive --timeout 10000",
+    "test": "mocha test/ --recursive --timeout 20000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive"
   },
   "license": "GPL"

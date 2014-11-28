@@ -108,6 +108,7 @@ if (require.main === module) {
     var packageRootPath = path.join(__dirname, '..', '..')
       , buildDir = path.join(packageRootPath, 'build')
       , asyncStartOps = []
+      , warningLog = []
       , successLog = []
 
     // HTTP server
@@ -124,13 +125,15 @@ if (require.main === module) {
         app.use('/', express.static(config.http.staticDir))
 
         httpServer.listen(app.get('port'), function() {
-          successLog.push(['HTTP server running pages served at',
-            clc.italic('http://<serverIP>:' + config.http.port + clc.bold(config.http.staticDir))])
+          successLog.push('HTTP server running at '
+            + clc.bold('http://<serverIP>:' + config.http.port + '/') 
+            + '\n    serving content from ' + clc.bold(config.http.staticDir)
+          )
           next()
         })
       })
     } else
-      successLog.unshift([clc.italic('warning : '), 'no config found for http'])
+      warningLog.push('no http server')
 
     // Websocket server
     if (config.websockets) {
@@ -139,33 +142,36 @@ if (require.main === module) {
         if (config.http) config.websockets.serverInstance = httpServer
         wsServer = new websockets.Server(config.websockets)
         wsServer.start(function(err) {
-          successLog.push(['websockets server running on port',
-            clc.bold(config.http ? config.http.port : config.websockets.port)])
+          successLog.push('websockets server running on port '
+            + clc.bold(config.http ? config.http.port : config.websockets.port))
           next(err)
         })
       })
     } else
-      successLog.unshift([clc.italic('warning : '), 'no config found for websockets'])
+      warningLog.push('no websockets server')
 
     // OSC server
     if (config.osc) {
       asyncStartOps.push(function(next) {
         oscServer = new osc.Server(config.osc)
         oscServer.start(function(err) {
-          successLog.push(['OSC server running on port', clc.bold(config.osc.port)])
+          successLog.push('OSC server running on port ' + clc.bold(config.osc.port))
           next(err)
         })
       })
     } else
-      successLog.unshift([clc.italic('warning : '), 'no config found for osc'])
+      warningLog.push('no osc server')
 
     // Start servers
     async.parallel(asyncStartOps, function(err) {
       if (err) throw err
       var count = 1
       console.log(clc.bold('Rhizome ' + version +' running.') )
-      successLog.forEach(function(messages) {
-        console.log.apply(console, [clc.bold('('+ (count++) +')')].concat(messages))
+      warningLog.forEach(function(msg) {
+        console.log(clc.yellow.bold('(!) ') + msg)
+      })
+      successLog.forEach(function(msg) {
+        console.log(clc.green.bold('('+ (count++) +') ') + msg)
       })
     })
 

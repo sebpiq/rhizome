@@ -1,6 +1,15 @@
 module.exports = {
-  usersLimit: 5,
-  pages: [
-    { rootUrl: '/example', dirName: './pages' }
-  ]
+  
+  osc: {
+    port: 9000
+  },
+
+  websockets: {
+    usersLimit: 5,
+  },
+
+  http: {
+    port: 8000,
+    staticDir: './pages'
+  }
 }

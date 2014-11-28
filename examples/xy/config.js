@@ -2,7 +2,14 @@ var path = require('path')
 
 module.exports = {
 
-  pages: [
-    { rootUrl: '/example', dirName: path.join(__dirname, 'pages') }
-  ]
+  http: {
+    port: 8000,
+    staticDir: path.join(__dirname, 'pages')
+  },
+
+  websockets: {},
+
+  osc: {
+    port: 9000
+  }
 }

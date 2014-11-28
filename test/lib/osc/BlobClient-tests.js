@@ -10,7 +10,7 @@ var _ = require('underscore')
 
 var clientConfig = {
   blobsPort: 44444,
-  blobsDirName: '/tmp',
+  blobsDir: '/tmp',
   serverHostname: '127.0.0.1',
   serverBlobsPort: 44445
 }
@@ -42,7 +42,7 @@ describe('blob-client', function() {
 
     it('should return ValidationError if config is not valid', function(done) {
       helpers.assertConfigErrors([
-        [new BlobClient({blobsDirName: '/IdontExist'}), ['.blobsDirName']]
+        [new BlobClient({blobsDir: '/IdontExist'}), ['.blobsDir']]
       ], done)
     })
 

@@ -39,11 +39,9 @@ if (require.main === module) {
   client.start(function(err) {
     utils.handleError(err)
     console.log(clc.bold('Rhizome blobs ' + version + ' running.'))
-    console.log(clc.bold('(1)'), 'saving and reading blobs from', clc.bold(client._config.blobsDirName))
-    console.log(clc.bold('(2)'), 'receiving blobs on port', clc.bold(client._config.blobsPort))
-    console.log(clc.bold('(3)'), 'application client running on same machine, osc port',
-      clc.bold(client._config.appPort))
-    console.log(clc.bold('(4)'), 'server',
+    console.log(clc.bold.green('(1)'), 'saving and reading blobs from', clc.bold(client._config.blobsDir))
+    console.log(clc.bold.green('(2)'), 'receiving blobs on port', clc.bold(client._config.blobsPort))
+    console.log(clc.bold.green('(3)'), 'server',
       clc.italic('host=' + clc.bold(client._config.serverHostname)
         + ', blobsPort=' + clc.bold(client._config.serverBlobsPort)))
   })
