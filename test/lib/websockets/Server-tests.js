@@ -73,14 +73,21 @@ describe('websockets.Server', function() {
 
       // Create dummy connection to listen to the 'open' message
       var dummyConnections = helpers.dummyConnections(6, 3, function(received) {
-        helpers.assertSameElements(received, [
-          [0, coreMessages.connectionOpenAddress, [0]],
-          [0, coreMessages.connectionOpenAddress, [1]],
-          [0, coreMessages.connectionOpenAddress, [2]],
+        var ids = received.map(function(r) { return r[2][0] })
+        received.forEach(function(r) { r[2] = ['id'] })
+        // Check ids
+        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
+        // Check for unicity
+        assert.equal(_.uniq(ids).length, 3)
 
-          [2, coreMessages.connectionOpenAddress, [0]],
-          [2, coreMessages.connectionOpenAddress, [1]],
-          [2, coreMessages.connectionOpenAddress, [2]]
+        helpers.assertSameElements(received, [
+          [0, coreMessages.connectionOpenAddress, ['id']],
+          [0, coreMessages.connectionOpenAddress, ['id']],
+          [0, coreMessages.connectionOpenAddress, ['id']],
+
+          [2, coreMessages.connectionOpenAddress, ['id']],
+          [2, coreMessages.connectionOpenAddress, ['id']],
+          [2, coreMessages.connectionOpenAddress, ['id']]
         ])
         done()
       })
@@ -131,9 +138,16 @@ describe('websockets.Server', function() {
 
       // Create dummy connections to listen to the 'close' message
       var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
+        var ids = received.map(function(r) { return r[2][0] })
+        received.forEach(function(r) { r[2] = ['id'] })
+        // Check ids
+        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
+        // Check for unicity
+        assert.equal(_.uniq(ids).length, 1)
+
         helpers.assertSameElements(received, [
-          [0, coreMessages.connectionCloseAddress, [2]],
-          [2, coreMessages.connectionCloseAddress, [2]]
+          [0, coreMessages.connectionCloseAddress, ['id']],
+          [2, coreMessages.connectionCloseAddress, ['id']]
         ])
         done()
       })

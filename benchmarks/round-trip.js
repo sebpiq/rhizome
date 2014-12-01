@@ -1,7 +1,7 @@
 var path = require('path')
   , _ = require('underscore')
   , jetty = new (require('jetty'))(process.stdout)
-  , WebClient = require('../lib/web-client/Client')
+  , WebClient = require('../lib/websockets/Client')
   , timeStarted = +(new Date)
   , echoClient, clients = [], connected = []
   , config
@@ -14,8 +14,11 @@ if (process.argv.length !== 3) {
 config = require(process.argv[2])
 
 // The client that listens for messages and echoes back
-echoClient = new WebClient()
-
+echoClient = new WebClient({
+  'hostname': config.hostname,
+  'port': config.port
+})
+ 
 echoClient.on('connected', function() {
   console.log('echo client connected')
   echoClient.send('/sys/subscribe', ['/'])
@@ -34,22 +37,23 @@ echoClient.on('message', function(address, args) {
   client.stats.countReceivedMessages++
 })
 
-echoClient.config('hostname', config.hostname)
-echoClient.config('port', config.port)
-echoClient.start()
+echoClient.start(function(err) {
+  if (err) throw err
+})
+
 
 // Building several web client
 _.range(config.connections).forEach(function() {
-  var client = new WebClient()
+  var client = new WebClient({
+    'hostname': config.hostname,
+    'port': config.port
+  })
   clients.push(client)
   client.stats = {
     cumRoundTripTime: 0,
     countReceivedMessages: 0,
     countSentMessages: 0,
   }
-  client.config('hostname', config.hostname)
-  client.config('port', config.port)
-  client.start()
 
   client.on('connected', function() {
     connected.push(client)
@@ -64,6 +68,10 @@ _.range(config.connections).forEach(function() {
 
   client.on('reconnected', function() {
     console.log('reconnected, ID ' + client.userId)
+  })
+
+  client.start(function(err) {
+    if (err) throw err
   })
 })
 

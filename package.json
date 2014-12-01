@@ -7,8 +7,12 @@
     "type": "git",
     "url": "https://github.com/sebpiq/rhizome.git"
   },
-  "keywords": [ "art", "osc", "websocket" ],
-  "dependencies" : {
+  "keywords": [
+    "art",
+    "osc",
+    "websocket"
+  ],
+  "dependencies": {
     "underscore": "1.7.x",
     "validation-pod": "x",
     "debug": "0.7.x",
@@ -24,20 +28,23 @@
     "gulp-util": "3.0.x",
     "gulp-uglify": "1.0.x",
     "vinyl-source-stream": "1.0.x",
-    "vinyl-buffer": "1.0.x"
+    "vinyl-buffer": "1.0.x",
+    "cookie": "0.1.x"
   },
   "devDependencies": {
     "mocha": "1.17.x",
     "jetty": "0.2.x"
   },
-  "bin" : { "rhizome" : "./bin/rhizome.js", "rhizome-blobs" : "./bin/rhizome-blobs.js" },
-  "license": "MIT",
+  "bin": {
+    "rhizome": "./bin/rhizome.js",
+    "rhizome-blobs": "./bin/rhizome-blobs.js"
+  },
+  "license": "GPL",
   "engines": {
     "node": ">=0.6"
   },
   "scripts": {
     "test": "mocha test/ --recursive --timeout 20000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive"
-  },
-  "license": "GPL"
+  }
 }

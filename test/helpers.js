@@ -8,6 +8,7 @@ var assert = require('assert')
   , webClient = new WebClient({ hostname: 'localhost', port: 8000 })
   , connections = require('../lib/connections')
   , coreServer = require('../lib/core/server')
+  , coreMessages = require('../lib/core/messages')
   , ValidationError = require('../lib/core/errors').ValidationError
   , utils = require('../lib/core/utils')
 
@@ -101,7 +102,9 @@ exports.afterEach = function(toStop, done) {
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)
 exports.assertSameElements = function(arr1, arr2) {
-  assert.deepEqual(_.sortBy(arr1, _sortFunc), _.sortBy(arr2, _sortFunc))
+  var sorted1 = _.sortBy(arr1, _sortFunc)
+    , sorted2 = _.sortBy(arr2, _sortFunc)
+  assert.deepEqual(sorted1, sorted2)
 }
 var _sortFunc = function(obj) {
   vals = obj

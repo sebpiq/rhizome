@@ -51,13 +51,13 @@ describe('websockets.Client', function() {
       assert.equal(wsServer.sockets().filter(function(s) {
         return s.upgradeReq.url !== '/?dummies'
       }).length, 1)
-      assert.equal(c.userId, 0)
+      assert.ok(_.isString(c.id) && c.id.length > 5)
     }
 
     var assertDisconnected = function(otherClient) {
       var c = client || otherClient
       assert.equal(c.status(), 'stopped')
-      assert.equal(c.userId, null)
+      assert.equal(c.id, null)
     }
 
     it('should return ValidationError if config is not valid', function(done) {
@@ -305,7 +305,7 @@ describe('websockets.Client', function() {
     })
 
     var assertConnected = function() {
-      assert.ok(_.isNumber(client.userId))
+      assert.ok(_.isString(client.id) && client.id.length > 5)
       assert.equal(client.status(), 'started')
     }
 

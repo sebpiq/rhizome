@@ -75,6 +75,7 @@ describe('blob-client', function() {
           results.forEach(function(contents, i) {
             received[filePaths[i][0]][2][filePaths[i][1]] = results[i]
           })
+
           helpers.assertSameElements(received, [
             [9001, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
             [9001, '/', [56789, new Buffer('hihihi')]]
