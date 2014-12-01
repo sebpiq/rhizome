@@ -3,6 +3,7 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , WebSocket = require('ws')
+  , cookie = require('cookie')
   , websockets = require('../../../lib/websockets')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
@@ -35,6 +36,7 @@ describe('websockets.Client', function() {
   afterEach(function(done) {
     client.debug = function() {}
     client.removeAllListeners()
+    cookie._value = null
     helpers.afterEach([wsServer, client], done)
   })
 
@@ -449,6 +451,64 @@ describe('websockets.Client', function() {
         assertConnected()
         done()
       })
+    })
+
+  })
+
+  describe('client id', function() {
+
+    client = new websockets.Client(clientConfig)
+
+    beforeEach(function(done) {
+      // Cookie mock-up for testing
+      cookie._set = cookie.set
+      cookie._get = cookie.get
+      cookie.get = function() { return cookie._value }
+      cookie.set = function(key, value) { cookie._value = value }
+      cookie._value = null
+
+      async.series([
+        function(next) { wsServer.start(next) },
+        function(next) { client.start(done) }
+      ], done)
+    })
+
+    afterEach(function() {
+      cookie.set = cookie._set
+      cookie.get = cookie._get
+    })
+
+    it.skip('should recover the client infos if the client is known', function(done) {
+      var client2 = new websockets.Client(clientConfig)
+        , savedId = client.id
+      cookie._value = client.id
+      assert.equal(connections._nsTree.has('/blou'), false)
+
+      async.series([
+        // Subscribe the client to an address
+        function(next) {
+          client.send(coreMessages.subscribeAddress, ['/blou'])
+          client.once('message', function(address, args) {
+            assert.deepEqual(address, coreMessages.subscribedAddress)
+            assert.equal(connections._nsTree.get('/blou').connections.length, 1)
+            next()
+          })
+        },
+
+        // Stop it, and create another client with id read from the cookie
+        client.stop.bind(client),
+        function(next) {
+          assert.equal(connections._nsTree.get('/blou').connections.length, 0)
+          client2.start(next)
+        },
+
+        // Check that the client gets assigned the same id, check that subscriptions
+        // are restored.
+        function(next) {
+          assert.equal(client2.id, savedId)
+          assert.equal(connections._nsTree.get('/blou').connections.length, 1)
+        }
+      ], done)
     })
 
   })

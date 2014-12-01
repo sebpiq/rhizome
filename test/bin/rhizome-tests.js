@@ -22,7 +22,6 @@ describe('bin.rhizome', function() {
     rhizome.on('close', function (code) {
       clearTimeout(overTimeout)
       assert.equal(errData, '')
-      assert.ok(outData.length > 100)
       done()
     })
     overTimeout = setTimeout(function() {
