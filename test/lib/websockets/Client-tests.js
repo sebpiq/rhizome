@@ -50,7 +50,7 @@ describe('websockets.Client', function() {
     var assertConnected = function(otherClient) {
       var c = client || otherClient
       assert.equal(c.status(), 'started')
-      assert.equal(wsServer.sockets().filter(function(s) {
+      assert.equal(wsServer._wsServer.clients.filter(function(s) {
         return s.upgradeReq.url !== '/?dummies'
       }).length, 1)
       assert.ok(_.isString(c.id) && c.id.length > 5)
@@ -103,7 +103,7 @@ describe('websockets.Client', function() {
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.port, 2),
         function(sockets, next) {
-          assert.equal(wsServer.sockets()[0].readyState, WebSocket.OPEN)
+          assert.equal(wsServer._wsServer.clients[0].readyState, WebSocket.OPEN)
           clientNoQueue.start(next)
         }
       ], function(err, next) {

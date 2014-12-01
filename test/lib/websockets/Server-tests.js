@@ -42,7 +42,7 @@ describe('websockets.Server', function() {
   describe('connection', function() {
 
     it('should reject connection when full', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(wsServer._wsServer.clients.length, 0)
 
       async.waterfall([
 
@@ -50,7 +50,7 @@ describe('websockets.Server', function() {
           helpers.dummyWebClients(wsServer, config.port, 6, function(err, sockets) {
             if (err) return next(err)
             assert.deepEqual(
-              _.pluck(wsServer.sockets().slice(0, 5), 'readyState'), 
+              _.pluck(wsServer._wsServer.clients.slice(0, 5), 'readyState'), 
               _.range(5).map(function() { return WebSocket.OPEN })
             )
             _.last(sockets).on('message', function(msg) { next(null, msg) })
@@ -63,13 +63,13 @@ describe('websockets.Server', function() {
         assert.ok(msg.error)
         delete msg.error
         assert.deepEqual(msg, {command: 'connect', status: 1})
-        assert.equal(_.last(wsServer.sockets()).readyState, WebSocket.CLOSING)
+        assert.equal(_.last(wsServer._wsServer.clients).readyState, WebSocket.CLOSING)
         done()
       })
     })
 
     it('should send a message to all other connections', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(wsServer._wsServer.clients.length, 0)
 
       // Create dummy connection to listen to the 'open' message
       var dummyConnections = helpers.dummyConnections(6, 3, function(received) {
@@ -103,7 +103,7 @@ describe('websockets.Server', function() {
   describe('disconnection', function() {
 
     it('should forget the sockets', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(wsServer._wsServer.clients.length, 0)
       async.waterfall([
         function(next) { helpers.dummyWebClients(wsServer, config.port, 3, next) },
         function(sockets, next) {
@@ -113,13 +113,13 @@ describe('websockets.Server', function() {
           connections.subscribe(connection2, '/someOtherAddr')
           assert.equal(connections._nsTree.get('/someAddr').connections.length, 1)
           assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
-          assert.equal(wsServer.sockets().length, 3)
+          assert.equal(wsServer._wsServer.clients.length, 3)
           connection1.socket.close()
           connection1.on('close', function() { next() })
         }
       ], function(err) {
         if (err) throw err
-        assert.equal(wsServer.sockets().length, 2)
+        assert.equal(wsServer._wsServer.clients.length, 2)
         assert.equal(connections._nsTree.get('/someAddr').connections.length, 0)
         assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
         done()
@@ -127,12 +127,12 @@ describe('websockets.Server', function() {
     })
 
     it('should send a message to all other connections', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(wsServer._wsServer.clients.length, 0)
 
       // Create dummy web clients, and immediately close one of them
       helpers.dummyWebClients(wsServer, config.port, 3, function(err, sockets) {
         if (err) throw err
-        assert.equal(wsServer.sockets().length, 3)
+        assert.equal(wsServer._wsServer.clients.length, 3)
         sockets[2].close()
       })
 
@@ -161,38 +161,19 @@ describe('websockets.Server', function() {
   describe('send', function() {
 
     it('shouldn\'t crash if socket is not opened', function(done) {
-      assert.equal(wsServer.sockets().length, 0)
+      assert.equal(wsServer._wsServer.clients.length, 0)
 
       // Create dummy web clients, and immediately close one of them
       helpers.dummyWebClients(wsServer, config.port, 1, function(err, sockets) {
         if (err) throw err
-        assert.equal(wsServer.sockets().length, 1)
-        var serverSocket = wsServer.sockets()[0]
+        assert.equal(wsServer._wsServer.clients.length, 1)
+        var serverSocket = wsServer._wsServer.clients[0]
         serverSocket.close()
         console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
         wsServer.connections[0].send('/bla', [1, 2, 3])
         done()
       })
 
-    })
-
-  })
-
-  describe('renderClientBrowser', function() {
-
-    it('should render the client js file to the given folder', function(done) {
-      async.series([
-        websockets.renderClientBrowser.bind(wsServer, '/tmp'),
-        fs.unlink.bind(fs, '/tmp/rhizome.js')
-      ], done)
-    })
-
-    it('should return errors', function(done) {
-      websockets.renderClientBrowser('/forbidden', function(err) {
-        assert.ok(err)
-        assert.equal(err.code, 'EACCES')
-        done()
-      })
     })
 
   })

@@ -24,7 +24,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 
 // Helper to create dummy web clients
 exports.dummyWebClients = function(wsServer, port, count, done) {
-  var countBefore = wsServer.sockets().length
+  var countBefore = wsServer._wsServer.clients.length
   async.series(_.range(count).map(function(i) {
     return function(next) {
       socket = new WebSocket('ws://localhost:' + port + '/?dummies')
@@ -32,7 +32,7 @@ exports.dummyWebClients = function(wsServer, port, count, done) {
       socket.addEventListener('open', function() { next() })
     }
   }), function(err) {
-    assert.equal(wsServer.sockets().length, countBefore + count)
+    assert.equal(wsServer._wsServer.clients.length, countBefore + count)
     if (done) done(err, _dummyWebClients)
   })
 }
