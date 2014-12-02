@@ -91,6 +91,9 @@ describe('websockets.Server', function() {
         ])
         done()
       })
+      connections.open(dummyConnections[0], function(err) { if (err) throw err })
+      connections.open(dummyConnections[2], function(err) { if (err) throw err })
+
       connections.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
       connections.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
 
@@ -151,6 +154,9 @@ describe('websockets.Server', function() {
         ])
         done()
       })
+      connections.open(dummyConnections[0], function(err) { if (err) throw err })
+      connections.open(dummyConnections[2], function(err) { if (err) throw err })
+      
       connections.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
       connections.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
 

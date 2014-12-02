@@ -1,7 +1,7 @@
 var assert = require('assert')
   , _ = require('underscore')
-  , connections = require('../../lib/connections')
-  , helpers = require('../helpers')
+  , connections = require('../../../lib/connections')
+  , helpers = require('../../helpers')
 
 describe('connections', function() {
 
@@ -13,6 +13,7 @@ describe('connections', function() {
         received.push([address, args])
       })
 
+      connections.open(connection, function(err) { if(err) throw err })
       connections.subscribe(connection, '/a')
       assert.equal(connections.send('/a', [44]), null)
       assert.equal(connections.send('/a/b', [55]), null)
@@ -34,9 +35,11 @@ describe('connections', function() {
   describe('subscribe', function() {
 
     it('should return an error message if address in not valid', function() {
-      assert.ok(_.isString(connections.subscribe({}, '')))
-      assert.ok(_.isString(connections.subscribe({}, 'bla')))
-      assert.ok(_.isString(connections.subscribe({}, '/sys/bla')))
+      var connection = {}
+      connections.open(connection, function(err) { if(err) throw err })
+      assert.ok(_.isString(connections.subscribe(connection, '')))
+      assert.ok(_.isString(connections.subscribe(connection, 'bla')))
+      assert.ok(_.isString(connections.subscribe(connection, '/sys/bla')))
     })
 
   })

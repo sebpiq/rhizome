@@ -20,6 +20,9 @@ describe('core.server.Connection', function() {
       var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
         received.push([2, address, args])
       })
+      connections.open(dummyConnection2, function(err) { if(err) throw err })
+      connections.open(dummyConnection1, function(err) { if(err) throw err })
+
       dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
       dummyConnection2.onSysMessage(coreMessages.subscribeAddress, ['/bla/'])
       dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/'])
@@ -43,6 +46,7 @@ describe('core.server.Connection', function() {
       var dummyConnection = new helpers.DummyConnection(function(address, args) {
         received.push([address, args])
       })
+      connections.open(dummyConnection, function(err) { if(err) throw err })
 
       connections.send('/bla', [1, 'toitoi', new Buffer('hello')])
       connections.send('/bla/blo', [111])
@@ -72,6 +76,7 @@ describe('core.server.Connection', function() {
       var dummyConnection = new helpers.DummyConnection(function(address, args) {
         received.push([address, args])
       })
+      connections.open(dummyConnection, function(err) { if(err) throw err })
 
       dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
       dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla'])

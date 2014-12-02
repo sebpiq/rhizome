@@ -64,8 +64,11 @@ describe('osc.Server', function() {
       ]
 
       // Adding dummy clients (simulate websockets)
-      var dummyConn = { send: function(address, args) { this.received.push([address, args]) }, received: [] }
-      connections.subscribe(dummyConn, '/blo')
+      var dummyConnection = { send: function(address, args) {
+        this.received.push([address, args])
+      }, received: [] }
+      connections.open(dummyConnection, function(err) { if (err) throw err })
+      connections.subscribe(dummyConnection, '/blo')
 
       async.waterfall([
         doConnection(oscClients),
@@ -98,7 +101,7 @@ describe('osc.Server', function() {
 
             [9002, '/empty', []]
           ])
-          assert.deepEqual(dummyConn.received, [['/blo/bli', ['non', 'oui', 1, 2]]])
+          assert.deepEqual(dummyConnection.received, [['/blo/bli', ['non', 'oui', 1, 2]]])
           done()
         }
 

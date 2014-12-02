@@ -94,7 +94,7 @@ exports.afterEach = function(toStop, done) {
   }
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
-  connections.removeAll()
+  connections._clean()
   if (toStop)
     async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
   else done()
