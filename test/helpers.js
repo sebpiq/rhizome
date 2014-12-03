@@ -72,7 +72,9 @@ var DummyConnection = exports.DummyConnection = function(callback) {
 }
 connections.registerClass('dummy', DummyConnection)
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
-  send: function(address, args) { this.callback(address, args) }
+  send: function(address, args) { this.callback(address, args) },
+  serialize: function() { return this.testData || {} },
+  deserialize: function(data) { this.restoredTestData = data }
 })
 
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {

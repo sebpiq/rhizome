@@ -30,11 +30,13 @@
     "vinyl-source-stream": "1.0.x",
     "vinyl-buffer": "1.0.x",
     "cookie": "0.1.x",
-    "nedb": "^0.11.1"
+    "nedb": "0.11.x",
+    "rimraf": "^2.2.8"
   },
   "devDependencies": {
     "mocha": "1.17.x",
-    "jetty": "0.2.x"
+    "jetty": "0.2.x",
+    "rimraf": "2.2.x"
   },
   "bin": {
     "rhizome": "./bin/rhizome.js",
