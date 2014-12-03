@@ -4,8 +4,6 @@ var assert = require('assert')
   , WebSocket = require('ws')
   , moscow = require('moscow')
   , oscServer = require('../lib/osc/Server')
-  , WebClient = require('../lib/websockets/Client')
-  , webClient = new WebClient({ hostname: 'localhost', port: 8000 })
   , connections = require('../lib/connections')
   , coreServer = require('../lib/core/server')
   , coreMessages = require('../lib/core/messages')
@@ -29,11 +27,17 @@ exports.dummyWebClients = function(wsServer, port, count, done) {
     return function(next) {
       socket = new WebSocket('ws://localhost:' + port + '/?dummies')
       _dummyWebClients.push(socket)
-      socket.addEventListener('open', function() { next() })
+      socket.on('open', function() {
+        socket.on('message', function(msg) {
+          msg = JSON.parse(msg)
+          if (msg.command === 'connect') next(null, msg)
+          else throw new Error('unexpected ' + msg)
+        })
+      })
     }
-  }), function(err) {
+  }), function(err, messages) {
     assert.equal(wsServer._wsServer.clients.length, countBefore + count)
-    if (done) done(err, _dummyWebClients)
+    if (done) done(err, _dummyWebClients, messages)
   })
 }
 var _dummyWebClients = []
@@ -66,6 +70,7 @@ var DummyConnection = exports.DummyConnection = function(callback) {
   this.callback = callback
   coreServer.Connection.apply(this)
 }
+connections.registerClass('dummy', DummyConnection)
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
   send: function(address, args) { this.callback(address, args) }
 })
@@ -90,14 +95,13 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
 exports.afterEach = function(toStop, done) {
   if (arguments.length === 1) {
     done = toStop
-    toStop = null
+    toStop = []
   }
+  toStop.push(connections)
+
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
-  connections._clean()
-  if (toStop)
-    async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
-  else done()
+  async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)

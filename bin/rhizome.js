@@ -28,6 +28,7 @@ var path = require('path')
   , version = require('../package.json').version
   , websockets = require('../lib/websockets')
   , osc = require('../lib/osc')
+  , connections = require('../lib/connections')
   , coreUtils = require('../lib/core/utils')
   , errors = require('../lib/core/errors')
   , utils = require('./utils')
@@ -107,7 +108,7 @@ if (require.main === module) {
     utils.handleError(err)
     var packageRootPath = path.join(__dirname, '..', '..')
       , buildDir = path.join(packageRootPath, 'build')
-      , asyncStartOps = []
+      , asyncStartOps = [connections.start.bind(connections)]
       , warningLog = []
       , successLog = []
 

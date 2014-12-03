@@ -30,7 +30,7 @@ describe('websockets.Client', function() {
   beforeEach(function(done) {
     //client.debug = console.log
     client.on('error', function() {}) // Just to avoid throwing
-    done()
+    connections.start(done)
   })
 
   afterEach(function(done) {
@@ -101,7 +101,7 @@ describe('websockets.Client', function() {
 
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.port, 2),
-        function(sockets, next) {
+        function(sockets, messages, next) {
           assert.equal(wsServer._wsServer.clients[0].readyState, WebSocket.OPEN)
           clientNoQueue.start(next)
         }
@@ -118,7 +118,7 @@ describe('websockets.Client', function() {
 
         helpers.dummyWebClients.bind(this, wsServer, serverConfig.port, 2),
 
-        function(sockets, next) {
+        function(sockets, messages, next) {
           client.start(function(err) { if (err) throw err })
           client.once('queued', function(err) { next(err, sockets) })
         },
@@ -232,16 +232,22 @@ describe('websockets.Client', function() {
         ])
         done()
       })
-      connections.open(dummyConnections[0], function(err) { if (err) throw err })
-      connections.open(dummyConnections[1], function(err) { if (err) throw err })
 
-      // Subscribing them to receive what's sent by our client
-      connections.subscribe(dummyConnections[0], '/')
-      connections.subscribe(dummyConnections[1], '/bla')
+      async.series([
+        connections.open.bind(connections, dummyConnections[0]),
+        connections.open.bind(connections, dummyConnections[1])
+      ], function(err) {
+        if (err) throw err
 
-      // Sending messages
-      client.send('/bla', [1, 2, 3])
-      client.send('/blo', ['oui', 'non'])
+        // Subscribing them to receive what's sent by our client
+        connections.subscribe(dummyConnections[0], '/')
+        connections.subscribe(dummyConnections[1], '/bla')
+
+        // Sending messages
+        client.send('/bla', [1, 2, 3])
+        client.send('/blo', ['oui', 'non'])
+      })
+
     })
 
     it('should handle things correctly when sending blobs', function(done) {
@@ -258,19 +264,24 @@ describe('websockets.Client', function() {
         ])
         done()
       })
-      connections.open(dummyConnections[0], function(err) { if (err) throw err })
-      connections.open(dummyConnections[1], function(err) { if (err) throw err })
 
-      // Subscribing them to receive what's sent by our client
-      connections.subscribe(dummyConnections[0], '/bla/blob')
-      connections.subscribe(dummyConnections[0], '/blu/blob')
-      connections.subscribe(dummyConnections[1], '/')
+      async.series([
+        connections.open.bind(connections, dummyConnections[0]),
+        connections.open.bind(connections, dummyConnections[1])
+      ], function(err) {
+        if (err) throw err
 
-      // Sending messages containing blobs
-      client.send('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
-      client.send('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
-      client.send('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
-      client.send('/bli/blob/', [new Buffer('blobbi')])
+        // Subscribing them to receive what's sent by our client
+        connections.subscribe(dummyConnections[0], '/bla/blob')
+        connections.subscribe(dummyConnections[0], '/blu/blob')
+        connections.subscribe(dummyConnections[1], '/')
+
+        // Sending messages containing blobs
+        client.send('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
+        client.send('/blo/blob', [new Buffer('blobbo1'), 1234, new Buffer('blobbo2')])
+        client.send('/blu/blob/', [new Buffer('blobbu'), 'hoho', 5678])
+        client.send('/bli/blob/', [new Buffer('blobbi')])
+      })
     })
 
     it('should work when sending no arguments', function(done) {
@@ -278,10 +289,12 @@ describe('websockets.Client', function() {
         helpers.assertSameElements(received, [[0, '/bla', []]])
         done()
       })
-      connections.open(dummyConnections[0], function(err) { if (err) throw err })
+      connections.open(dummyConnections[0], function(err) {
+        if (err) throw err
+        connections.subscribe(dummyConnections[0], '/bla')
+        client.send('/bla/')
+      })
 
-      connections.subscribe(dummyConnections[0], '/bla')
-      client.send('/bla/')
     })
 
     it('should throw an error if the address is not valid', function() {
@@ -486,7 +499,7 @@ describe('websockets.Client', function() {
       cookie.get = cookie._get
     })
 
-    it.skip('should recover the client infos if the client is known', function(done) {
+    it('should recover the client infos if the client is known', function(done) {
       var client2 = new websockets.Client(clientConfig)
         , savedId = client.id
       cookie._value = client.id
@@ -515,6 +528,7 @@ describe('websockets.Client', function() {
         function(next) {
           assert.equal(client2.id, savedId)
           assert.equal(connections._nsTree.get('/blou').connections.length, 1)
+          next()
         }
       ], done)
     })

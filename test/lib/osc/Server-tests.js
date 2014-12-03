@@ -39,7 +39,12 @@ var sendToServer = new moscow.createClient('localhost', config.port, 'udp')
 
 describe('osc.Server', function() {
 
-  beforeEach(function(done) { oscServer.start(done) })
+  beforeEach(function(done) {
+    async.series([
+      connections.start.bind(connections),
+      oscServer.start.bind(oscServer)
+    ], done)
+  })
   afterEach(function(done) { helpers.afterEach([oscServer], done) })
 
   describe('start', function() {
@@ -64,48 +69,53 @@ describe('osc.Server', function() {
       ]
 
       // Adding dummy clients (simulate websockets)
-      var dummyConnection = { send: function(address, args) {
-        this.received.push([address, args])
-      }, received: [] }
-      connections.open(dummyConnection, function(err) { if (err) throw err })
-      connections.subscribe(dummyConnection, '/blo')
 
-      async.waterfall([
-        doConnection(oscClients),
+      var dummyConnection = new helpers.DummyConnection(function(address, args) {
+        dummyReceived.push([address, args])
+      }), dummyReceived = []
 
-        // Do subscribe
-        function(next) {
-          sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
-          sendToServer.send(coreMessages.subscribeAddress, [9002, '/'])
-          helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
-        },
+      connections.open(dummyConnection, function(err) {
+        if (err) throw err
+        connections.subscribe(dummyConnection, '/blo')
 
-        // Checking received and sending some messages
-        function(received, next) {
-          helpers.assertSameElements(received, [
-            [9001, coreMessages.subscribedAddress, ['/bla']],
-            [9002, coreMessages.subscribedAddress, ['/']]
-          ])
-          helpers.dummyOSCClients(4, oscClients, next.bind(this, null))
-          sendToServer.send('/bla', ['haha', 'hihi'])
-          sendToServer.send('/blo/bli', ['non', 'oui', 1, 2])
-          sendToServer.send('/empty')
-        },
+        async.waterfall([
+          doConnection(oscClients),
 
-        // Checking the messages received
-        function(received, next) {
-          helpers.assertSameElements(received, [
-            [9001, '/bla', ['haha', 'hihi']],
-            [9002, '/bla', ['haha', 'hihi']],
-            [9002, '/blo/bli', ['non', 'oui', 1, 2]],
+          // Do subscribe
+          function(next) {
+            sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
+            sendToServer.send(coreMessages.subscribeAddress, [9002, '/'])
+            helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
+          },
 
-            [9002, '/empty', []]
-          ])
-          assert.deepEqual(dummyConnection.received, [['/blo/bli', ['non', 'oui', 1, 2]]])
-          done()
-        }
+          // Checking received and sending some messages
+          function(received, next) {
+            helpers.assertSameElements(received, [
+              [9001, coreMessages.subscribedAddress, ['/bla']],
+              [9002, coreMessages.subscribedAddress, ['/']]
+            ])
+            helpers.dummyOSCClients(4, oscClients, next.bind(this, null))
+            sendToServer.send('/bla', ['haha', 'hihi'])
+            sendToServer.send('/blo/bli', ['non', 'oui', 1, 2])
+            sendToServer.send('/empty')
+          },
 
-      ])
+          // Checking the messages received
+          function(received, next) {
+            helpers.assertSameElements(received, [
+              [9001, '/bla', ['haha', 'hihi']],
+              [9002, '/bla', ['haha', 'hihi']],
+              [9002, '/blo/bli', ['non', 'oui', 1, 2]],
+
+              [9002, '/empty', []]
+            ])
+            assert.deepEqual(dummyReceived, [['/blo/bli', ['non', 'oui', 1, 2]]])
+            done()
+          }
+
+        ])
+      })
+
     })
 
     it('should transmit blobs to blob clients', function(done) {

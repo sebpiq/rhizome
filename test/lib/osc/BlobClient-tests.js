@@ -5,6 +5,7 @@ var _ = require('underscore')
   , moscow = require('moscow')
   , coreMessages = require('../../../lib/core/messages')
   , BlobClient = require('../../../lib/osc/BlobClient')
+  , connections = require('../../../lib/connections')
   , helpers = require('../../helpers')
 
 
@@ -27,6 +28,7 @@ describe('blob-client', function() {
   beforeEach(function(done) {
     async.series([
       client.start.bind(client), 
+      connections.start.bind(connections),
       fakeServer.start.bind(fakeServer)
     ], done)
   })
