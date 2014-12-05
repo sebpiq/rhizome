@@ -92,6 +92,34 @@ describe('persistence', function() {
 
     })
 
+    describe('eventInsert', function() {
+
+      it('should insert events in the store', function(done) {
+        var event1 = { when: +(new Date), what: 'open', who: 'john' }
+          , event2 = { when: +(new Date) + 10, what: 'close', who: 'jack' }
+          , event3 = { when: +(new Date) + 100, what: 'start', who: 'jimi' }
+
+        async.series([
+          store.eventList.bind(store),
+          store.eventInsert.bind(store, event1),
+          store.eventInsert.bind(store, event3),
+          store.eventList.bind(store),
+          store.eventInsert.bind(store, event2),
+          store.eventList.bind(store)
+        ], function(err, results) {
+          if (err) throw err
+          assert.deepEqual(results.shift(), [])
+          results.shift()
+          results.shift()
+          helpers.assertSameElements(results.shift(), [event1, event3])
+          results.shift()
+          helpers.assertSameElements(results.shift(), [event1, event2, event3])
+          done()
+        })
+      })
+
+    })
+
   })
 
 })

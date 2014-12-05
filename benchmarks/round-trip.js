@@ -30,9 +30,9 @@ echoClient.on('reconnected', function() {
 
 echoClient.on('message', function(address, args) {
   if (address !== '/echo') return
-  var userId = args[0]
+  var id = args[0]
     , timestamp = args[1]
-    , client = _.find(clients, function(c) { return c.userId === userId })
+    , client = _.find(clients, function(c) { return c.id === id })
   client.stats.cumRoundTripTime += (+(new Date) - args[1])
   client.stats.countReceivedMessages++
 })
@@ -57,17 +57,17 @@ _.range(config.connections).forEach(function() {
 
   client.on('connected', function() {
     connected.push(client)
-    console.log('client, ID ' + client.userId + ' connected')
+    console.log('client, ID ' + client.id + ' connected')
     if (_.intersection(connected, clients).length === config.connections)
       onAllClientsConnected()
   })
 
   client.on('connection lost', function() {
-    console.log('LOST client, ID ' + client.userId)
+    console.log('LOST client, ID ' + client.id)
   })
 
   client.on('reconnected', function() {
-    console.log('reconnected, ID ' + client.userId)
+    console.log('reconnected, ID ' + client.id)
   })
 
   client.start(function(err) {
@@ -79,8 +79,8 @@ var onAllClientsConnected = function() {
   console.log('' + clients.length + ' clients connected')
 
   setInterval(function() {
-    clients.filter(function(c) { return c.userId !== null }).forEach(function(c) {
-      c.send('/echo', [c.userId, +(new Date)])
+    clients.filter(function(c) { return c.id !== null }).forEach(function(c) {
+      c.send('/echo', [c.id, +(new Date)])
       c.stats.countSentMessages++
     })
   }, config.sendInterval)
@@ -101,7 +101,7 @@ setInterval(function() {
   jetty.clear()
   jetty.text('- echo client: \t\t\t\t' + echoClient.status() + '\n')
   jetty.text('- clients ready: \t\t\t' + clients.reduce(function(cum, c) {
-    if (c.userId !== null && c.status() === 'started') return cum + 1
+    if (c.id !== null && c.status() === 'started') return cum + 1
     else return cum
   }, 0) + '\n')
   jetty.text('- total messages: \t\t\t' + totalReceivedMessages

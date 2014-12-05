@@ -1,22 +1,123 @@
 var assert = require('assert')
+  , fs = require('fs')
   , _ = require('underscore')
+  , async = require('async')
+  , rimraf = require('rimraf')
   , ConnectionManager = require('../../../lib/connections/ConnectionManager')
+  , persistence = require('../../../lib/connections/persistence')
   , helpers = require('../../helpers')
 
 
 describe('ConnectionManager', function() {
 
+  var testDbDir = '/tmp/rhizome-test-db'
+  beforeEach(function(done) {
+    async.series([
+      rimraf.bind(rimraf, testDbDir),
+      fs.mkdir.bind(fs, testDbDir)
+    ], done)
+  })
+
+  describe('open', function() {
+    var store = new persistence.NEDBStore(testDbDir)
+      , connections = new ConnectionManager({store: store})
+    beforeEach(function(done) { connections.start(done) })
+    afterEach(function(done) { connections.stop(done) })    
+
+    it('should open properly and log events', function(done) {
+      var connection = new helpers.DummyConnection()
+
+      connections.open(connection, function(err) {
+        if (err) throw err
+        assert.deepEqual(connections._openConnections, [connection])
+        assert.ok(_.isString(connection.id) && connection.id.length > 5)
+
+        // As the event is created after the connection has been opened,
+        // without acknowledgement, we need to wait before it is inserted
+        var events = []
+        async.whilst(
+          function() { return events.length < 1 },
+          function(next) {
+            store.eventList(function(err, eList) {
+              events = eList
+              setTimeout(next.bind(this, err), 20)
+            })
+          },
+          function(err) {
+            if (err) throw err
+            assert.equal(events.length, 1)
+            var event = events[0]
+            assert.equal(event.who[0], 'dummy')
+            assert.equal(event.who[1], connection.id)
+            assert.equal(event.what, 'open')
+            assert.ok(_.isNumber(event.when))
+            done()
+          }
+        )
+
+      })
+    })
+
+  })
+
+  describe('close', function() {
+    var store = new persistence.NEDBStore(testDbDir)
+      , connections = new ConnectionManager({store: store})
+    beforeEach(function(done) { connections.start(done) })
+    afterEach(function(done) { connections.stop(done) })    
+
+    it('should close properly and log events', function(done) {
+      var connection = new helpers.DummyConnection()
+
+      async.series([
+        connections.open.bind(connections, connection),
+        // Wait a bit so 'open' and 'close' events are not simultaneous
+        function(next) { setTimeout(next.bind(this, null), 10) },
+        connections.close.bind(connections, connection)
+      ], function(err) {
+        if (err) throw err
+        assert.ok(_.isString(connection.id) && connection.id.length > 5)
+        assert.deepEqual(connections._openConnections, [])
+
+        // As the event is created after the connection has been closed,
+        // without acknowledgement, we need to wait before it is inserted
+        var events = []
+        async.whilst(
+          function() { return events.length < 2 },
+          function(next) {
+            store.eventList(function(err, eList) {
+              events = eList
+              setTimeout(next.bind(this, err), 20)
+            })
+          },
+          function(err) {
+            if (err) throw err
+            assert.equal(events.length, 2)
+            var event = events[1]
+            assert.equal(event.who[0], 'dummy')
+            assert.equal(event.who[1], connection.id)
+            assert.equal(event.what, 'close')
+            assert.ok(_.isNumber(event.when))
+            done()
+          }
+        )
+
+      })
+    })
+
+  })
+
   describe('send', function() {
 
-    var connections = new ConnectionManager({})
+    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })
 
     it('should send messages from subspaces', function(done) {
       var received = []
-      var connection = new helpers.DummyConnection(function(address, args) {
-        received.push([address, args])
-      })
+        , connection = new helpers.DummyConnection(function(address, args) {
+          received.push([address, args])
+        })
 
       connections.open(connection, function(err) {
         if(err) throw err
@@ -43,7 +144,7 @@ describe('ConnectionManager', function() {
 
   describe('subscribe', function() {
 
-    var connections = new ConnectionManager({})
+    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })
 

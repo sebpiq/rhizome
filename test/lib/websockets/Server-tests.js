@@ -146,9 +146,8 @@ describe('websockets.Server', function() {
       var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
         var ids = received.map(function(r) { return r[2][0] })
         received.forEach(function(r) { r[2] = ['id'] })
-        // Check ids
+        // Check ids and unicity
         ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
-        // Check for unicity
         assert.equal(_.uniq(ids).length, 1)
 
         helpers.assertSameElements(received, [
