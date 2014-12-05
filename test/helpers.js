@@ -36,6 +36,8 @@ exports.dummyWebClients = function(wsServer, port, count, done) {
       })
     }
   }), function(err, messages) {
+    if (wsServer._wsServer.clients.length !== countBefore + count)
+      console.log(wsServer._wsServer.clients)
     assert.equal(wsServer._wsServer.clients.length, countBefore + count)
     if (done) done(err, _dummyWebClients, messages)
   })
@@ -70,7 +72,7 @@ var DummyConnection = exports.DummyConnection = function(callback) {
   this.callback = callback
   coreServer.Connection.apply(this)
 }
-connections.registerClass('dummy', DummyConnection)
+connections.registerConnectionClass('dummy', DummyConnection)
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
   send: function(address, args) { this.callback(address, args) },
   serialize: function() { return this.testData || {} },
@@ -99,11 +101,12 @@ exports.afterEach = function(toStop, done) {
     done = toStop
     toStop = []
   }
-  toStop.push(connections)
 
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
-  async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
+  if (toStop.length)
+    async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
+  else done()
 }
 
 // Helper to assert that 2 arrays contain the same elements (using deepEqual)

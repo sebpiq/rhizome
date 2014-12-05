@@ -24,11 +24,15 @@ var sendToBlobClient = new moscow.createClient('localhost', clientConfig.blobsPo
 
 
 describe('blob-client', function() {
+  var manager = new connections.ConnectionManager({
+    store: new connections.NoStore()
+  })
 
   beforeEach(function(done) {
+    connections.manager = manager
     async.series([
       client.start.bind(client), 
-      connections.start.bind(connections),
+      manager.start.bind(manager),
       fakeServer.start.bind(fakeServer)
     ], done)
   })
@@ -36,7 +40,7 @@ describe('blob-client', function() {
   afterEach(function(done) {
     async.series([
       fakeServer.stop.bind(fakeServer),
-      helpers.afterEach.bind(helpers, [client])
+      helpers.afterEach.bind(helpers, [client, manager])
     ], done)
   })
 

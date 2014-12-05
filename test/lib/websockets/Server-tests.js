@@ -21,13 +21,21 @@ helpers.wsServer = wsServer
 
 describe('websockets.Server', function() {
 
+  var manager = new connections.ConnectionManager({
+    store: new connections.NoStore()
+  })
+
   beforeEach(function(done) {
+    connections.manager = manager
     async.series([
-      connections.start.bind(connections),
+      manager.start.bind(manager),
       wsServer.start.bind(wsServer)
     ], done)
   })
-  afterEach(function(done) { helpers.afterEach([wsServer], done) })
+  
+  afterEach(function(done) {
+    helpers.afterEach([wsServer, manager], done)
+  })
 
   describe('start', function() {
 
@@ -98,13 +106,13 @@ describe('websockets.Server', function() {
       })
 
       async.series([
-        connections.open.bind(connections, dummyConnections[0]),
-        connections.open.bind(connections, dummyConnections[2])
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[2])
       ], function(err) {
         if (err) throw err
 
-        connections.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
-        connections.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
+        manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
+        manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
 
         // Create dummy web clients, so that new connections are open
         helpers.dummyWebClients(wsServer, config.port, 3)
@@ -122,10 +130,10 @@ describe('websockets.Server', function() {
         function(sockets, messages, next) {
           var connection1 = wsServer.connections[0]
             , connection2 = wsServer.connections[1]
-          connections.subscribe(connection1, '/someAddr')
-          connections.subscribe(connection2, '/someOtherAddr')
-          assert.equal(connections._nsTree.get('/someAddr').connections.length, 1)
-          assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
+          manager.subscribe(connection1, '/someAddr')
+          manager.subscribe(connection2, '/someOtherAddr')
+          assert.equal(manager._nsTree.get('/someAddr').connections.length, 1)
+          assert.equal(manager._nsTree.get('/someOtherAddr').connections.length, 1)
           assert.equal(wsServer._wsServer.clients.length, 3)
           connection1._socket.close()
           connection1.on('close', function() { next() })
@@ -133,8 +141,8 @@ describe('websockets.Server', function() {
       ], function(err) {
         if (err) throw err
         assert.equal(wsServer._wsServer.clients.length, 2)
-        assert.equal(connections._nsTree.get('/someAddr').connections.length, 0)
-        assert.equal(connections._nsTree.get('/someOtherAddr').connections.length, 1)
+        assert.equal(manager._nsTree.get('/someAddr').connections.length, 0)
+        assert.equal(manager._nsTree.get('/someOtherAddr').connections.length, 1)
         done()
       })
     })
@@ -158,8 +166,8 @@ describe('websockets.Server', function() {
       })
 
       async.series([
-        connections.open.bind(connections, dummyConnections[0]),
-        connections.open.bind(connections, dummyConnections[2]),
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[2]),
         helpers.dummyWebClients.bind(helpers, wsServer, config.port, 3)
       ], function(err, results) {
         if (err) throw err
@@ -169,8 +177,8 @@ describe('websockets.Server', function() {
         assert.equal(wsServer._wsServer.clients.length, 3)
         sockets[2].close()
 
-        connections.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
-        connections.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
+        manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
+        manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
       })
 
 

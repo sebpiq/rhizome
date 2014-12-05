@@ -3,6 +3,7 @@ var _ = require('underscore')
   , async = require('async')
   , assert = require('assert')
   , WebSocket = require('ws')
+  , rimraf = require('rimraf')
   , cookie = require('cookie')
   , websockets = require('../../../lib/websockets')
   , connections = require('../../../lib/connections')
@@ -15,7 +16,7 @@ var serverConfig = {
   usersLimit: 2
 }
 
-var client, clientConfig = {
+var clientConfig = {
   port: 8000,
   hostname: 'localhost',
   reconnect: 0,
@@ -26,25 +27,26 @@ var wsServer = new websockets.Server(serverConfig)
 
 
 describe('websockets.Client', function() {
-
-  beforeEach(function(done) {
-    //client.debug = console.log
-    client.on('error', function() {}) // Just to avoid throwing
-    connections.start(done)
-  })
-
-  afterEach(function(done) {
-    client.debug = function() {}
-    client.removeAllListeners()
-    cookie._value = null
-    helpers.afterEach([wsServer, client], done)
-  })
+  afterEach(function() { cookie._value = null })
 
   describe('start', function() {
-    client = new websockets.Client(clientConfig)
+    var client = new websockets.Client(clientConfig)
+      , manager = new connections.ConnectionManager({
+        store: new connections.NoStore()
+      })
 
     beforeEach(function(done) {
-      wsServer.start(done)
+      connections.manager = manager
+      client.on('error', function() {}) // Just to avoid throwing
+      async.series([
+        manager.start.bind(manager),
+        wsServer.start.bind(wsServer)
+      ], done)
+    })
+
+    afterEach(function(done) {
+      client.removeAllListeners()
+      helpers.afterEach([wsServer, client, manager], done)
     })
 
     var assertConnected = function(otherClient) {
@@ -139,7 +141,7 @@ describe('websockets.Client', function() {
   })
 
   describe('stop', function() {
-    client = new websockets.Client(clientConfig)
+    var client = new websockets.Client(clientConfig)
 
     it('should call the callback even if client is already stopped', function(done) {
       client.stop(done)
@@ -148,25 +150,36 @@ describe('websockets.Client', function() {
   })
 
   describe('message', function() {
-    client = new websockets.Client(clientConfig)
+    var client = new websockets.Client(clientConfig)
+      , manager = new connections.ConnectionManager({
+        store: new connections.NoStore()
+      })
 
     beforeEach(function(done) {
+      connections.manager = manager
+      client.on('error', function() {}) // Just to avoid throwing
       async.series([
-        function(next) { wsServer.start(next) },
-        function(next) { client.start(done) }
-      ])
+        manager.start.bind(manager),
+        wsServer.start.bind(wsServer),
+        client.start.bind(client)
+      ], done)
+    })
+
+    afterEach(function(done) {
+      client.removeAllListeners()
+      helpers.afterEach([wsServer, client, manager], done)
     })
 
     it('should receive messages from the specified address', function(done) {
-      assert.equal(connections._nsTree.has('/place1'), false)
+      assert.equal(manager._nsTree.has('/place1'), false)
 
       var subscribed = function(address, args) {
         assert.equal(address, coreMessages.subscribedAddress)
         assert.deepEqual(args, ['/place1'])
-        assert.equal(connections._nsTree.has('/place1'), true)
-        assert.equal(connections._nsTree.get('/place1').connections.length, 1)
-        connections.send('/place2', [44])
-        connections.send('/place1', [1, 2, 3])
+        assert.equal(manager._nsTree.has('/place1'), true)
+        assert.equal(manager._nsTree.get('/place1').connections.length, 1)
+        manager.send('/place2', [44])
+        manager.send('/place1', [1, 2, 3])
       }
 
       var handler = function(address, args) {
@@ -187,10 +200,10 @@ describe('websockets.Client', function() {
       var subscribed = function(address, args) {
         assert.equal(address, coreMessages.subscribedAddress)
         assert.deepEqual(args, ['/a'])
-        connections.send('/a', [new Buffer('hahaha'), 1234, 'blabla'])
-        connections.send('/a/b', [new Buffer('hello')])
-        connections.send('/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')])
-        connections.send('/a/', [new Buffer('huhu'), new Buffer('hyhy')])
+        manager.send('/a', [new Buffer('hahaha'), 1234, 'blabla'])
+        manager.send('/a/b', [new Buffer('hello')])
+        manager.send('/a', [5678, new Buffer('hihi'), 'prout', new Buffer('hoho')])
+        manager.send('/a/', [new Buffer('huhu'), new Buffer('hyhy')])
       }
 
       var handler = function(received) {
@@ -213,13 +226,24 @@ describe('websockets.Client', function() {
   })
 
   describe('send', function() {
-    client = new websockets.Client(clientConfig)
+    var client = new websockets.Client(clientConfig)
+      , manager = new connections.ConnectionManager({
+        store: new connections.NoStore()
+      })
 
     beforeEach(function(done) {
+      connections.manager = manager
+      client.on('error', function() {}) // Just to avoid throwing
       async.series([
-        function(next) { wsServer.start(next) },
-        function(next) { client.start(done) }
+        manager.start.bind(manager),
+        wsServer.start.bind(wsServer),
+        client.start.bind(client)
       ], done)
+    })
+
+    afterEach(function(done) {
+      client.removeAllListeners()
+      helpers.afterEach([wsServer, client, manager], done)
     })
 
     it('should send messages to the specified address', function(done) {
@@ -234,14 +258,14 @@ describe('websockets.Client', function() {
       })
 
       async.series([
-        connections.open.bind(connections, dummyConnections[0]),
-        connections.open.bind(connections, dummyConnections[1])
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[1])
       ], function(err) {
         if (err) throw err
 
         // Subscribing them to receive what's sent by our client
-        connections.subscribe(dummyConnections[0], '/')
-        connections.subscribe(dummyConnections[1], '/bla')
+        manager.subscribe(dummyConnections[0], '/')
+        manager.subscribe(dummyConnections[1], '/bla')
 
         // Sending messages
         client.send('/bla', [1, 2, 3])
@@ -266,15 +290,15 @@ describe('websockets.Client', function() {
       })
 
       async.series([
-        connections.open.bind(connections, dummyConnections[0]),
-        connections.open.bind(connections, dummyConnections[1])
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[1])
       ], function(err) {
         if (err) throw err
 
         // Subscribing them to receive what's sent by our client
-        connections.subscribe(dummyConnections[0], '/bla/blob')
-        connections.subscribe(dummyConnections[0], '/blu/blob')
-        connections.subscribe(dummyConnections[1], '/')
+        manager.subscribe(dummyConnections[0], '/bla/blob')
+        manager.subscribe(dummyConnections[0], '/blu/blob')
+        manager.subscribe(dummyConnections[1], '/')
 
         // Sending messages containing blobs
         client.send('/bla/blob', [1, new Buffer('blobba'), 'blabla'])
@@ -289,9 +313,9 @@ describe('websockets.Client', function() {
         helpers.assertSameElements(received, [[0, '/bla', []]])
         done()
       })
-      connections.open(dummyConnections[0], function(err) {
+      manager.open(dummyConnections[0], function(err) {
         if (err) throw err
-        connections.subscribe(dummyConnections[0], '/bla')
+        manager.subscribe(dummyConnections[0], '/bla')
         client.send('/bla/')
       })
 
@@ -311,20 +335,31 @@ describe('websockets.Client', function() {
 
   describe('auto-reconnect', function() {
 
-    var received = []
-    client = new websockets.Client(_.extend({}, clientConfig, { reconnect: 50 }))
+    var client = new websockets.Client(_.extend({}, clientConfig, { reconnect: 50 }))
+      , manager = new connections.ConnectionManager({
+        store: new connections.NoStore()
+      })
+      , received = []
 
     beforeEach(function(done) {
+      connections.manager = manager
+      client.on('error', function() {}) // Just to avoid throwing
       client.on('connection lost', function() { received.push('connection lost') })
       client.on('connected', function() { received.push('connected') })
       received = []
       async.series([
-        function(next) { wsServer.start(next) },
+        manager.start.bind(manager),
+        wsServer.start.bind(wsServer),
         function(next) {
           client.start()
           client.once('connected', next) // wait for the event to not confuse the tests
         }
       ], done)
+    })
+
+    afterEach(function(done) {
+      client.removeAllListeners()
+      helpers.afterEach([wsServer, client, manager], done)
     })
 
     var assertConnected = function() {
@@ -478,9 +513,14 @@ describe('websockets.Client', function() {
 
   describe('client id', function() {
 
-    client = new websockets.Client(clientConfig)
+    var dbDir = '/tmp/rhizome-test-db/'
+      , client = new websockets.Client(clientConfig)
+      , manager = new connections.ConnectionManager({
+        store: new connections.NEDBStore(dbDir)
+      })
 
     beforeEach(function(done) {
+      connections.manager = manager
       // Cookie mock-up for testing
       cookie._set = cookie.set
       cookie._get = cookie.get
@@ -488,22 +528,28 @@ describe('websockets.Client', function() {
       cookie.set = function(key, value) { cookie._value = value }
       cookie._value = null
 
+      client.on('error', function() {}) // Just to avoid throwing
       async.series([
-        function(next) { wsServer.start(next) },
-        function(next) { client.start(done) }
+        rimraf.bind(rimraf, dbDir),
+        manager.start.bind(manager),
+        wsServer.start.bind(wsServer),
+        client.start.bind(client)
       ], done)
     })
 
-    afterEach(function() {
+    afterEach(function(done) {
       cookie.set = cookie._set
       cookie.get = cookie._get
+      client.removeAllListeners()
+      helpers.afterEach([wsServer, client, manager], done)
     })
+
 
     it('should recover the client infos if the client is known', function(done) {
       var client2 = new websockets.Client(clientConfig)
         , savedId = client.id
       cookie._value = client.id
-      assert.equal(connections._nsTree.has('/blou'), false)
+      assert.equal(manager._nsTree.has('/blou'), false)
 
       async.series([
         // Subscribe the client to an address
@@ -511,7 +557,7 @@ describe('websockets.Client', function() {
           client.send(coreMessages.subscribeAddress, ['/blou'])
           client.once('message', function(address, args) {
             assert.deepEqual(address, coreMessages.subscribedAddress)
-            assert.equal(connections._nsTree.get('/blou').connections.length, 1)
+            assert.equal(manager._nsTree.get('/blou').connections.length, 1)
             next()
           })
         },
@@ -519,7 +565,7 @@ describe('websockets.Client', function() {
         // Stop it, and create another client with id read from the cookie
         client.stop.bind(client),
         function(next) {
-          assert.equal(connections._nsTree.get('/blou').connections.length, 0)
+          assert.equal(manager._nsTree.get('/blou').connections.length, 0)
           client2.start(next)
         },
 
@@ -527,7 +573,7 @@ describe('websockets.Client', function() {
         // are restored.
         function(next) {
           assert.equal(client2.id, savedId)
-          assert.equal(connections._nsTree.get('/blou').connections.length, 1)
+          assert.equal(manager._nsTree.get('/blou').connections.length, 1)
           next()
         }
       ], done)

@@ -38,14 +38,18 @@ var doConnection = function(clients) {
 var sendToServer = new moscow.createClient('localhost', config.port, 'udp')
 
 describe('osc.Server', function() {
+  var manager = new connections.ConnectionManager({
+    store: new connections.NoStore()
+  })
 
   beforeEach(function(done) {
+    connections.manager = manager
     async.series([
-      connections.start.bind(connections),
+      manager.start.bind(manager),
       oscServer.start.bind(oscServer)
     ], done)
   })
-  afterEach(function(done) { helpers.afterEach([oscServer], done) })
+  afterEach(function(done) { helpers.afterEach([oscServer, manager], done) })
 
   describe('start', function() {
 
@@ -74,9 +78,9 @@ describe('osc.Server', function() {
         dummyReceived.push([address, args])
       }), dummyReceived = []
 
-      connections.open(dummyConnection, function(err) {
+      manager.open(dummyConnection, function(err) {
         if (err) throw err
-        connections.subscribe(dummyConnection, '/blo')
+        manager.subscribe(dummyConnection, '/blo')
 
         async.waterfall([
           doConnection(oscClients),
@@ -185,7 +189,7 @@ describe('osc.Server', function() {
         // forbidden port
         function(next) {
           var oscConn = oscServer.connections[0]
-          connections.subscribe(oscConn, '/bla')
+          manager.subscribe(oscConn, '/bla')
           sendToServer.send('/bla', [new Buffer('blo')])
           setTimeout(done, 1000)
         }

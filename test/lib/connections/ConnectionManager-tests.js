@@ -18,13 +18,35 @@ describe('ConnectionManager', function() {
     ], done)
   })
 
+  describe('start', function() {
+
+    it('should create a NEDBStore automatically if store is a string', function(done) {
+      var manager1 = new ConnectionManager({ store: '/tmp' })
+        , manager2 = new ConnectionManager({ store: 'IdontExist' })
+      async.series([
+        manager1.start.bind(manager1),
+        function(next) {
+          manager2.start(function(err) {
+            helpers.assertValidationError(err, ['.store'])
+            next()
+          })
+        }
+      ], function(err) {
+        if (err) throw err
+        assert.ok(manager1._config.store instanceof persistence.NEDBStore)
+        done()
+      })
+    })
+
+  })
+
   describe('open', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({store: store})
+      , connections = new ConnectionManager({ store: store, collectStats: true })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 
-    it('should open properly and log events', function(done) {
+    it('should open properly and log events if collectStats', function(done) {
       var connection = new helpers.DummyConnection()
 
       connections.open(connection, function(err) {
@@ -62,11 +84,11 @@ describe('ConnectionManager', function() {
 
   describe('close', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({store: store})
+      , connections = new ConnectionManager({ store: store, collectStats: true })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 
-    it('should close properly and log events', function(done) {
+    it('should close properly and log events if collectStats', function(done) {
       var connection = new helpers.DummyConnection()
 
       async.series([

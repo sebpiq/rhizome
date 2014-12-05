@@ -8,9 +8,15 @@ var _ = require('underscore')
 
 
 describe('core.server.Connection', function() {
+  var manager = new connections.ConnectionManager({
+    store: connections.NoStore()
+  })
 
-  beforeEach(function(done) { connections.start(done) })
-  afterEach(function(done) { helpers.afterEach(done) })
+  beforeEach(function(done) {
+    connections.manager = manager
+    manager.start(done) 
+  })
+  afterEach(function(done) { helpers.afterEach([manager], done) })
 
   describe('onSysMessage', function() {
 
@@ -27,8 +33,8 @@ describe('core.server.Connection', function() {
         })
 
         async.series([
-          connections.open.bind(connections, dummyConnection2),
-          connections.open.bind(connections, dummyConnection1)
+          manager.open.bind(manager, dummyConnection2),
+          manager.open.bind(manager, dummyConnection1)
         ], function(err) {
           if (err) throw err
           dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
@@ -40,8 +46,8 @@ describe('core.server.Connection', function() {
             [2, coreMessages.subscribedAddress, ['/bla/']],
             [1, coreMessages.subscribedAddress, ['/']]
           ])
-          assert.equal(connections._nsTree.get('/bla').connections.length, 2)
-          assert.equal(connections._nsTree.get('/').connections.length, 1)
+          assert.equal(manager._nsTree.get('/bla').connections.length, 2)
+          assert.equal(manager._nsTree.get('/').connections.length, 1)
           done()
         })
       })
@@ -57,17 +63,17 @@ describe('core.server.Connection', function() {
           received.push([address, args])
         })
 
-        connections.open(dummyConnection, function(err) {
+        manager.open(dummyConnection, function(err) {
           if(err) throw err
 
-          connections.send('/bla', [1, 'toitoi', new Buffer('hello')])
-          connections.send('/bla/blo', [111])
-          connections.send('/blu', ['feeling'])
-          connections.send('/bla/blo', [222])
-          connections.send('/bli', [])
-          connections.send('/bly', [new Buffer('tyutyu')])
-          connections.send('/bla', [2, 'tutu', new Buffer('hello')])
-          connections.send('/bla/blo', [333])
+          manager.send('/bla', [1, 'toitoi', new Buffer('hello')])
+          manager.send('/bla/blo', [111])
+          manager.send('/blu', ['feeling'])
+          manager.send('/bla/blo', [222])
+          manager.send('/bli', [])
+          manager.send('/bly', [new Buffer('tyutyu')])
+          manager.send('/bla', [2, 'tutu', new Buffer('hello')])
+          manager.send('/bla/blo', [333])
 
           dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla']) // Blobs
           dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla/blo'])
@@ -90,7 +96,7 @@ describe('core.server.Connection', function() {
         var dummyConnection = new helpers.DummyConnection(function(address, args) {
           received.push([address, args])
         })
-        connections.open(dummyConnection, function(err) {
+        manager.open(dummyConnection, function(err) {
           if(err) throw err
 
           dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])

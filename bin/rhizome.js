@@ -35,6 +35,7 @@ var path = require('path')
 
 var httpServer, wsServer, oscServer
 
+// Validation for the http section of the configuration
 var httpValidator = new coreUtils.ChaiValidator({
   port: function(val) {
     expect(val).to.be.a('number')
@@ -50,19 +51,28 @@ var httpValidator = new coreUtils.ChaiValidator({
   }
 })
 
+// Function to validate a full config. Calls `done(err)` when done.
+// If validation failed, `err` is `ValidationError`.
 var validateConfig = exports.validateConfig = function(config, done) {
   var asyncValidOps = []
   
   // Build list of async validation operations to perform
+  config.connections = config.connections || {}
+  _.defaults(config.connections, connections.ConnectionManager.prototype.configDefaults)
+  var connectionsValidator = connections.ConnectionManager.prototype.configValidator
+  asyncValidOps.push(connectionsValidator.run.bind(connectionsValidator, config.connections))
+
   if (config.http) {
     asyncValidOps.push(httpValidator.run.bind(httpValidator, config.http))
   }
+
   if (config.websockets) {
     if (config.http) config.websockets.serverInstance = {}
     _.defaults(config.websockets, websockets.Server.prototype.configDefaults)
     var wsValidator = websockets.Server.prototype.configValidator
     asyncValidOps.push(wsValidator.run.bind(wsValidator, config.websockets))
   }
+
   if (config.osc) {
     _.defaults(config.osc, osc.Server.prototype.configDefaults)
     var oscValidator = osc.Server.prototype.configValidator
@@ -75,6 +85,7 @@ var validateConfig = exports.validateConfig = function(config, done) {
     var prefixes = []
 
     // Build list of prefixes for validation errors
+    prefixes.push('.connections')
     if (config.http) prefixes.push('.http')
     if (config.websockets) prefixes.push('.websockets')
     if (config.osc) prefixes.push('.osc')
@@ -92,6 +103,7 @@ var validateConfig = exports.validateConfig = function(config, done) {
   })
 }
 
+// Code that will run if the module is main
 if (require.main === module) {
   program
     .version(version)
@@ -108,9 +120,13 @@ if (require.main === module) {
     utils.handleError(err)
     var packageRootPath = path.join(__dirname, '..', '..')
       , buildDir = path.join(packageRootPath, 'build')
-      , asyncStartOps = [connections.start.bind(connections)]
+      , asyncStartOps = []
       , warningLog = []
       , successLog = []
+
+    // Connection manager
+    connections.manager = new connections.ConnectionManager(config.connections)
+    asyncStartOps.push(connections.manager.start.bind(connections.manager))
 
     // HTTP server
     if (config.http) {

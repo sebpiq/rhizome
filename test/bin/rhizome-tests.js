@@ -33,6 +33,10 @@ describe('bin.rhizome', function() {
 
     it('should accept a valid config', function(done) {
       var config = {
+        connections: {
+          store: '/tmp/',
+          collectStats: true
+        },
         osc: {
           port: 8002,
           blobsPort: 8004,
@@ -56,24 +60,30 @@ describe('bin.rhizome', function() {
       async.series([
         function(next) {
           var config = {
+            connections: { store: 7 },
             osc: {},
             http: {},
             websockets: {}
           }
           rhizomeBin.validateConfig(config, function(err) {
-            helpers.assertValidationError(err, [ '.osc.port', '.http.staticDir', '.http.port' ])
+            helpers.assertValidationError(err, [
+              '.osc.port', '.http.staticDir', '.http.port', '.connections.store'
+            ])
             next()
           })
         },
 
         function(next) {
           var config = {
+            connections: { store: '/IdontExist' },
             osc: {port: 'blabla'},
             http: {staticDir: '/IdontExist', port: 8000},
             websockets: {rootUrl: 156}
           }
           rhizomeBin.validateConfig(config, function(err) {
-            helpers.assertValidationError(err, [ '.osc.port', '.http.staticDir', '.websockets.rootUrl' ])
+            helpers.assertValidationError(err, [
+              '.osc.port', '.http.staticDir', '.websockets.rootUrl', '.connections.store'
+            ])
             next()
           })
         }

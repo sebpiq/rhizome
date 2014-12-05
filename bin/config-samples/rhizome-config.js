@@ -1,6 +1,6 @@
 module.exports = {
 
-  // Web server. Serves statc web pages.
+  // [Optional] : Web server. Serves statc web pages.
   http: {
 
     // [required] : the directory where the html, css, js files are located
@@ -12,7 +12,7 @@ module.exports = {
 
   },
 
-  // OSC server. Listens for OSC connections, and proxies messages to them. 
+  // [Optional] : OSC server. Listens for OSC connections, and proxies messages to them. 
   osc: {
 
     // [required] : Port on which the OSC applications will connect
@@ -24,6 +24,7 @@ module.exports = {
 
   },
 
+  // [Optional] : Websocket server.
   websockets: {
 
     // [default='/'] : Root url on which the websocket server will listen
@@ -37,5 +38,19 @@ module.exports = {
     // [default=1000] : maximum number of users that can be connected simultaneously on
     // the web socket server. Extra users will be queued until space is available.
     usersLimit: 1000
+  },
+
+  // [Optional] : Configures the general connections management.
+  connections: {
+
+    // [default=null] : whether to persist connection data. This is useful for example
+    // if the data associated to each connection is critical.
+    // By default, nothing is persisted.
+    // If you want it persisted : put the path of a folder where to save the data 
+    store: '/tmp',
+
+    // [default=false] : whether to collect usage data.
+    collectStats: true
+
   }
 }
