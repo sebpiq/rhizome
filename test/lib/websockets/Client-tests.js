@@ -511,22 +511,27 @@ describe('websockets.Client', function() {
 
   })
 
-  describe('client id', function() {
+  describe('cookies', function() {
 
     var dbDir = '/tmp/rhizome-test-db/'
       , client = new websockets.Client(clientConfig)
       , manager = new connections.ConnectionManager({
         store: new connections.NEDBStore(dbDir)
       })
+    client._isBrowser = true
 
     beforeEach(function(done) {
       connections.manager = manager
+
       // Cookie mock-up for testing
       cookie._set = cookie.set
       cookie._get = cookie.get
       cookie.get = function() { return cookie._value }
       cookie.set = function(key, value) { cookie._value = value }
       cookie._value = null
+
+      // navigator mock-up for testing
+      global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
 
       client.on('error', function() {}) // Just to avoid throwing
       async.series([
@@ -541,15 +546,18 @@ describe('websockets.Client', function() {
       cookie.set = cookie._set
       cookie.get = cookie._get
       client.removeAllListeners()
+      delete global.navigator
       helpers.afterEach([wsServer, client, manager], done)
     })
 
 
-    it('should recover the client infos if the client is known', function(done) {
+    it('should recover the client infos (os, browser, ...) if the client is known', function(done) {
       var client2 = new websockets.Client(clientConfig)
         , savedId = client.id
+      client2._isBrowser = true
       cookie._value = client.id
       assert.equal(manager._nsTree.has('/blou'), false)
+      global.navigator = { oscpu: 'should be ignored', userAgent: 'should be ignored' }
 
       async.series([
         // Subscribe the client to an address
@@ -574,6 +582,11 @@ describe('websockets.Client', function() {
         function(next) {
           assert.equal(client2.id, savedId)
           assert.equal(manager._nsTree.get('/blou').connections.length, 1)
+          // Test that the connection infos got restored
+          assert.deepEqual(
+            manager._nsTree.get('/blou').connections[0].infos,
+            {os: 'seb OS', browser: 'seb Agent'}
+          )
           next()
         }
       ], done)
