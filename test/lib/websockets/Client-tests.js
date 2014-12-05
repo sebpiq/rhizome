@@ -4,7 +4,6 @@ var _ = require('underscore')
   , assert = require('assert')
   , WebSocket = require('ws')
   , rimraf = require('rimraf')
-  , cookie = require('cookie')
   , websockets = require('../../../lib/websockets')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
@@ -27,7 +26,6 @@ var wsServer = new websockets.Server(serverConfig)
 
 
 describe('websockets.Client', function() {
-  afterEach(function() { cookie._value = null })
 
   describe('start', function() {
     var client = new websockets.Client(clientConfig)
@@ -513,7 +511,8 @@ describe('websockets.Client', function() {
 
   describe('cookies', function() {
 
-    var dbDir = '/tmp/rhizome-test-db/'
+    var cookie = require('../../../lib/websockets/browser-deps/cookie').cookie
+      , dbDir = '/tmp/rhizome-test-db/'
       , client = new websockets.Client(clientConfig)
       , manager = new connections.ConnectionManager({
         store: new connections.NEDBStore(dbDir)
@@ -543,6 +542,7 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
+      cookie._value = null
       cookie.set = cookie._set
       cookie.get = cookie._get
       client.removeAllListeners()
