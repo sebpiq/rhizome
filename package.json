@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "mocha": "1.17.x",
-    "jetty": "0.2.x",
+    "stats-lite": "1.0.x",
     "rimraf": "2.2.x"
   },
   "bin": {
