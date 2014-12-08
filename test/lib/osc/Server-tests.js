@@ -199,6 +199,19 @@ describe('osc.Server', function() {
 
   })
 
+  describe('sys messages', function() {
+
+    it('shouldnt crash if invalid port value', function(done) {
+      sendToServer.send(coreMessages.subscribeAddress, ['/blabla'])
+      sendToServer.send(coreMessages.subscribeAddress, [-10])
+      sendToServer.send(coreMessages.subscribeAddress, [10000000])
+
+      console.log('\nDO NOT PANIC : this is just a test (should say "invalid port")')
+      setTimeout(done, 1800)
+    })
+
+  })
+
   describe('receive a blob', function() {
 
     it('should request the blob client to send a blob when asked for it', function(done) {
