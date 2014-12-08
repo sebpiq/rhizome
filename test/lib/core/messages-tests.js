@@ -51,6 +51,12 @@ describe('core.messages', function() {
     it('should reject malformed addresses', function() {
       // Should start with /
       assert.ok(_.isString(coreMessages.validateAddressForSub('bla')))
+      assert.ok(_.isString(coreMessages.validateAddressForSub('')))
+    })
+
+    it('should reject if not a string', function() {
+      assert.ok(_.isString(coreMessages.validateAddressForSub()))
+      assert.ok(_.isString(coreMessages.validateAddressForSub(236)))
     })
 
     it('should reject sys addresses', function() {

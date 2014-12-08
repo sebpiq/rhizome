@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rhizome example</title>
+  <script src="/rhizome/rhizome.js"></script>
+  <script src="js/jquery-2.1.0.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/styles.css" />
+  <script>
+    $(function() {
+
+      // `rhizome.start` is the first function that should be called.
+      // The function inside is executed once the client managed to connect.
+      rhizome.start(function(err) {
+        if (err) throw err
+
+        $('#send').submit(function(event) {
+          event.preventDefault()
+          var address = $('#address').val()
+            , args = $('#args').val().split(' ').map(function(arg) { JSON.parse(arg) })
+          rhizome.send(address, args)
+        })
+
+        // We want to receive all the messages, so we subscribe to '/'
+        rhizome.send('/sys/subscribe', ['/'])
+      })
+
+      rhizome.on('message', function(address, args) { 
+        $('#received .message').slice(20).remove()
+        var message = $('<div class="message"><span class="ad"></span><span class="ar"></span></div>')
+          .prependTo('#received')
+        message.find('.ad').html(address)
+        message.find('.ar').html(args.map(function(arg) { JSON.stringify(arg) }).join(' '))
+      })
+
+      rhizome.on('connected', function() {
+        alert('connected!')
+      })
+
+      rhizome.on('connection lost', function() {
+        alert('connection lost!')
+      })
+
+      rhizome.on('queued', function() {
+        alert('queued!')
+      })
+
+    })
+  </script>
+</head>
+
+<body>
+  <form id="send">
+    <input id="address" placeholder="/some/address" />
+    <input id="args" placeholder="'arg1' 666 'arg3'" />
+    <input type="submit" />
+  </form>
+
+  <div id="received">
+  </div>
+</body>
+
+</html>
