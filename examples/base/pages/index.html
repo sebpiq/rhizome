@@ -16,7 +16,10 @@
         $('#send').submit(function(event) {
           event.preventDefault()
           var address = $('#address').val()
-            , args = $('#args').val().split(' ').map(function(arg) { JSON.parse(arg) })
+            , args = $('#args').val()
+          if (args.length)
+            args = args.split(' ').map(function(arg) { return JSON.parse(arg) })
+          else args = []
           rhizome.send(address, args)
         })
 
@@ -29,7 +32,7 @@
         var message = $('<div class="message"><span class="ad"></span><span class="ar"></span></div>')
           .prependTo('#received')
         message.find('.ad').html(address)
-        message.find('.ar').html(args.map(function(arg) { JSON.stringify(arg) }).join(' '))
+        message.find('.ar').html(args.map(function(arg) { return JSON.stringify(arg) }).join(' '))
       })
 
       rhizome.on('connected', function() {
@@ -50,8 +53,8 @@
 
 <body>
   <form id="send">
-    <input id="address" placeholder="/some/address" />
-    <input id="args" placeholder="'arg1' 666 'arg3'" />
+    <input id="address" placeholder="example : /some/address" />
+    <input id="args" placeholder='example : "arg1" 666 "arg2"' />
     <input type="submit" />
   </form>
 
