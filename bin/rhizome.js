@@ -93,7 +93,7 @@ var validateConfig = exports.validateConfig = function(config, done) {
 
     // Prefix validation errors, merge them and print them
     var merged = {}
-    results.map(function(r) { return r[1] }).forEach(function(errors, i) {
+    results.forEach(function(errors, i) {
       _.pairs(errors).forEach(function(p) {
         merged[prefixes[i] + p[0]] = p[1]
       })
