@@ -67,15 +67,16 @@ describe('websockets.Server', function() {
 
         // Check that the last socket received connection rejected
         var lastMsg = messages.pop()
-        assert.ok(lastMsg.error)
-        delete lastMsg.error
-        assert.deepEqual(lastMsg, {command: 'connect', status: 1})
+        assert.equal(lastMsg.length, 2)
+        assert.equal(lastMsg[0], 1)
+        assert.ok(_.isString(lastMsg[1]))
         assert.equal(_.last(wsServer._wsServer.clients).readyState, WebSocket.CLOSING)
         
         // Check that all sockets before got connection accepted
         messages.forEach(function(msg) {
-          delete msg.id
-          assert.deepEqual(msg, {command: 'connect', status: 0})
+          assert.equal(msg.length, 2)
+          assert.equal(msg[0], 0)
+          assert.ok(_.isString(msg[1]))
         })
         done()
       })

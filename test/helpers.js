@@ -3,6 +3,7 @@ var assert = require('assert')
   , async = require('async')
   , WebSocket = require('ws')
   , moscow = require('moscow')
+  , oscMin = require('osc-min')
   , oscServer = require('../lib/osc/Server')
   , connections = require('../lib/connections')
   , coreServer = require('../lib/core/server')
@@ -29,15 +30,14 @@ exports.dummyWebClients = function(wsServer, port, count, done) {
       _dummyWebClients.push(socket)
       socket.on('open', function() {
         socket.on('message', function(msg) {
-          msg = JSON.parse(msg)
-          if (msg.command === 'connect') next(null, msg)
+          msg = oscMin.fromBuffer(msg)
+          var args = _.pluck(msg.args, 'value')
+          if (msg.address === coreMessages.connectionStatusAddress) next(null, args)
           else throw new Error('unexpected ' + msg)
         })
       })
     }
   }), function(err, messages) {
-    if (wsServer._wsServer.clients.length !== countBefore + count)
-      console.log(wsServer._wsServer.clients)
     assert.equal(wsServer._wsServer.clients.length, countBefore + count)
     if (done) done(err, _dummyWebClients, messages)
   })
