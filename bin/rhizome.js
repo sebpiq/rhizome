@@ -30,13 +30,14 @@ var path = require('path')
   , osc = require('../lib/osc')
   , connections = require('../lib/connections')
   , coreUtils = require('../lib/core/utils')
+  , coreValidation = require('../lib/core/validation')
   , errors = require('../lib/core/errors')
   , utils = require('./utils')
 
 var httpServer, wsServer, oscServer
 
 // Validation for the http section of the configuration
-var httpValidator = new coreUtils.ChaiValidator({
+var httpValidator = new coreValidation.ChaiValidator({
   port: function(val) {
     expect(val).to.be.a('number')
     expect(val).to.be.within(1025, 49150)

@@ -22,7 +22,6 @@ var path = require('path')
   , debug = require('debug')('rhizome.blob-client')
   , version = require('../package.json').version  
   , BlobClient = require('../lib/osc/BlobClient')
-  , coreUtils = require('../lib/core/utils')
   , utils = require('./utils')
 
 if (require.main === module) {
