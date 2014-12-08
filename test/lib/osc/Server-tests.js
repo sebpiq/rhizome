@@ -49,7 +49,9 @@ describe('osc.Server', function() {
       oscServer.start.bind(oscServer)
     ], done)
   })
-  afterEach(function(done) { helpers.afterEach([oscServer, manager], done) })
+  afterEach(function(done) {
+    helpers.afterEach([oscServer, manager], done)
+  })
 
   describe('start', function() {
 

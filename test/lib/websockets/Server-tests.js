@@ -82,44 +82,6 @@ describe('websockets.Server', function() {
       })
     })
 
-    it('should send a message to all other connections', function(done) {
-      assert.equal(wsServer._wsServer.clients.length, 0)
-
-      // Create dummy connection to listen to the 'open' message
-      var dummyConnections = helpers.dummyConnections(6, 3, function(received) {
-        var ids = received.map(function(r) { return r[2][0] })
-        received.forEach(function(r) { r[2] = ['id'] })
-        // Check ids
-        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
-        // Check for unicity
-        assert.equal(_.uniq(ids).length, 3)
-
-        helpers.assertSameElements(received, [
-          [0, coreMessages.connectionOpenAddress, ['id']],
-          [0, coreMessages.connectionOpenAddress, ['id']],
-          [0, coreMessages.connectionOpenAddress, ['id']],
-
-          [2, coreMessages.connectionOpenAddress, ['id']],
-          [2, coreMessages.connectionOpenAddress, ['id']],
-          [2, coreMessages.connectionOpenAddress, ['id']]
-        ])
-        done()
-      })
-
-      async.series([
-        manager.open.bind(manager, dummyConnections[0]),
-        manager.open.bind(manager, dummyConnections[2])
-      ], function(err) {
-        if (err) throw err
-
-        manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
-        manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
-
-        // Create dummy web clients, so that new connections are open
-        helpers.dummyWebClients(wsServer, config.port, 3)
-      })
-    })
-
   })
 
   describe('disconnection', function() {
@@ -146,43 +108,6 @@ describe('websockets.Server', function() {
         assert.equal(manager._nsTree.get('/someOtherAddr').connections.length, 1)
         done()
       })
-    })
-
-    it('should send a message to all other connections', function(done) {
-      assert.equal(wsServer._wsServer.clients.length, 0)
-
-      // Create dummy connections to listen to the 'close' message
-      var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
-        var ids = received.map(function(r) { return r[2][0] })
-        received.forEach(function(r) { r[2] = ['id'] })
-        // Check ids and unicity
-        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
-        assert.equal(_.uniq(ids).length, 1)
-
-        helpers.assertSameElements(received, [
-          [0, coreMessages.connectionCloseAddress, ['id']],
-          [2, coreMessages.connectionCloseAddress, ['id']]
-        ])
-        done()
-      })
-
-      async.series([
-        manager.open.bind(manager, dummyConnections[0]),
-        manager.open.bind(manager, dummyConnections[2]),
-        helpers.dummyWebClients.bind(helpers, wsServer, config.port, 3)
-      ], function(err, results) {
-        if (err) throw err
-
-        // Close on of the sockets
-        var sockets = results.pop()[0]
-        assert.equal(wsServer._wsServer.clients.length, 3)
-        sockets[2].close()
-
-        manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
-        manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
-      })
-
-
     })
 
   })

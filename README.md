@@ -84,8 +84,8 @@ The following messages are used for communication between one connection and the
 
 The following messages are sent by the server. To receive them, you should subscribe to them.
 
-  - `/broadcast/websockets/open <userId>` : a user connected to the web page, his id is `<userId>`
-  - `/broadcast/websockets/close <userId>` : user with id `<userId>` left the web page
+  - `/broadcast/open/<namespace> <id>` : a user connected to the web page, his id is `<userId>`
+  - `/broadcast/close/<namespace> <id>` : user with id `<userId>` left the web page
 
 
 ### Web client

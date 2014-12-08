@@ -18,6 +18,73 @@ describe('core.server.Connection', function() {
   })
   afterEach(function(done) { helpers.afterEach([manager], done) })
 
+  describe('open', function() {
+
+    it('should send a message to all other connections', function(done) {
+
+      // Create dummy connection to listen to the 'open' message
+      var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
+        var ids = _.pluck(dummyConnections, 'id')
+        received.forEach(function(r) { r[2] = ['id'] })
+        // Check ids
+        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
+        // Check for unicity
+        assert.equal(_.uniq(ids).length, 3)
+
+        helpers.assertSameElements(received, [
+          [0, coreMessages.connectionOpenAddress + '/dummy', ['id']],
+          [2, coreMessages.connectionOpenAddress + '/dummy', ['id']]
+        ])
+        done()
+      })
+
+      async.series([
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[2]),
+      ], function(err) {
+        if (err) throw err
+
+        manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
+        manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
+
+        dummyConnections[1].open()
+      })
+    })
+
+  })
+
+  describe('close', function() {
+
+    it('should send a message to all other connections', function(done) {
+      // Create dummy connections to listen to the 'close' message
+      var dummyConnections = helpers.dummyConnections(2, 4, function(received) {
+        var ids = received.map(function(r) { return r[2][0] })
+        received.forEach(function(r) { r[2] = ['id'] })
+        // Check ids and unicity
+        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
+        assert.equal(_.uniq(ids).length, 1)
+
+        helpers.assertSameElements(received, [
+          [0, coreMessages.connectionCloseAddress + '/dummy', ['id']],
+          [2, coreMessages.connectionCloseAddress + '/dummy', ['id']]
+        ])
+        done()
+      })
+
+      async.series([
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[2]),
+        manager.open.bind(manager, dummyConnections[3]),
+      ], function(err, results) {
+        if (err) throw err
+        manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
+        manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
+        dummyConnections[3].close()
+      })
+    })
+
+  })
+
   describe('onSysMessage', function() {
 
     describe('subscribe', function() {
