@@ -72,8 +72,8 @@ var DummyConnection = exports.DummyConnection = function(callback) {
   this.callback = callback
   coreServer.Connection.apply(this)
 }
-connections.registerConnectionClass('dummy', DummyConnection)
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
+  namespace: 'dummy',
   send: function(address, args) { this.callback(address, args) },
   serialize: function() { return this.testData || {} },
   deserialize: function(data) { this.restoredTestData = data }

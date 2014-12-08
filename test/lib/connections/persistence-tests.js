@@ -27,7 +27,7 @@ describe('persistence', function() {
         var connection = new helpers.DummyConnection()
         connection.id = '1234'
         async.series([
-          store.connectionSave.bind(store, 'dummy', connection),
+          store.connectionSave.bind(store, connection),
           store.connectionExists.bind(store, 'dummy', connection.id)
         ], function(err, results) {
           if (err) throw err
@@ -56,14 +56,14 @@ describe('persistence', function() {
 
         async.series([
           store.connectionExists.bind(store, 'dummy', connection.id),
-          store.connectionSave.bind(store, 'dummy', connection), // insert
-          store.connectionRestore.bind(store, 'dummy', connection),
+          store.connectionSave.bind(store, connection), // insert
+          store.connectionRestore.bind(store, connection),
           function(next) {
             assert.deepEqual(connection.restoredTestData, {a: 1, b: 2})
             connection.testData = {a: 3, c: 4}
-            store.connectionSave('dummy', connection, next) // update
+            store.connectionSave(connection, next) // update
           },
-          store.connectionRestore.bind(store, 'dummy', connection),
+          store.connectionRestore.bind(store, connection),
 
         ], function(err, results) {
           if (err) throw err
@@ -83,7 +83,7 @@ describe('persistence', function() {
         var connection = new helpers.DummyConnection()
         connection.id = 'defg'
         connection.testData = 12345
-        store.connectionRestore('dummy', connection, function(err) {
+        store.connectionRestore(connection, function(err) {
           assert.equal(connection.restoredTestData, undefined)
           assert.ok(err)
           done()
@@ -95,9 +95,9 @@ describe('persistence', function() {
     describe('eventInsert', function() {
 
       it('should insert events in the store', function(done) {
-        var event1 = { when: +(new Date), what: 'open', who: 'john' }
-          , event2 = { when: +(new Date) + 10, what: 'close', who: 'jack' }
-          , event3 = { when: +(new Date) + 100, what: 'start', who: 'jimi' }
+        var event1 = { timestamp: +(new Date), eventType: 'open', id: 'john', namespace: 'people' }
+          , event2 = { timestamp: +(new Date) + 10, eventType: 'close', id: 'jack', namespace: 'people' }
+          , event3 = { timestamp: +(new Date) + 100, eventType: 'start', id: 'jimi', namespace: 'people' }
 
         async.series([
           store.eventList.bind(store),

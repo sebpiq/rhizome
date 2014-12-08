@@ -69,10 +69,10 @@ describe('ConnectionManager', function() {
             if (err) throw err
             assert.equal(events.length, 1)
             var event = events[0]
-            assert.equal(event.who[0], 'dummy')
-            assert.equal(event.who[1], connection.id)
-            assert.equal(event.what, 'open')
-            assert.ok(_.isNumber(event.when))
+            assert.equal(event.namespace, 'dummy')
+            assert.equal(event.id, connection.id)
+            assert.equal(event.eventType, 'open')
+            assert.ok(_.isNumber(event.timestamp))
             done()
           }
         )
@@ -116,10 +116,10 @@ describe('ConnectionManager', function() {
             if (err) throw err
             assert.equal(events.length, 2)
             var event = events[1]
-            assert.equal(event.who[0], 'dummy')
-            assert.equal(event.who[1], connection.id)
-            assert.equal(event.what, 'close')
-            assert.ok(_.isNumber(event.when))
+            assert.equal(event.namespace, 'dummy')
+            assert.equal(event.id, connection.id)
+            assert.equal(event.eventType, 'close')
+            assert.ok(_.isNumber(event.timestamp))
             done()
           }
         )
