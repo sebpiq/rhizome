@@ -7,7 +7,7 @@ rhizome
 
 **rhizome** is a solution for transmitting messages and files between **OSC** applications and **web pages**, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**.
 
-**rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...). 
+**rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...).
 
 ![rhizome](https://raw.githubusercontent.com/sebpiq/rhizome/master/images/schema.png)
 
@@ -31,7 +31,7 @@ The simplest and nicest way to do this is probably by installing [nvm](https://g
 Open a terminal, and simply run `npm install -g rhizome-server`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
 
 
-##### 3) Implement your thing 
+##### 3) Implement your thing
 
 More documentation will come soon. But for the moment, you can check-out the [examples](https://github.com/sebpiq/rhizome/tree/master/examples).
 
@@ -143,7 +143,7 @@ Starts the client, and executes `done(err)` when complete. The fact that the cli
 
 #### rhizome.send(address[, args])
 
-Sends a message to `address`, with an optional list of arguments `args`. For example : 
+Sends a message to `address`, with an optional list of arguments `args`. For example :
 
 ```javascript
 rhizome.send('/ring', ['wake up', 8.0])
@@ -176,10 +176,9 @@ var onMouseMove function(x, y) {
 Returns `true` if the current browser is supported, `false` otherwise.
 
 
-#### rhizome.userId
+#### rhizome.id
 
-Id of the connected user. It is `null` if the web client is not connected.
-
+Unique id of the client. It is `null` if the web client is not connected.
 
 
 
@@ -196,7 +195,7 @@ export DEBUG=rhizome*
 
 #### Running tests and code coverage
 
-You need to install *mocha* for running the tests and *istanbul* for the test coverage : 
+You need to install *mocha* for running the tests and *istanbul* for the test coverage :
 
 ```
 npm install -g mocha
@@ -243,11 +242,11 @@ Changelog
   - Server:
     - option `clients` removed. Now OSC connection are created on the fly instead of being declared in the config file.
     - building the web client with gulp instead of grunt
-  
+
   - Blob client:
     - option `appPort` removed. Clients don't need to be declared anymore
     - option `fileExtension` to save files with a given extension
-  
+
 
 -0.4.3
 
@@ -257,7 +256,7 @@ Changelog
 -0.4.2
 
   - Server:
-    - bug fixes 
+    - bug fixes
 
 -0.4.0
 
@@ -305,7 +304,7 @@ Changelog
   - Bins:
     - config is now validated and displayed when starting the binaries
 
-- 0.2.0 
+- 0.2.0
 
   - Web client:
     - removed `blob`, now blob sent with `message`
@@ -314,7 +313,7 @@ Changelog
   - Blob client for sending blobs web client <-> OSC
   - Added address validation
 
-- 0.1.1 
+- 0.1.1
   - Fixed bugs with retry
   - In web-client : added `client.status()`
 
