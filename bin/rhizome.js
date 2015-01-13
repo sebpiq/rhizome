@@ -40,7 +40,6 @@ var httpServer, wsServer, oscServer
 var httpValidator = new coreValidation.ChaiValidator({
   port: function(val) {
     expect(val).to.be.a('number')
-    expect(val).to.be.within(1025, 49150)
   },
   staticDir: function(val, doneDirName) {
     expect(val).to.be.a('string')

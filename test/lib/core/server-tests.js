@@ -30,10 +30,9 @@ describe('core.server.Connection', function() {
         ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
         // Check for unicity
         assert.equal(_.uniq(ids).length, 3)
-
         helpers.assertSameElements(received, [
           [0, coreMessages.connectionOpenAddress + '/dummy', ['id']],
-          [2, coreMessages.connectionOpenAddress + '/dummy', ['id']]
+          [2, coreMessages.connectionOpenAddress + '/dummy', ['id']],
         ])
         done()
       })
