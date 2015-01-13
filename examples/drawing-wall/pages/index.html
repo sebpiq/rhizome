@@ -66,7 +66,11 @@
         // and send a message containg the file to the address `/drawing`.
         sendCanvasButton.onclick = function() {
           canvas.toBlob(function(jpegFile) {
-            rhizome.send('/drawing', [jpegFile])
+            var fileReader = new FileReader()
+            fileReader.onload = function() {
+              rhizome.send('/drawing', [this.result])
+            }
+            fileReader.readAsArrayBuffer(jpegFile)
           })
         }
       })
@@ -90,8 +94,7 @@
           console.log('successfully subscribed to ' + args[0])
 
         } else if (address === '/mosaic') {
-          var blob = args[0]
-            , url = URL.createObjectURL(blob)
+          var url = URL.createObjectURL(new Blob([args[0]], {type: 'image/png'}))
           fabricCanvas.setBackgroundImage(url, fabricCanvas.renderAll.bind(fabricCanvas), {
             scaleX: canvasSize/processingCanvasSize, scaleY: canvasSize/processingCanvasSize
           })

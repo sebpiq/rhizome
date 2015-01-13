@@ -306,6 +306,31 @@ describe('websockets.Client', function() {
       })
     })
 
+    it('should handle things correctly when sending ArrayBuffer', function(done) {
+      // Creating dummy connections
+      var dummyConnections = helpers.dummyConnections(2, 2, function(received) {
+        helpers.assertSameElements(received, [
+          [0, '/bla/blob', [1, new Buffer([12, 23, 34, 45, 56]), 'blabla']],
+          [1, '/bla/blob', [1, new Buffer([12, 23, 34, 45, 56]), 'blabla']]
+        ])
+        done()
+      })
+
+      async.series([
+        manager.open.bind(manager, dummyConnections[0]),
+        manager.open.bind(manager, dummyConnections[1])
+      ], function(err) {
+        if (err) throw err
+
+        // Subscribing them to receive what's sent by our client
+        manager.subscribe(dummyConnections[0], '/')
+        manager.subscribe(dummyConnections[1], '/')
+
+        // Sending messages containing blobs
+        client.send('/bla/blob', [1, (new Uint8Array([12, 23, 34, 45, 56])).buffer, 'blabla'])
+      })
+    })
+
     it('should work when sending no arguments', function(done) {
       var dummyConnections = helpers.dummyConnections(1, 1, function(received) {
         helpers.assertSameElements(received, [[0, '/bla', []]])
