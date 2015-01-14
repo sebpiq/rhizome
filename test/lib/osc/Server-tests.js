@@ -79,6 +79,7 @@ describe('osc.Server', function() {
       var dummyConnection = new helpers.DummyConnection(function(address, args) {
         dummyReceived.push([address, args])
       }), dummyReceived = []
+      dummyConnection.id = 'bla'
 
       manager.open(dummyConnection, function(err) {
         if (err) throw err

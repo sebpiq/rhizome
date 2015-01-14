@@ -24,18 +24,15 @@ describe('core.server.Connection', function() {
 
       // Create dummy connection to listen to the 'open' message
       var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
-        var ids = _.pluck(dummyConnections, 'id')
-        received.forEach(function(r) { r[2] = ['id'] })
-        // Check ids
-        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
-        // Check for unicity
-        assert.equal(_.uniq(ids).length, 3)
         helpers.assertSameElements(received, [
-          [0, coreMessages.connectionOpenAddress + '/dummy', ['id']],
-          [2, coreMessages.connectionOpenAddress + '/dummy', ['id']],
+          [0, coreMessages.connectionOpenAddress + '/dummy', ['1']],
+          [2, coreMessages.connectionOpenAddress + '/dummy', ['1']],
         ])
         done()
       })
+
+      // Assign ids
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
 
       async.series([
         manager.open.bind(manager, dummyConnections[0]),
@@ -50,6 +47,18 @@ describe('core.server.Connection', function() {
       })
     })
 
+    it('should assign a unique id if autoId is true', function(done) {
+      // Create dummy connection to listen to the 'open' message
+      var dummyConnection = new helpers.DummyConnection()
+      dummyConnection.autoId = true
+      dummyConnection.on('open', function() {
+        assert.ok(_.isString(dummyConnection.id))
+        assert.ok(dummyConnection.id.length > 4)
+        done()
+      })
+      dummyConnection.open()
+    })
+
   })
 
   describe('close', function() {
@@ -57,23 +66,20 @@ describe('core.server.Connection', function() {
     it('should send a message to all other connections', function(done) {
       // Create dummy connections to listen to the 'close' message
       var dummyConnections = helpers.dummyConnections(2, 4, function(received) {
-        var ids = received.map(function(r) { return r[2][0] })
-        received.forEach(function(r) { r[2] = ['id'] })
-        // Check ids and unicity
-        ids.forEach(function(id) { assert.ok(_.isString(id) && id.length > 5) })
-        assert.equal(_.uniq(ids).length, 1)
-
         helpers.assertSameElements(received, [
-          [0, coreMessages.connectionCloseAddress + '/dummy', ['id']],
-          [2, coreMessages.connectionCloseAddress + '/dummy', ['id']]
+          [0, coreMessages.connectionCloseAddress + '/dummy', ['3']],
+          [2, coreMessages.connectionCloseAddress + '/dummy', ['3']]
         ])
         done()
       })
 
+      // Assign ids
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
+
       async.series([
         manager.open.bind(manager, dummyConnections[0]),
         manager.open.bind(manager, dummyConnections[2]),
-        manager.open.bind(manager, dummyConnections[3]),
+        manager.open.bind(manager, dummyConnections[3])
       ], function(err, results) {
         if (err) throw err
         manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
@@ -97,6 +103,8 @@ describe('core.server.Connection', function() {
         var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
           received.push([2, address, args])
         })
+        dummyConnection1.id = '1'
+        dummyConnection2.id = '2'
 
         async.series([
           manager.open.bind(manager, dummyConnection2),
@@ -128,6 +136,7 @@ describe('core.server.Connection', function() {
         var dummyConnection = new helpers.DummyConnection(function(address, args) {
           received.push([address, args])
         })
+        dummyConnection.id = '1'
 
         manager.open(dummyConnection, function(err) {
           if(err) throw err
@@ -162,6 +171,8 @@ describe('core.server.Connection', function() {
         var dummyConnection = new helpers.DummyConnection(function(address, args) {
           received.push([address, args])
         })
+        dummyConnection.id = 'bla'
+        
         manager.open(dummyConnection, function(err) {
           if(err) throw err
 

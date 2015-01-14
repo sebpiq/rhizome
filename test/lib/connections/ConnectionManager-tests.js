@@ -48,11 +48,11 @@ describe('ConnectionManager', function() {
 
     it('should open properly and log events if collectStats', function(done) {
       var connection = new helpers.DummyConnection()
+      connection.id = '1234'
 
       connections.open(connection, function(err) {
         if (err) throw err
         assert.deepEqual(connections._openConnections, [connection])
-        assert.ok(_.isString(connection.id) && connection.id.length > 5)
 
         // As the event is created after the connection has been opened,
         // without acknowledgement, we need to wait before it is inserted
@@ -90,6 +90,7 @@ describe('ConnectionManager', function() {
 
     it('should close properly and log events if collectStats', function(done) {
       var connection = new helpers.DummyConnection()
+      connection.id = '5678'
 
       async.series([
         connections.open.bind(connections, connection),
@@ -98,7 +99,6 @@ describe('ConnectionManager', function() {
         connections.close.bind(connections, connection)
       ], function(err) {
         if (err) throw err
-        assert.ok(_.isString(connection.id) && connection.id.length > 5)
         assert.deepEqual(connections._openConnections, [])
 
         // As the event is created after the connection has been closed,
@@ -140,6 +140,7 @@ describe('ConnectionManager', function() {
         , connection = new helpers.DummyConnection(function(address, args) {
           received.push([address, args])
         })
+      connection.id = '9abc'
 
       connections.open(connection, function(err) {
         if(err) throw err
@@ -172,6 +173,7 @@ describe('ConnectionManager', function() {
 
     it('should return an error message if address in not valid', function(done) {
       var connection = new helpers.DummyConnection()
+      connection.id = 'defg'
       connections.open(connection, function(err) {
         if(err) throw err
         assert.ok(_.isString(connections.subscribe(connection, '')))

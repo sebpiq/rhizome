@@ -254,6 +254,8 @@ describe('websockets.Client', function() {
         ])
         done()
       })
+      // Assign id to connections
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
 
       async.series([
         manager.open.bind(manager, dummyConnections[0]),
@@ -286,6 +288,8 @@ describe('websockets.Client', function() {
         ])
         done()
       })
+      // Assign id to connections
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
 
       async.series([
         manager.open.bind(manager, dummyConnections[0]),
@@ -315,6 +319,8 @@ describe('websockets.Client', function() {
         ])
         done()
       })
+      // Assign id to connections
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
 
       async.series([
         manager.open.bind(manager, dummyConnections[0]),
@@ -336,6 +342,9 @@ describe('websockets.Client', function() {
         helpers.assertSameElements(received, [[0, '/bla', []]])
         done()
       })
+      // Assign id to connections 
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
+
       manager.open(dummyConnections[0], function(err) {
         if (err) throw err
         manager.subscribe(dummyConnections[0], '/bla')
