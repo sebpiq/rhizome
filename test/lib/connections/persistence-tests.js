@@ -92,6 +92,33 @@ describe('persistence', function() {
 
     })
 
+    describe('connectionIdList', function() {
+
+      it('should list connection ids', function(done) {
+        var connection1 = new helpers.DummyConnection()
+          , connection2 = new helpers.DummyConnection()
+          , connection3 = new helpers.DummyConnection()
+          , connection4 = new helpers.DummyConnection()
+        connection1.id = 'defg'
+        connection2.id = 'hijk'
+        connection3.id = 'lmno'
+        connection4.id = 'pqrs'
+
+        async.series([
+          store.connectionSave.bind(store, connection1),
+          store.connectionSave.bind(store, connection2),
+          store.connectionSave.bind(store, connection3),
+          store.connectionIdList.bind(store, 'dummy')
+        ], function(err, results) {
+          if (err) throw err
+          var idList = results.pop()
+          assert.deepEqual(idList, ['defg', 'hijk', 'lmno'])
+          done()
+        })
+      })
+
+    })
+
     describe('eventInsert', function() {
 
       it('should insert events in the store', function(done) {

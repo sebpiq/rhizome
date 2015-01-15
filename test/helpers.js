@@ -1,4 +1,5 @@
 var assert = require('assert')
+  , fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
   , WebSocket = require('ws')
@@ -95,8 +96,32 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
   }
 }
 
+exports.beforeEach = function(manager, toStart, done) {
+  var asyncOps = [
+    function(next) {
+      fs.exists('/tmp/connections.db', function(exists) {
+        if (exists) fs.unlink('/tmp/connections.db', next) 
+        else next()
+      })
+    },
+    manager.start.bind(manager)
+  ]
+  connections.manager = manager
+
+  if (arguments.length === 2) {
+    done = toStart
+    toStart = []
+  }
+
+  if (toStart.length) toStart.forEach(function(obj) { asyncOps.push(obj.start.bind(obj)) })
+
+  async.series(asyncOps, done)
+}
+
 // Helper with common operations to clean after a test
 exports.afterEach = function(toStop, done) {
+  var asyncOps = []
+
   if (arguments.length === 1) {
     done = toStop
     toStop = []
@@ -104,8 +129,9 @@ exports.afterEach = function(toStop, done) {
 
   _dummyWebClients.forEach(function(socket) { socket.close() })
   _dummyWebClients = []
-  if (toStop.length)
-    async.series(toStop.map(function(obj) { return obj.stop.bind(obj) }), done)
+  if (toStop.length) toStop.forEach(function(obj) { asyncOps.push(obj.stop.bind(obj)) })
+  
+  if (asyncOps.length) async.series(asyncOps, done)
   else done()
 }
 

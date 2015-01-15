@@ -12,10 +12,7 @@ describe('core.server.Connection', function() {
     store: connections.NoStore()
   })
 
-  beforeEach(function(done) {
-    connections.manager = manager
-    manager.start(done) 
-  })
+  beforeEach(function(done) { helpers.beforeEach(manager, done) })
   afterEach(function(done) { helpers.afterEach([manager], done) })
 
   describe('open', function() {
@@ -92,6 +89,29 @@ describe('core.server.Connection', function() {
 
   describe('onSysMessage', function() {
 
+    it('should queue the messages if the connection is not opened yet', function(done) {
+      var received = []
+      var dummyConnection = new helpers.DummyConnection(function(address, args) {
+        received.push([1, address, args])
+      })
+      dummyConnection.id = '1'
+
+      // Send onSysMessages
+      dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+      dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/blo'])
+      assert.deepEqual(received, [])
+
+      // The actual subscription happens only after connection has been opened
+      dummyConnection.once('open', function() {
+        helpers.assertSameElements(received, [
+          [1, coreMessages.subscribedAddress, ['/bla']],
+          [1, coreMessages.subscribedAddress, ['/blo']]
+        ])
+        done()
+      })
+      dummyConnection.open()
+    })
+
     describe('subscribe', function() {
 
       it('should subscribe the connection to the given address', function(done) {
@@ -106,9 +126,9 @@ describe('core.server.Connection', function() {
         dummyConnection1.id = '1'
         dummyConnection2.id = '2'
 
-        async.series([
-          manager.open.bind(manager, dummyConnection2),
-          manager.open.bind(manager, dummyConnection1)
+        async.parallel([
+          dummyConnection1.once.bind(dummyConnection1, 'open'),
+          dummyConnection2.once.bind(dummyConnection2, 'open')
         ], function(err) {
           if (err) throw err
           dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
@@ -124,6 +144,8 @@ describe('core.server.Connection', function() {
           assert.equal(manager._nsTree.get('/').connections.length, 1)
           done()
         })
+        dummyConnection1.open()
+        dummyConnection2.open()
       })
 
     })
@@ -138,7 +160,7 @@ describe('core.server.Connection', function() {
         })
         dummyConnection.id = '1'
 
-        manager.open(dummyConnection, function(err) {
+        dummyConnection.once('open', function(err) {
           if(err) throw err
 
           manager.send('/bla', [1, 'toitoi', new Buffer('hello')])
@@ -163,6 +185,7 @@ describe('core.server.Connection', function() {
           ])
           done()
         })
+        dummyConnection.open()
       })
 
       it('should send empty list if the address exists but no last message', function(done) {
@@ -173,7 +196,7 @@ describe('core.server.Connection', function() {
         })
         dummyConnection.id = 'bla'
         
-        manager.open(dummyConnection, function(err) {
+        dummyConnection.once('open', function(err) {
           if(err) throw err
 
           dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
@@ -185,6 +208,7 @@ describe('core.server.Connection', function() {
           ])
           done()
         })
+        dummyConnection.open()
 
       })
 

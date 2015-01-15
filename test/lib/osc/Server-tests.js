@@ -42,16 +42,8 @@ describe('osc.Server', function() {
     store: new connections.NoStore()
   })
 
-  beforeEach(function(done) {
-    connections.manager = manager
-    async.series([
-      manager.start.bind(manager),
-      oscServer.start.bind(oscServer)
-    ], done)
-  })
-  afterEach(function(done) {
-    helpers.afterEach([oscServer, manager], done)
-  })
+  beforeEach(function(done) { helpers.beforeEach(manager, [oscServer], done) })
+  afterEach(function(done) { helpers.afterEach([oscServer, manager], done) })
 
   describe('start', function() {
 
@@ -60,6 +52,69 @@ describe('osc.Server', function() {
         [new osc.Server({}), ['.port']],
         [new osc.Server({blobsPort: 'bla'}), ['.port', '.blobsPort']]
       ], done)
+    })
+
+    it('should re-open connections that have been persisted', function(done) {
+      var oscClients = [
+          {ip: '127.0.0.1', appPort: 9001},
+          {ip: '127.0.0.1', appPort: 9002},
+          {ip: '127.0.0.1', appPort: 9003}
+        ]
+        , store = new connections.NEDBStore('/tmp')
+        , manager = new connections.ConnectionManager({ store: store })
+      connections.manager = manager
+
+      async.series([
+
+        // Send 'subscribe' messages to trigger creation of 3 osc connections
+        manager.start.bind(manager),
+        function(next) {
+          sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
+          sendToServer.send(coreMessages.subscribeAddress, [9002, '/bli'])
+          sendToServer.send(coreMessages.subscribeAddress, [9003, '/bla/blo'])
+          helpers.dummyOSCClients(3, oscClients, next.bind(this, null))
+        },
+        function(next) {
+          assert.equal(oscServer.connections.length, 3)
+          assert.equal(manager._openConnections.length, 3)
+          _.find(oscServer.connections, function(c) {
+            return c.id === '127.0.0.1:9001'
+          }).infos.bla = 999
+          next()
+        },
+
+        // Create a new manager with no open connection, and stop the osc server, before
+        // creating a new, clean one.
+        function(next) {
+          manager = new connections.ConnectionManager({ store: store })
+          connections.manager = manager
+          oscServer.stop(next)
+        },
+        function(next) {
+          oscServer = new osc.Server(config)
+          oscServer.start(next)
+        },
+
+        // Check that connections have been restored with subscribed addresses
+        // and other persisted info
+        function(next) {
+          assert.equal(oscServer.connections.length, 3)
+          helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
+          sendToServer.send('/bla/blo', [0, 1, '2'])
+        }
+
+      ], function(err, results) {
+        if (err) throw err
+        received = results.pop()
+        helpers.assertSameElements(received, [
+          [9001, '/bla/blo', [0, 1, '2']],
+          [9003, '/bla/blo', [0, 1, '2']]
+        ])
+        assert.deepEqual(_.find(oscServer.connections, function(c) {
+            return c.id === '127.0.0.1:9001'
+          }).infos, { bla: 999 })
+        done()
+      })
     })
 
   })
