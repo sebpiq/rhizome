@@ -54,12 +54,12 @@ describe('osc.Server', function() {
       ], done)
     })
 
-    it('should re-open connections that have been persisted', function(done) {
+    it('should re-open connections that have been persisted and restore blob clients', function(done) {
       var oscClients = [
           {ip: '127.0.0.1', appPort: 9001},
           {ip: '127.0.0.1', appPort: 9002},
           {ip: '127.0.0.1', appPort: 9003}
-        ]
+        ], conn9001
         , store = new connections.NEDBStore('/tmp')
         , manager = new connections.ConnectionManager({ store: store })
       connections.manager = manager
@@ -77,9 +77,11 @@ describe('osc.Server', function() {
         function(next) {
           assert.equal(oscServer.connections.length, 3)
           assert.equal(manager._openConnections.length, 3)
-          _.find(oscServer.connections, function(c) {
+          conn9001 = _.find(oscServer.connections, function(c) {
             return c.id === '127.0.0.1:9001'
-          }).infos.bla = 999
+          })
+          conn9001.infos.bla = 999
+          conn9001.infos.blobsPort = 8888
           next()
         },
 
@@ -110,9 +112,11 @@ describe('osc.Server', function() {
           [9001, '/bla/blo', [0, 1, '2']],
           [9003, '/bla/blo', [0, 1, '2']]
         ])
-        assert.deepEqual(_.find(oscServer.connections, function(c) {
-            return c.id === '127.0.0.1:9001'
-          }).infos, { bla: 999 })
+        conn9001 = _.find(oscServer.connections, function(c) {
+          return c.id === '127.0.0.1:9001'
+        })
+        assert.deepEqual(conn9001.infos, { bla: 999, blobsPort: 8888 })
+        assert.ok(conn9001.blobClient)
         done()
       })
     })
