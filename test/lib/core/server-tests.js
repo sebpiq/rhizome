@@ -180,8 +180,8 @@ describe('core.server.Connection', function() {
           helpers.assertSameElements(received, [
             ['/bla', [2, 'tutu', new Buffer('hello')]],
             ['/bla/blo', [333]],
-            ['/bli', []],
-            ['/neverSeenBefore', []]
+            ['/bli', []]
+            // neverSeenBefore shouldnt be resent
           ])
           done()
         })
