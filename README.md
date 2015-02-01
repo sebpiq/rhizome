@@ -9,6 +9,8 @@ rhizome
 
 **rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...).
 
+Gallery of projects realized with **rhizome** : https://github.com/sebpiq/rhizome/wiki/Gallery
+
 ![rhizome](https://raw.githubusercontent.com/sebpiq/rhizome/master/images/schema.png)
 
 While **rhizome** provides you with a solid architecture for communication, you still have to implement what's on both ends of the chain :
@@ -41,15 +43,6 @@ More documentation will come soon. But for the moment, you can check-out the [ex
 Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
 
 Also, if you would like to share your projects realized with **rhizome**, please contact me, or add them directly to the gallery!
-
-
-Gallery
------------
-
-**rhizome** was used to realize the following projects :
-
-- *Fields*. Sound diffusion through audience's mobile devices. The connected phones and tablets become an array of speakers that the performers can control live. [Watch excerpt](https://vimeo.com/92586493)
-- *The Projectionist Orchestra*. Live audio-visual performance, where the audience can control sound and visuals with their smartphones. [Watch excerpt](https://vimeo.com/91108668)
 
 
 Transferring files
