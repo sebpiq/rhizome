@@ -12,6 +12,13 @@ describe('persistence', function() {
     var testDbDir = '/tmp/rhizome-test-db'
       , store = new persistence.NEDBStore(testDbDir)
 
+    var connectionExists = function(connection, done) {
+      var query = { _id: store._getId(connection.namespace, connection.id) }
+      store._connectionsCollection.findOne(query, function(err, doc) {
+        done(err, Boolean(doc))
+      })
+    }
+
     beforeEach(function(done) {
       async.series([
         rimraf.bind(rimraf, testDbDir),
@@ -21,73 +28,74 @@ describe('persistence', function() {
     })
     afterEach(function(done) { store.stop(done) })
     
-    describe('connectionExists', function() {
-      
-      it('should return true if the connection exists', function(done) {
-        var connection = new helpers.DummyConnection()
-        connection.id = '1234'
+    describe('connectionInsertOrRestore', function() {
+
+      it('should insert connections that dont exist and retore the others', function(done) {
+        var connection1 = new helpers.DummyConnection()
+          , connection2 = new helpers.DummyConnection()
+          , restoredConnection
+        connection1.testData = {a: 1, b: 2}
+        connection1.id = '9abc'
+        connection2.testData = {c: 3, d: 4}
+        connection2.id = 'fghj'
+
         async.series([
-          store.connectionSave.bind(store, connection),
-          store.connectionExists.bind(store, 'dummy', connection.id)
+          connectionExists.bind(this, connection1),
+          connectionExists.bind(this, connection2),
+          store.connectionInsertOrRestore.bind(store, connection1),
+          store.connectionInsertOrRestore.bind(store, connection2),
+          connectionExists.bind(this, connection1),
+          connectionExists.bind(this, connection2),
+          function(next) {
+            restoredConnection = new helpers.DummyConnection()
+            restoredConnection.id = '9abc'
+            assert.equal(connection1.restoredTestData, null)
+            assert.equal(connection2.restoredTestData, null)
+            store.connectionInsertOrRestore(restoredConnection, next) // update
+          }
+
         ], function(err, results) {
           if (err) throw err
-          var exists = results.pop()
-          assert.equal(exists, true)
+          var existed1Before = results.shift()
+            , existed2Before = results.shift()
+          results.shift()
+          results.shift()
+          var existed1After = results.shift()
+            , existed2After = results.shift()
+          assert.equal(existed1Before, false)
+          assert.equal(existed2Before, false)
+          assert.equal(existed1After, true)
+          assert.equal(existed2After, true)
+          assert.deepEqual(restoredConnection.restoredTestData, {a: 1, b: 2})
           done()
         })
-      })
-    
-      it('should return true if the connection exists', function(done) {
-        store.connectionExists('dummy', '5678', function(err, exists) {
-          if (err) throw err
-          assert.equal(exists, false)
-          done()
-        })
+
       })
 
     })
 
-    describe('connectionSave', function() {
+    describe('connectionUpdate', function() {
 
-      it('should save a connection properly', function(done) {
+      it('should update connections that exist', function(done) {
         var connection = new helpers.DummyConnection()
+          , restoredConnection = new helpers.DummyConnection()
         connection.testData = {a: 1, b: 2}
         connection.id = '9abc'
+        restoredConnection.id = connection.id
 
         async.series([
-          store.connectionExists.bind(store, 'dummy', connection.id),
-          store.connectionSave.bind(store, connection), // insert
-          store.connectionRestore.bind(store, connection),
+          store.connectionInsertOrRestore.bind(store, connection),
           function(next) {
-            assert.deepEqual(connection.restoredTestData, {a: 1, b: 2})
-            connection.testData = {a: 3, c: 4}
-            store.connectionSave(connection, next) // update
+            connection.testData = {c: 8, d: 99}
+            store.connectionUpdate(connection, next)
           },
-          store.connectionRestore.bind(store, connection),
-
+          store.connectionInsertOrRestore.bind(store, restoredConnection)
         ], function(err, results) {
           if (err) throw err
-          var existed = results.shift()
-          assert.equal(existed, false)
-          assert.deepEqual(connection.restoredTestData, {a: 3, c: 4})
+          assert.deepEqual(restoredConnection.restoredTestData, {c: 8, d: 99})
           done()
         })
 
-      })
-
-    })
-
-    describe('connectionRestore', function() {
-
-      it('should throw an error if the connection doesnt exist', function(done) {
-        var connection = new helpers.DummyConnection()
-        connection.id = 'defg'
-        connection.testData = 12345
-        store.connectionRestore(connection, function(err) {
-          assert.equal(connection.restoredTestData, undefined)
-          assert.ok(err)
-          done()
-        })
       })
 
     })
@@ -105,9 +113,9 @@ describe('persistence', function() {
         connection4.id = 'pqrs'
 
         async.series([
-          store.connectionSave.bind(store, connection1),
-          store.connectionSave.bind(store, connection2),
-          store.connectionSave.bind(store, connection3),
+          store.connectionInsertOrRestore.bind(store, connection1),
+          store.connectionInsertOrRestore.bind(store, connection2),
+          store.connectionInsertOrRestore.bind(store, connection3),
           store.connectionIdList.bind(store, 'dummy')
         ], function(err, results) {
           if (err) throw err
@@ -128,15 +136,13 @@ describe('persistence', function() {
 
         async.series([
           store.eventList.bind(store),
-          store.eventInsert.bind(store, event1),
-          store.eventInsert.bind(store, event3),
+          store.eventInsert.bind(store, [event1, event3]),
           store.eventList.bind(store),
-          store.eventInsert.bind(store, event2),
+          store.eventInsert.bind(store, [event2]),
           store.eventList.bind(store)
         ], function(err, results) {
           if (err) throw err
           assert.deepEqual(results.shift(), [])
-          results.shift()
           results.shift()
           helpers.assertSameElements(results.shift(), [event1, event3])
           results.shift()

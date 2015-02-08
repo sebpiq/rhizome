@@ -53,7 +53,7 @@ describe('websockets.Client', function() {
       assert.equal(wsServer._wsServer.clients.filter(function(s) {
         return s.upgradeReq.url !== '/?dummies'
       }).length, 1)
-      assert.ok(_.isString(c.id) && c.id.length > 5)
+      assert.ok(_.isString(c.id) && c.id.length > 0)
     }
 
     var assertDisconnected = function(otherClient) {
@@ -395,7 +395,7 @@ describe('websockets.Client', function() {
     })
 
     var assertConnected = function() {
-      assert.ok(_.isString(client.id) && client.id.length > 5)
+      assert.ok(_.isString(client.id) && client.id.length > 0)
       assert.equal(client.status(), 'started')
     }
 

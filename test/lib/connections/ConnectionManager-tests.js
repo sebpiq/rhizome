@@ -42,7 +42,7 @@ describe('ConnectionManager', function() {
 
   describe('open', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true })
+      , connections = new ConnectionManager({ store: store, collectStats: true, runQueueTime: 1 })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 
@@ -84,7 +84,7 @@ describe('ConnectionManager', function() {
 
   describe('close', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true })
+      , connections = new ConnectionManager({ store: store, collectStats: true, runQueueTime: 1 })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 
