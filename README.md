@@ -5,19 +5,11 @@ rhizome
 
 **rhizome** is a web server for participative performances and installations.
 
-**rhizome** is a solution for transmitting messages and files between **OSC** applications and **web pages**, therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets **(2)**, **(3)**.
+**rhizome** is a solution for transmitting **messages and files** between **OSC** applications, **web pages**, **midi** devices, ... therefore allowing you to control the user's devices with your installation, or allowing the participants to control your installation with their smartphones, computers or tablets.
 
-**rhizome** can also serve static content **(1)** (HTML, JavaScript files, images ...).
-
-Gallery of projects realized with **rhizome** : https://github.com/sebpiq/rhizome/wiki/Gallery
+**rhizome** was used to realize the following projects : https://github.com/sebpiq/rhizome/wiki/Gallery
 
 ![rhizome](https://raw.githubusercontent.com/sebpiq/rhizome/master/images/schema.png)
-
-While **rhizome** provides you with a solid architecture for communication, you still have to implement what's on both ends of the chain :
-
-- *the installation / performance setup*. It can be implemented with anything that supports **OSC** messaging (Pure Data, SuperCollider, openFrameworks, ...).
-
-- *the web page*. It should be implemented with **JavaScript** and **HTML**. **rhizome** comes with a JavaScript client handling all the communication for you. So you shouldn't have to worry about this, and instead, focus on implementing a nice user interface / cool visuals / cool sounds.
 
 
 Getting started
@@ -33,24 +25,54 @@ The simplest and nicest way to do this is probably by installing [nvm](https://g
 Open a terminal, and simply run `npm install -g rhizome-server`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
 
 
-##### 3) Implement your thing
+##### 3) Write a configuration file and start the server
 
-More documentation will come soon. But for the moment, you can check-out the [examples](https://github.com/sebpiq/rhizome/tree/master/examples).
+Create a configuration file and start the server `rhizome myConfigFile.js`.
+A sample configuration file with all available options can be found [here](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js).
+There is also full examples [here](https://github.com/sebpiq/rhizome/tree/master/examples).
 
 
 ##### 4) That's it!
 
 Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
 
-Also, if you would like to share your projects realized with **rhizome**, please contact me, or add them directly to the gallery!
+Also, if you would like to add your **rhizome** project to the gallery, please contact me.
 
 
-Transferring files
--------------------
+Feature list
+--------------
 
-**rhizome** supports transferring [OSC blobs](http://opensoundcontrol.org/spec-1_0) and [JavaScript blobs](https://developer.mozilla.org/en-US/docs/Web/API/Blob) without any problem. This means that you can transfer files (audio, images, ...) between your OSC application and the web page.
+**rhizome** receives connections from different clients (OSC, websockets, ...) and allows them to communicate together through a protocol that looks a lot like OSC `/some/address arg1, arg2, ...`.
 
-However, some OSC applications have bad support for OSC blobs (for example Pure Data). To solve this problem, **rhizome** comes with a tool called **rhizome-blobs** that can handle the transfer for you. To see how to use it, check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
+
+##### publish / subscribe system
+
+To receive messages sent at a given address, a client has to subscribe to that address. This avoids all messages to be sent to all clients, and therefore offers an optimized yet flexible messaging system.
+
+
+##### OSC
+
+Any OSC client such as **Pure Data**, **Max/MSP**, **SuperCollider**, **Processing**, ... is supported out of the box. Check-out the [complete OSC API](#from-osc-client).
+
+
+##### websockets
+
+**rhizome** provides a simple websocket client that can be included in your web pages, and handles all the dirty bits of websocket communication : automatic reconnection and so on ... Check-out the [complete websocket client API](#from-websocket-client).
+
+
+##### Transferring files over OSC
+
+While file transfer (or binary data transfer) is not supported by many OSC clients, **rhizome** provides a simple client called **rhizome-blobs** to handle this. This allows you to receive / send files from / to any OSC client through rhizome. Check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
+
+
+##### static web server
+
+**rhizome** can serve your web pages, HTML, JavaScript, CSS, ... so that you don't have to setup a separate HTTP server yourself. Check-out [this sample config file](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js) to see how to enable this feature.
+
+
+##### Reliability
+
+Crashes shouldn't happen, but in case they do, your server can be restarted cleanly, and its whole state will be restored. Check-out [this sample config file](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js) to see how to enable this feature.
 
 
 API
@@ -68,7 +90,7 @@ The following messages are used for communication between one connection and the
   - `/sys/config <appPort> <parameter> [<arg1> <arg2> ...]` : configures the OSC connection on the server. Available parameters are :
     - `blobClient [<blobsPort>]` : tell the server that the OSC client uses **rhizome-blobs** for file transfers. `blobsPort` is the port on which **rhizome-blobs** is listening for incoming files. If not provided a default value will be chosen.
 
-#### From Web client
+#### From WebSocket client
 
   - `/sys/subscribe <address>` : subscribes the web client to messages sent at `<address>`
   - `/sys/resend <address>` : resends the last message sent at `<address>`.
@@ -81,7 +103,7 @@ The following messages are sent by the server. To receive them, you should subsc
   - `/broadcast/close/<namespace> <id>` : user with id `<userId>` left the web page
 
 
-### Web client
+### WebSocket client
 
 
 #### Event: 'connected'
@@ -198,27 +220,28 @@ npm install -g istanbul
 Then from the root folder of the project, run tests like so :
 
 ```
-mocha --recursive
+npm test
 ```
 
 And generate a coverage report like so :
 
 ```
-istanbul cover _mocha -- test --recursive
+npm run coverage
 ```
 
 
 Changelog
 -----------
 
--0.6.0
+- 0.6.0
 
   - Completely reorganized structure of the library
   - websockets.Client :
     - 'queued' event instead of 'server full'
     - `start` just returns an error if server is full and `queueIfFull` is false
+  - Server should now be able to restart nicely and restore its full state after crash or normal stop.
 
--0.5.2
+- 0.5.2
 
   - Exposed clients and servers so that library can be used as a package
   - Server:
@@ -226,11 +249,11 @@ Changelog
     - Refactored servers to implement `Server` and `Connection` base classes.
     - fixed a bug causing server to crash when blob client refuses connection
 
--0.5.1
+- 0.5.1
 
   - Server: fixed a bug with gulp
 
--0.5.0
+- 0.5.0
 
   - Server:
     - option `clients` removed. Now OSC connection are created on the fly instead of being declared in the config file.
@@ -241,17 +264,17 @@ Changelog
     - option `fileExtension` to save files with a given extension
 
 
--0.4.3
+- 0.4.3
 
   - web client:
     - bug fixes
 
--0.4.2
+- 0.4.2
 
   - Server:
     - bug fixes
 
--0.4.0
+- 0.4.0
 
   - get the last message sent to an address by sending to `/sys/resend`
 
