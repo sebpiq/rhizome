@@ -2,6 +2,7 @@ var fs = require('fs')
   , assert = require('assert')
   , _ = require('underscore')
   , async = require('async')
+  , helpers = require('../../helpers')
   , utils = require('../../../lib/core/utils')
 
 describe('core.utils', function() {
@@ -153,6 +154,49 @@ describe('core.utils', function() {
       it('shouldn\'t make a difference whether there is trailing slash or not', function() {
         var nsTree = utils.createNsTree()
         assert.equal(nsTree.get('/bla'), nsTree.get('/bla/'))
+      })
+
+    })
+
+    describe('toJSON', function() {
+
+      it('should serialize the tree', function() {
+        var nsTree = utils.createNsTree()
+        nsTree.get('/bla/bli').lastMessage = ['lolo']
+        nsTree.get('/bla').lastMessage = [1, 2, 'boo']
+        nsTree.get('/blo')
+        helpers.assertSameElements(nsTree.toJSON(), [
+          { address: '/', lastMessage: null },
+          { address: '/bla', lastMessage: [1, 2, 'boo'] },
+          { address: '/bla/bli', lastMessage: ['lolo'] },
+          { address: '/blo', lastMessage: null }
+        ])
+      })
+
+    })
+
+    describe('fromJSON', function() {
+
+      it('should deserialize the tree', function() {
+        var nsTree = utils.createNsTree()
+        nsTree.fromJSON([
+          { address: '/', lastMessage: null },
+          { address: '/blu', lastMessage: [1, 2, 'boo'] },
+          { address: '/bla/bli', lastMessage: ['lolo'] },
+          { address: '/blo', lastMessage: null }
+        ])
+
+        assert.equal(nsTree.has('/'), true)
+        assert.equal(nsTree.has('/blu'), true)
+        assert.equal(nsTree.has('/bla'), true)
+        assert.equal(nsTree.has('/bla/bli'), true)
+        assert.equal(nsTree.has('/blo'), true)
+
+        assert.equal(nsTree.get('/').lastMessage, null)
+        assert.deepEqual(nsTree.get('/blu').lastMessage, [1, 2, 'boo'])
+        assert.equal(nsTree.get('/bla').lastMessage, null)
+        assert.deepEqual(nsTree.get('/bla/bli').lastMessage, ['lolo'])
+        assert.equal(nsTree.get('/blo').lastMessage, null)
       })
 
     })

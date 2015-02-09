@@ -153,6 +153,50 @@ describe('persistence', function() {
 
     })
 
+    describe('managerSave/managerRestore', function() {
+
+      it('should save/restore manager state', function(done) {
+        var state = [{a: 5678, b: 122121}, {c: 888, b: 122121}]
+        async.series([
+          store.managerSave.bind(store, state),
+          store.managerRestore.bind(store)
+        ], function(err, results) {
+          if (err) throw err
+          var restored = results.pop()
+          assert.deepEqual(restored, state)
+          done()
+        })
+      })
+
+      it('should return null if no state saved', function(done) {
+        store.managerRestore(function(err, state) {
+          if (err) throw err
+          assert.equal(state, null)
+          done()
+        })
+      })
+
+      it('should handle buffers', function(done) {
+        var state = [
+          {address: '/', lastMessage: [122121]},
+          {address: '/bla', lastMessage: ['hello', new Buffer('blabla'), 1234]}
+        ]
+        async.series([
+          store.managerSave.bind(store, state),
+          store.managerRestore.bind(store)
+        ], function(err, results) {
+          if (err) throw err
+          var restored = results.pop()
+          assert.deepEqual(restored, [
+            {address: '/', lastMessage: [122121]},
+            {address: '/bla', lastMessage: ['hello', new Buffer(''), 1234]}
+          ])
+          done()
+        })
+      })
+
+    })
+
   })
 
 })

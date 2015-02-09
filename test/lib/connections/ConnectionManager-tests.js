@@ -5,6 +5,7 @@ var assert = require('assert')
   , rimraf = require('rimraf')
   , ConnectionManager = require('../../../lib/connections/ConnectionManager')
   , persistence = require('../../../lib/connections/persistence')
+  , coreUtils = require('../../../lib/core/utils')
   , helpers = require('../../helpers')
 
 
@@ -38,11 +39,38 @@ describe('ConnectionManager', function() {
       })
     })
 
+    it('should restore saved state', function(done) {
+      var managerConfig = { store: testDbDir, storeWriteTime: 1 }
+        , manager = new ConnectionManager(managerConfig)
+        , restoredManager = new ConnectionManager(managerConfig)
+
+      // Change state of manager
+      manager._nsTree.get('/bla/ho').lastMessage = ['hoho', 1, 'huhu']
+      manager._nsTree.get('/blu').lastMessage = [122222.901]
+
+      async.series([
+        manager.start.bind(manager),
+        function(next) { setTimeout(next, 5) }, // wait for manager to save state
+        restoredManager.start.bind(restoredManager),
+        function(next) {
+          helpers.assertSameElements(restoredManager._nsTree.toJSON(), [
+            { address: '/', lastMessage: null },
+            { address: '/bla', lastMessage: null },
+            { address: '/bla/ho', lastMessage: ['hoho', 1, 'huhu'] },
+            { address: '/blu', lastMessage: [122222.901] }
+          ])
+          next()
+        },
+        manager.stop.bind(manager), // Close those 2, to śtop the interval writing
+        restoredManager.stop.bind(restoredManager)
+      ], done)
+    })
+
   })
 
   describe('open', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true, runQueueTime: 1 })
+      , connections = new ConnectionManager({ store: store, collectStats: true, storeWriteTime: 1 })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 
@@ -84,7 +112,7 @@ describe('ConnectionManager', function() {
 
   describe('close', function() {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true, runQueueTime: 1 })
+      , connections = new ConnectionManager({ store: store, collectStats: true, storeWriteTime: 1 })
     beforeEach(function(done) { connections.start(done) })
     afterEach(function(done) { connections.stop(done) })    
 

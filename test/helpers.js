@@ -148,7 +148,7 @@ var _sortFunc = function(obj) {
       .sortBy(function(p) { return p[0] })
       .pluck(1).value()
   }
-  return vals.map(function(v) { return v.toString() }).join('')
+  return vals.map(function(v) { return v === null ? 'null' : v.toString() }).join('')
 }
 
 var assertValidationError = exports.assertValidationError = function(err, expected) {
