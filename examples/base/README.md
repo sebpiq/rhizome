@@ -3,14 +3,14 @@ Instructions
 
 This folder contains a full **rhizome** application.
 
-It is a very simple example, where 6 users connected to the web page can control a synthesizer implemented in Pure Data. 
+It shows simple message sending / receiving with different clients for **rhizome** :
 
-To start the example, open your terminal, go to the example folder and run `rhizome config.js`. This should start the server and print an extract of the configuration.
+- a static webpage (communication over websockets)
+- SuperCollider (communication over OSC)
+- Pure Data (communication over OSC)
 
-Once the server is started, open your web browser, and go to the address [http://localhost:8000/index.html](http://localhost:8000/index.html). You should see a black web page.
+To start the server, open your terminal, go to the example folder and run `rhizome config.js`. This should start the server and print an extract of the configuration.
 
-Finally, open the Pure Data patch *lame-fm.pd*.
+Then, open either of the clients and try sending messages. Other clients that have subscribed to the right address should receive these messages.
 
-Now just click and move your mouse on the web page and you should hear sound coming from Pure Data.
-
-You can also try to open the same page into another tab, to simulate multiple connections. The pitch should be different for each user.
+To open the web page (websocket client), just go to [http://localhost:8000/index.html](http://localhost:8000/index.html).

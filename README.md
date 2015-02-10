@@ -25,54 +25,54 @@ The simplest and nicest way to do this is probably by installing [nvm](https://g
 Open a terminal, and simply run `npm install -g rhizome-server`. If this succeeded, you can try to run `rhizome`. This should print **rhizome** help message.
 
 
-##### 3) Write a configuration file and start the server
+##### 3) Create a configuration file
 
-Create a configuration file and start the server `rhizome myConfigFile.js`.
-A sample configuration file with all available options can be found [here](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js).
-There is also full examples [here](https://github.com/sebpiq/rhizome/tree/master/examples).
+A sample configuration file with all available options can be found [here](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js), you can use it to get started.
 
 
-##### 4) That's it!
+##### 4) Start the server
 
-Please if you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
+Say you have created a configuration file called `myConfig.js`. You can now start the server by running `rhizome myConfig.js` in your terminal.
+
+
+##### 5) Do your thing
+
+Now that the server is running, the only thing left is to create your application by programming a few clients for **rhizome**. There is a full example [here](https://github.com/sebpiq/rhizome/tree/master/examples/base), providing bare bones for a web page (and websocket client), a Pure Data client and a SuperCollider client.
+
+If you have any feedback, any problem, if you need help, don't hesitate to drop a message in the [issue tracker](https://github.com/sebpiq/rhizome/issues).
 
 Also, if you would like to add your **rhizome** project to the gallery, please contact me.
 
 
-Feature list
---------------
+Rhizome feature list
+---------------------
 
-**rhizome** receives connections from different clients (OSC, websockets, ...) and allows them to communicate together through a protocol that looks a lot like OSC `/some/address arg1, arg2, ...`.
+**Simple communication protocol**. The rhizome server receives connections from different clients (OSC, websockets, ...) and allows them to communicate together through a protocol that looks a lot like OSC :
 
+```
+/some/address ["big", "bang"]
+/other/address [1.123456, Blob(100000)]
+```
 
-##### publish / subscribe system
+**Publish / Subscribe**. To receive messages sent at a given address, a client has to subscribe to that address. This avoids all messages to be sent to all clients, and therefore offers an optimized yet flexible messaging system.
 
-To receive messages sent at a given address, a client has to subscribe to that address. This avoids all messages to be sent to all clients, and therefore offers an optimized yet flexible messaging system.
+**OSC support**. Any OSC client such as **Pure Data**, **Max/MSP**, **SuperCollider**, **Processing**, ... is supported out of the box.
 
+[example](https://github.com/sebpiq/rhizome/tree/master/examples/base) | [OSC API](#from-osc-client)
 
-##### OSC
+**websocket support**. A websocket client is included with rhizome. It can be used in your web pages, and handles all the dirty bits of websocket communication : automatic reconnection and so on ... 
 
-Any OSC client such as **Pure Data**, **Max/MSP**, **SuperCollider**, **Processing**, ... is supported out of the box. Check-out the [complete OSC API](#from-osc-client).
+[example](https://github.com/sebpiq/rhizome/tree/master/examples/base) | [websocket client API](#from-websocket-client)
 
+**Transferring files over OSC**. While file transfer (or binary data transfer) is not supported by many OSC clients, rhizome provides a simple tool called **rhizome-blobs** to handle this. This allows you to receive / send files from / to any OSC client through rhizome.
 
-##### websockets
+[example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall)
 
-**rhizome** provides a simple websocket client that can be included in your web pages, and handles all the dirty bits of websocket communication : automatic reconnection and so on ... Check-out the [complete websocket client API](#from-websocket-client).
+**Static web server**. rhizome can serve static web pages, HTML, JavaScript, CSS, ... so that you don't have to setup a separate HTTP server yourself.
 
+[example](https://github.com/sebpiq/rhizome/tree/master/examples/base)
 
-##### Transferring files over OSC
-
-While file transfer (or binary data transfer) is not supported by many OSC clients, **rhizome** provides a simple client called **rhizome-blobs** to handle this. This allows you to receive / send files from / to any OSC client through rhizome. Check-out [this example](https://github.com/sebpiq/rhizome/tree/master/examples/drawing-wall).
-
-
-##### static web server
-
-**rhizome** can serve your web pages, HTML, JavaScript, CSS, ... so that you don't have to setup a separate HTTP server yourself. Check-out [this sample config file](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js) to see how to enable this feature.
-
-
-##### Reliability
-
-Crashes shouldn't happen, but in case they do, your server can be restarted cleanly, and its whole state will be restored. Check-out [this sample config file](https://github.com/sebpiq/rhizome/blob/master/bin/config-samples/rhizome-config.js) to see how to enable this feature.
+**Reliability**. Crashes shouldn't happen, but in case they do, your server can be restarted cleanly, and its whole state will be restored.
 
 
 API
@@ -84,10 +84,10 @@ The following messages are used for communication between one connection and the
 
 #### From OSC client
 
-  - `/sys/subscribe <appPort> <address>` : subscribes the OSC client to messages sent at `<address>`
-  - `/sys/resend <appPort> <address>` : resends the last message sent at `<address>`.
-  - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends a blob from an OSC application to the server using **rhizome-blobs**.
-  - `/sys/config <appPort> <parameter> [<arg1> <arg2> ...]` : configures the OSC connection on the server. Available parameters are :
+  - `/sys/subscribe <appPort> <address>` : subscribes the OSC client running at `<appPort>` to all messages sent at `<address>`.
+  - `/sys/resend <appPort> <address>` : resends the last message sent at `<address>` to the OSC client running at `<appPort>`.
+  - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends the file `<blobPath>` from an OSC application to the server using **rhizome-blobs**.
+  - `/sys/config <appPort> <parameter> [<arg1> <arg2> ...]` : sends configuration for the OSC client running at `<appPort>` to the rhizome server. Available parameters are :
     - `blobClient [<blobsPort>]` : tell the server that the OSC client uses **rhizome-blobs** for file transfers. `blobsPort` is the port on which **rhizome-blobs** is listening for incoming files. If not provided a default value will be chosen.
 
 #### From WebSocket client
