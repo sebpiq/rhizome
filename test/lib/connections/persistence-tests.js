@@ -156,7 +156,10 @@ describe('persistence', function() {
     describe('managerSave/managerRestore', function() {
 
       it('should save/restore manager state', function(done) {
-        var state = [{a: 5678, b: 122121}, {c: 888, b: 122121}]
+        var state = {
+          nsTree: [{a: 5678, b: 122121}, {c: 888, b: 122121}],
+          idCounters: {blabla: 1234}
+        }
         async.series([
           store.managerSave.bind(store, state),
           store.managerRestore.bind(store)
@@ -177,20 +180,20 @@ describe('persistence', function() {
       })
 
       it('should handle buffers', function(done) {
-        var state = [
+        var state = {nsTree: [
           {address: '/', lastMessage: [122121]},
           {address: '/bla', lastMessage: ['hello', new Buffer('blabla'), 1234]}
-        ]
+        ]}
         async.series([
           store.managerSave.bind(store, state),
           store.managerRestore.bind(store)
         ], function(err, results) {
           if (err) throw err
           var restored = results.pop()
-          assert.deepEqual(restored, [
+          assert.deepEqual(restored, {nsTree: [
             {address: '/', lastMessage: [122121]},
             {address: '/bla', lastMessage: ['hello', new Buffer(''), 1234]}
-          ])
+          ]})
           done()
         })
       })

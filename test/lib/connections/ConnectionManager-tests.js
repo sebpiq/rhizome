@@ -47,6 +47,8 @@ describe('ConnectionManager', function() {
       // Change state of manager
       manager._nsTree.get('/bla/ho').lastMessage = ['hoho', 1, 'huhu']
       manager._nsTree.get('/blu').lastMessage = [122222.901]
+      manager._idCounters['namespace1'] = 10
+      manager._idCounters['namespace2'] = 1
 
       async.series([
         manager.start.bind(manager),
@@ -59,6 +61,10 @@ describe('ConnectionManager', function() {
             { address: '/bla/ho', lastMessage: ['hoho', 1, 'huhu'] },
             { address: '/blu', lastMessage: [122222.901] }
           ])
+          assert.deepEqual(restoredManager._idCounters, {
+            'namespace1': 10,
+            'namespace2': 1
+          })
           next()
         },
         manager.stop.bind(manager), // Close those 2, to śtop the interval writing
