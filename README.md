@@ -233,6 +233,10 @@ npm run coverage
 Changelog
 -----------
 
+- 0.6.1
+
+  - Fixed a bug with WebSocket client id
+
 - 0.6.0
 
   - Completely reorganized structure of the library
