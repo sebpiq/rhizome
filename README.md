@@ -233,6 +233,10 @@ npm run coverage
 Changelog
 -----------
 
+- 0.6.2
+
+  - Fixed a bug with WebSocket client useCookies
+
 - 0.6.1
 
   - Fixed a bug with WebSocket client id
