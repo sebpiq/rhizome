@@ -9,7 +9,7 @@ rhizome
 
 **rhizome** was used to realize the following projects : https://github.com/sebpiq/rhizome/wiki/Gallery
 
-![rhizome](https://raw.githubusercontent.com/sebpiq/rhizome/master/images/schema.svg)
+![rhizome](http://sebpiq.github.io/rhizome/images/schema.svg)
 
 
 Getting started
