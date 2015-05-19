@@ -99,8 +99,8 @@ The following messages are used for communication between one connection and the
 
 The following messages are sent by the server. To receive them, you should subscribe to them.
 
-  - `/broadcast/open/<namespace> <id>` : a user connected to the web page, his id is `<userId>`
-  - `/broadcast/close/<namespace> <id>` : user with id `<userId>` left the web page
+  - `/broadcast/open/<clientType> <id>` : client `<id>` has just connected. `<clientType>` can be `websockets` or `osc`.
+  - `/broadcast/close/<clientType> <id>` : client `<id>` has just disconnected. `<clientType>` can be `websockets` or `osc`
 
 
 ### WebSocket client
