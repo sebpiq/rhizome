@@ -214,6 +214,43 @@ describe('core.server.Connection', function() {
 
     })
 
+    describe('connectionsSendList', function() {
+
+      it('should send the id list of opened connections', function(done) {
+        var received = []
+
+        var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
+          received.push([1, address, args])
+        })
+        var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
+          received.push([2, address, args])
+        })
+        dummyConnection1.id = '1'
+        dummyConnection2.id = '2'
+
+        async.parallel([
+          dummyConnection1.once.bind(dummyConnection1, 'open'),
+          dummyConnection2.once.bind(dummyConnection2, 'open')
+        ], function(err) {
+          if (err) throw err
+          dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
+          dummyConnection2.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
+          dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, [])
+
+          helpers.assertSameElements(received, [
+            [1, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
+            [2, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
+            [1, coreMessages.connectionsTakeListAddress + '/undefined', []]
+          ])
+          done()
+        })
+        dummyConnection1.open()
+        dummyConnection2.open()
+
+      })
+
+    })
+
   })
 
 })

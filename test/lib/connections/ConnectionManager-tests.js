@@ -219,4 +219,28 @@ describe('ConnectionManager', function() {
 
   })
 
+  describe('getOpenConnectionsIds', function() {
+
+    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
+    beforeEach(function(done) { connections.start(done) })
+    afterEach(function(done) { connections.stop(done) })
+
+    it('should return an error message if address in not valid', function(done) {
+      var connection = new helpers.DummyConnection()
+        , connection2 = new helpers.DummyConnection()
+      connection.id = 'defg'
+      connection2.id = 'hijk'
+
+      async.series([
+        connections.open.bind(connections, connection),
+        connections.open.bind(connections, connection2)
+      ], function(err) {
+        if(err) throw err
+        assert.deepEqual(connections.getOpenConnectionsIds('dummy'), ['defg', 'hijk'])
+        done()
+      })
+    })
+
+  })
+
 })
