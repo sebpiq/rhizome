@@ -95,6 +95,10 @@ The following messages are used for communication between one connection and the
   - `/sys/subscribe <address>` : subscribes the web client to messages sent at `<address>`
   - `/sys/resend <address>` : resends the last message sent at `<address>`.
 
+#### From Both
+
+  - `/sys/connections/sendlist <clientType>` : sends the list of ids of all connections of `<clientType>` currently opened on the server. The response is sent at address `/sys/connections/<clientType>`
+
 ### Broadcast messages
 
 The following messages are sent by the server. To receive them, you should subscribe to them.
@@ -232,6 +236,10 @@ npm run coverage
 
 Changelog
 -----------
+
+- 0.6.3
+
+  - Added `/sys/connections/getlist` to get a list of connected clients
 
 - 0.6.2
 
