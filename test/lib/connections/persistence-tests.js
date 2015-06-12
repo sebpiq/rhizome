@@ -90,9 +90,21 @@ describe('persistence', function() {
           assert.ok(connection.id.length > 4)
           done()
         })
-
       })
 
+      it('should assign a new id when autoId is true and connection could not be restored', function(done) {
+        var connection = new helpers.DummyConnection()
+          , id = 'Idontexist'
+        connection.id = id
+        connection.autoId = true
+        store.connectionInsertOrRestore(connection, function(err, results) {
+          if (err) throw err
+          assert.ok(connection.id !== null)
+          assert.ok(connection.id.length > 4)
+          assert.ok(connection.id != id)
+          done()
+        })
+      })
 
     })
 
