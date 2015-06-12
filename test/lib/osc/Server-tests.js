@@ -101,12 +101,15 @@ describe('osc.Server', function() {
         // and other persisted info
         function(next) {
           assert.equal(oscServer.connections.length, 3)
-          assert.equal(oscServer.connections[0].ip, '127.0.0.1')
-          assert.strictEqual(oscServer.connections[0].appPort, 9001)
-          assert.equal(oscServer.connections[1].ip, '127.0.0.1')
-          assert.strictEqual(oscServer.connections[1].appPort, 9002)
-          assert.equal(oscServer.connections[2].ip, '127.0.0.1')
-          assert.strictEqual(oscServer.connections[2].appPort, 9003)
+          assert.deepEqual(
+            _.uniq(_.pluck(oscServer.connections, 'ip'))
+            ['127.0.0.1']
+          )
+          var appPorts = _.pluck(oscServer.connections, 'appPort')
+          appPorts.sort()
+          assert.strictEqual(appPorts[0], 9001)
+          assert.strictEqual(appPorts[1], 9002)
+          assert.strictEqual(appPorts[2], 9003)
 
           helpers.dummyOSCClients(2, oscClients, next.bind(this, null))
           sendToServer.send('/bla/blo', [0, 1, '2'])

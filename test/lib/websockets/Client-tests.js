@@ -626,6 +626,26 @@ describe('websockets.Client', function() {
       ], done)
     })
 
+
+    it('should ignore the id if the client is not known', function(done) {
+      var client2 = new websockets.Client(clientConfig)
+        , id2 = 'Idontexist'
+      client2.id = id2
+      client2._isBrowser = true
+      cookie._value = id2
+
+      async.series([
+        // Start the client
+        client2.start.bind(client2),
+
+        // Check that the client gets assigned a different id
+        function(next) {
+          assert.ok(client2.id != id2)
+          next()
+        }
+      ], done)
+    })
+
   })
 
 })

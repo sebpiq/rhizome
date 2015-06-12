@@ -13,7 +13,7 @@ describe('persistence', function() {
       , store = new persistence.NEDBStore(testDbDir)
 
     var connectionExists = function(connection, done) {
-      var query = { _id: store._getId(connection.namespace, connection.id) }
+      var query = { connectionId: connection.id, namespace: connection.namespace }
       store._connectionsCollection.findOne(query, function(err, doc) {
         done(err, Boolean(doc))
       })
@@ -30,7 +30,7 @@ describe('persistence', function() {
     
     describe('connectionInsertOrRestore', function() {
 
-      it('should insert connections that dont exist and retore the others', function(done) {
+      it('should insert connections that dont exist and restore the others', function(done) {
         var connection1 = new helpers.DummyConnection()
           , connection2 = new helpers.DummyConnection()
           , restoredConnection
@@ -40,18 +40,25 @@ describe('persistence', function() {
         connection2.id = 'fghj'
 
         async.series([
+          // Check that connections indeed dont exist
           connectionExists.bind(this, connection1),
           connectionExists.bind(this, connection2),
+
+          // Insert connections
           store.connectionInsertOrRestore.bind(store, connection1),
           store.connectionInsertOrRestore.bind(store, connection2),
+          
+          // Check that now they do exist
           connectionExists.bind(this, connection1),
           connectionExists.bind(this, connection2),
+
+          // Restore a connection
           function(next) {
             restoredConnection = new helpers.DummyConnection()
             restoredConnection.id = '9abc'
             assert.equal(connection1.restoredTestData, null)
             assert.equal(connection2.restoredTestData, null)
-            store.connectionInsertOrRestore(restoredConnection, next) // update
+            store.connectionInsertOrRestore(restoredConnection, next)
           }
 
         ], function(err, results) {
@@ -62,6 +69,7 @@ describe('persistence', function() {
           results.shift()
           var existed1After = results.shift()
             , existed2After = results.shift()
+
           assert.equal(existed1Before, false)
           assert.equal(existed2Before, false)
           assert.equal(existed1After, true)
@@ -71,6 +79,20 @@ describe('persistence', function() {
         })
 
       })
+
+      it('should insert connections and automatically assign id if null', function(done) {
+        var connection = new helpers.DummyConnection()
+        connection.testData = {a: 1, b: 2}
+        assert.equal(connection.id, null)
+        store.connectionInsertOrRestore(connection, function(err, results) {
+          if (err) throw err
+          assert.ok(connection.id !== null)
+          assert.ok(connection.id.length > 4)
+          done()
+        })
+
+      })
+
 
     })
 
@@ -120,6 +142,7 @@ describe('persistence', function() {
         ], function(err, results) {
           if (err) throw err
           var idList = results.pop()
+          idList.sort()
           assert.deepEqual(idList, ['defg', 'hijk', 'lmno'])
           done()
         })

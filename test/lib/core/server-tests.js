@@ -44,18 +44,6 @@ describe('core.server.Connection', function() {
       })
     })
 
-    it('should assign a unique id if autoId is true', function(done) {
-      // Create dummy connection to listen to the 'open' message
-      var dummyConnection = new helpers.DummyConnection()
-      dummyConnection.autoId = true
-      dummyConnection.on('open', function() {
-        assert.ok(_.isString(dummyConnection.id))
-        assert.ok(dummyConnection.id === '0')
-        done()
-      })
-      dummyConnection.open()
-    })
-
   })
 
   describe('close', function() {
