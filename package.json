@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "mocha": "1.17.x",
+    "istanbul": "^0.3.14",
     "stats-lite": "1.0.x",
     "rimraf": "2.2.x"
   },
