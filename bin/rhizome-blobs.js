@@ -24,6 +24,8 @@ var path = require('path')
   , BlobClient = require('../lib/osc/BlobClient')
   , utils = require('./utils')
 
+console.log(clc.bold('rhizome-blobs ' + version) )
+
 if (require.main === module) {
   program
     .version(version)
@@ -37,7 +39,6 @@ if (require.main === module) {
   var client = new BlobClient(require(path.join(process.cwd(), process.argv[2])))
   client.start(function(err) {
     utils.handleError(err)
-    console.log(clc.bold('Rhizome blobs ' + version + ' running.'))
     console.log(clc.bold.green('(1)'), 'saving and reading blobs from', clc.bold(client._config.blobsDir))
     console.log(clc.bold.green('(2)'), 'receiving blobs on port', clc.bold(client._config.blobsPort))
     console.log(clc.bold.green('(3)'), 'server',

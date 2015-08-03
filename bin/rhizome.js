@@ -36,6 +36,8 @@ var path = require('path')
 
 var httpServer, wsServer, oscServer
 
+console.log(clc.bold('rhizome ' + version) )
+
 // Validation for the http section of the configuration
 var httpValidator = new coreValidation.ChaiValidator({
   port: function(val) {
@@ -184,7 +186,6 @@ if (require.main === module) {
     async.parallel(asyncStartOps, function(err) {
       if (err) throw err
       var count = 1
-      console.log(clc.bold('Rhizome ' + version +' running.') )
       warningLog.forEach(function(msg) {
         console.log(clc.yellow.bold('(!) ') + msg)
       })
