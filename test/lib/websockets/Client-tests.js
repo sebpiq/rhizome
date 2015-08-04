@@ -566,6 +566,9 @@ describe('websockets.Client', function() {
       // navigator mock-up for testing
       global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
 
+      // Fake Modernizr
+      global.Modernizr = { websocketsbinary: true }
+
       client.on('error', function() {}) // Just to avoid throwing
       async.series([
         rimraf.bind(rimraf, dbDir),
@@ -581,6 +584,7 @@ describe('websockets.Client', function() {
       cookie.get = cookie._get
       client.removeAllListeners()
       delete global.navigator
+      delete global.Modernizr
       helpers.afterEach([wsServer, client, manager], done)
     })
 
