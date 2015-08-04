@@ -37,7 +37,7 @@
     "osc-min": "0.2.x"
   },
   "devDependencies": {
-    "mocha": "1.17.x",
+    "mocha": "^2.0.0",
     "istanbul": "^0.3.14",
     "stats-lite": "1.0.x",
     "rimraf": "2.2.x"
