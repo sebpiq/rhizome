@@ -545,7 +545,7 @@ describe('websockets.Client', function() {
 
   describe('cookies', function() {
 
-    var cookie = require('../../../lib/websockets/browser-deps/cookie').cookie
+    var cookies = require('cookies-js')
       , dbDir = '/tmp/rhizome-test-db/'
       , client = new websockets.Client(clientConfig)
       , manager = new connections.ConnectionManager({
@@ -557,11 +557,11 @@ describe('websockets.Client', function() {
       connections.manager = manager
 
       // Cookie mock-up for testing
-      cookie._set = cookie.set
-      cookie._get = cookie.get
-      cookie.get = function() { return cookie._value }
-      cookie.set = function(key, value) { cookie._value = value }
-      cookie._value = null
+      cookies._set = cookies.set
+      cookies._get = cookies.get
+      cookies.get = function() { return cookies._value }
+      cookies.set = function(key, value) { cookies._value = value }
+      cookies._value = null
 
       // navigator mock-up for testing
       global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
@@ -579,9 +579,9 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
-      cookie._value = null
-      cookie.set = cookie._set
-      cookie.get = cookie._get
+      cookies._value = null
+      cookies.set = cookies._set
+      cookies.get = cookies._get
       client.removeAllListeners()
       delete global.navigator
       delete global.Modernizr
@@ -593,7 +593,7 @@ describe('websockets.Client', function() {
       var client2 = new websockets.Client(clientConfig)
         , savedId = client.id
       client2._isBrowser = true
-      cookie._value = client.id
+      cookies._value = client.id
       assert.equal(manager._nsTree.has('/blou'), false)
       global.navigator = { oscpu: 'should be ignored', userAgent: 'should be ignored' }
 
@@ -636,7 +636,7 @@ describe('websockets.Client', function() {
         , id2 = 'Idontexist'
       client2.id = id2
       client2._isBrowser = true
-      cookie._value = id2
+      cookies._value = id2
 
       async.series([
         // Start the client
