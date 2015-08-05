@@ -233,6 +233,14 @@ describe('persistence', function() {
         })
       })
 
+      it('shouldnt crash if manager state is missing fields or invalid', function(done) {
+        
+        async.series([
+          fs.writeFile.bind(fs, store._managerFile, JSON.stringify({})),
+          store.managerRestore.bind(store)
+        ], done)
+      })
+
     })
 
   })
