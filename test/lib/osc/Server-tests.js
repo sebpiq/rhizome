@@ -131,6 +131,42 @@ describe('osc.Server', function() {
       })
     })
 
+    it('should always persist blob client config', function(done) {
+      var store = new connections.NEDBStore('/tmp')
+        , manager = new connections.ConnectionManager({ store: store })
+      connections.manager = manager
+
+      async.series([
+
+        // Configure the blob client for one OSC connection.
+        manager.start.bind(manager),
+        function(next) {
+          sendToServer.send(coreMessages.configureAddress, [9001, 'blobClient', 11111])
+          helpers.dummyOSCClients(1, [ {ip: '127.0.0.1', appPort: 9001} ], next.bind(this, null))
+        },
+
+        // Create a new manager with no open connection, and stop the osc server, before
+        // creating a new, clean one.
+        function(next) {
+          manager = new connections.ConnectionManager({ store: store })
+          connections.manager = manager
+          oscServer.stop(next)
+        },
+        function(next) {
+          oscServer = new osc.Server(config)
+          oscServer.start(next)
+        }
+
+      ], function(err) {
+        if (err) throw err
+        var connection = oscServer.connections[0]
+        assert.deepEqual(connection.infos, { blobsPort: 11111 })
+        assert.ok(connection.blobClient)
+        assert.equal(connection.blobClient.port, 11111)
+        done()
+      })
+    })
+
   })
 
   describe('send', function() {

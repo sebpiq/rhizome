@@ -11,5 +11,9 @@ module.exports = {
   http: {
     port: 8000,
     staticDir: './pages'
+  },
+  
+  connections: {
+    store: '/tmp/blabla'
   }
 }

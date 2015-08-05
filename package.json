@@ -24,19 +24,24 @@
     "cli-color": "0.2.x",
     "commander": "2.2.x",
     "browserify": "6.1.x",
+    "modernizr": "^3.0.0-alpha.4",
     "gulp": "3.8.x",
     "gulp-util": "3.0.x",
     "gulp-uglify": "1.0.x",
+    "gulp-concat": "^2.6.0",
+    "event-stream": "^3.3.1",
+    "through2": "^2.0.0",
     "vinyl-source-stream": "1.0.x",
     "vinyl-buffer": "1.0.x",
     "nedb": "0.11.x",
-    "osc-min": "0.2.x"
+    "osc-min": "0.2.x",
+    "cookies-js": "^1.2.1"
   },
   "devDependencies": {
-    "mocha": "1.17.x",
     "istanbul": "^0.3.14",
-    "stats-lite": "1.0.x",
-    "rimraf": "2.2.x"
+    "mocha": "^2.0.0",
+    "rimraf": "2.2.x",
+    "stats-lite": "1.0.x"
   },
   "bin": {
     "rhizome": "./bin/rhizome.js",

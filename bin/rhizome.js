@@ -121,12 +121,12 @@ if (require.main === module) {
 
   validateConfig(config, function(err) {
     utils.handleError(err)
-    var packageRootPath = path.join(__dirname, '..', '..')
+    var packageRootPath = path.join(__dirname, '..')
       , buildDir = path.join(packageRootPath, 'build')
       , asyncStartOps = []
       , warningLog = []
       , successLog = []
-
+      
     // Connection manager
     connections.manager = new connections.ConnectionManager(config.connections)
     asyncStartOps.push(connections.manager.start.bind(connections.manager))
