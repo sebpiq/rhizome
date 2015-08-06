@@ -126,14 +126,14 @@ rhizome.on('message', function(address, args) {
 ```
 
 
-#### Event: 'queued'
+#### Event: 'server full'
 
 This event is sent when connection fails because the server is full.
 
 ```javascript
 rhizome.start()
 
-rhizome.on('queued', function() {
+rhizome.on('server full', function() {
   showMessage('Waiting for an available space')
 })
 
@@ -155,9 +155,9 @@ rhizome.on('connection lost', function() {
 ```
 
 
-#### rhizome.start(done)
+#### rhizome.start([done])
 
-Starts the client, and executes `done(err)` when complete. The fact that the client is started, doesn't mean that the client is connected. For example, if the server is full, the connection is queued.
+Starts the client, and executes `done(err)` when complete. The fact that the client is started, doesn't mean that the client is connected. For example, if the server is full, the client will start properly but connection will be delayed until space become available.
 
 
 #### rhizome.send(address[, args])

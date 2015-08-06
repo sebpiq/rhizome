@@ -76,7 +76,7 @@
       })
       showMessage('Connecting ...')
 
-      rhizome.on('queued', function() {
+      rhizome.on('server full', function() {
         showMessage('The server is full, please wait ...')
       })
 

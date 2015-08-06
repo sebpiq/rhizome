@@ -43,8 +43,8 @@
         alert('connection lost!')
       })
 
-      rhizome.on('queued', function() {
-        alert('queued!')
+      rhizome.on('server full', function() {
+        alert('server is full!')
       })
 
     })
