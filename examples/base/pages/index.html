@@ -11,7 +11,10 @@
       // `rhizome.start` is the first function that should be called.
       // The function inside is executed once the client managed to connect.
       rhizome.start(function(err) {
-        if (err) throw err
+        if (err) {
+          $('body').html('client failed starting : ' + err)
+          throw err
+        }
 
         $('#send').submit(function(event) {
           event.preventDefault()

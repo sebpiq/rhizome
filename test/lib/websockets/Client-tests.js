@@ -59,6 +59,8 @@ describe('websockets.Client', function() {
 
     afterEach(function(done) {
       client.removeAllListeners()
+      client._isBrowser = false
+      delete global.Modernizr
       helpers.afterEach([wsServer, client, manager], done)
     })
 
@@ -78,6 +80,20 @@ describe('websockets.Client', function() {
         assertConnected(client)
         // Test that the 'connected' event is emitted after client is started
         client.on('connected', function() { done() })
+      })
+    })
+
+    it('should return an error if client is not supported', function(done) {
+      var received = []
+      // Fake Modernizr
+      global.Modernizr = { websocketsbinary: true }
+      Modernizr.websocketsbinary = false
+      client._isBrowser = true
+      client.on('connected', function() { throw new Error('should not connect') })
+      client.start(function(err) {
+        assert.ok(err)
+        assert.equal(err.name, 'NotSupported')
+        done()
       })
     })
 

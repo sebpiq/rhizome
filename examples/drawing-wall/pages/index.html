@@ -60,7 +60,10 @@
       }
 
       rhizome.start(function(err) {
-        if (err) return alert('client failed starting : ' + err)
+        if (err) {
+          document.body.innerHTML = 'client failed starting : ' + err
+          throw err
+        }
 
         // When clicking on the "send" button, export the canvas to .jpeg with `toBlob`,
         // and send a message containg the file to the address `/drawing`.
