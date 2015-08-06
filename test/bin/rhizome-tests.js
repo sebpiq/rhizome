@@ -47,7 +47,7 @@ describe('bin.rhizome', function() {
         },
         websockets: {
           rootUrl: '/',
-          usersLimit: 40
+          maxSockets: 40
         }
       }
       rhizomeBin.validateConfig(config, function(err) {

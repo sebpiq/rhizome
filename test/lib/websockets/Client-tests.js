@@ -1,5 +1,6 @@
 var _ = require('underscore')
   , fs = require('fs')
+  , urlparse = require('url')
   , async = require('async')
   , assert = require('assert')
   , WebSocket = require('ws')
@@ -12,18 +13,33 @@ var _ = require('underscore')
 var serverConfig = {
   port: 8000,
   rootUrl: '/',
-  usersLimit: 2
+  maxSockets: 2
 }
 
 var clientConfig = {
   port: 8000,
   hostname: 'localhost',
   reconnect: 0,
-  queueIfFull: true
 }
 
 var wsServer = new websockets.Server(serverConfig)
 
+var assertConnected = function(client) {
+  var allOpenClients = wsServer._wsServer.clients.filter(function(s) {
+      return s.readyState === WebSocket.OPEN
+    }) 
+    , dummyWebClients = allOpenClients.filter(function(s) {
+      var query = urlparse.parse(s.upgradeReq.url, true).query
+      return query.hasOwnProperty('dummies')
+    })
+  assert.equal(client.status(), 'started')
+  assert.equal(allOpenClients.length - dummyWebClients.length, 1)
+  assert.ok(_.isString(client.id) && client.id.length > 0)
+}
+
+var assertDisconnected = function(client) {
+  assert.equal(client.status(), 'stopped')
+}
 
 describe('websockets.Client', function() {
 
@@ -35,7 +51,6 @@ describe('websockets.Client', function() {
 
     beforeEach(function(done) {
       connections.manager = manager
-      client.on('error', function() {}) // Just to avoid throwing
       async.series([
         manager.start.bind(manager),
         wsServer.start.bind(wsServer)
@@ -47,92 +62,91 @@ describe('websockets.Client', function() {
       helpers.afterEach([wsServer, client, manager], done)
     })
 
-    var assertConnected = function(otherClient) {
-      var c = client || otherClient
-      assert.equal(c.status(), 'started')
-      assert.equal(wsServer._wsServer.clients.filter(function(s) {
-        return s.upgradeReq.url !== '/?dummies'
-      }).length, 1)
-      assert.ok(_.isString(c.id) && c.id.length > 0)
-    }
-
-    var assertDisconnected = function(otherClient) {
-      var c = client || otherClient
-      assert.equal(c.status(), 'stopped')
-      assert.equal(c.id, null)
-    }
-
     it('should return ValidationError if config is not valid', function(done) {
       helpers.assertConfigErrors([
-        [new websockets.Client({}), ['.hostname', '.port']],
-        [new websockets.Client({hostname: 'localhost', port: 8000, queueIfFull: 7}), ['.queueIfFull']]
+        [new websockets.Client({}), ['.hostname', '.port']]
       ], done)
     })
 
     it('should open a socket connection to the server', function(done) {
       var received
-      assertDisconnected()
+      assertDisconnected(client)
+      assert.equal(client.id, null)
 
       client.start(function(err) {
         if (err) throw err
-        assertConnected()
+        assertConnected(client)
         // Test that the 'connected' event is emitted after client is started
         client.on('connected', function() { done() })
       })
     })
 
-    it('should return an error if the server is not responding', function(done) {
-      assertDisconnected()
+    it('should return an error if the server is not responding and reconnect is 0', function(done) {
+      assertDisconnected(client)
+      assert.equal(client.id, null)
       async.series([
         function(next) { wsServer.stop(next) },
         function(next) { setTimeout(next, 50) },
         function(next) { client.start(next) }
       ], function(err) {
         assert.ok(err)
-        assertDisconnected()
+        assertDisconnected(client)
+        assert.equal(client.id, null)
         done()
       })
     })
 
-    it('should reject connection when server is full and queue is false', function(done) {
+    it('should reject connection when server is full and reconnect is 0', function(done) {
       var received
-        , clientNoQueue = new websockets.Client(_.extend({}, clientConfig, { queueIfFull: false }))
-      assertDisconnected(clientNoQueue)
+        , configNoReconnect = _.extend({}, clientConfig, { reconnect: 0 })
+        , clientNoReconnect = new websockets.Client(configNoReconnect)
+        , dummyClients = [ { port: serverConfig.port }, { port: serverConfig.port } ]
+      assertDisconnected(clientNoReconnect)
+      assert.equal(client.id, null)
 
       async.waterfall([
-        helpers.dummyWebClients.bind(helpers, wsServer, serverConfig.port, 2),
+        helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
         function(sockets, messages, next) {
           assert.equal(wsServer._wsServer.clients[0].readyState, WebSocket.OPEN)
-          clientNoQueue.start(next)
+          clientNoReconnect.start(next)
         }
       ], function(err, next) {
         assert.ok(err)
-        clientNoQueue.stop(done)
+        assert.equal(err.name, 'ConnectionRefused')
+        clientNoReconnect.stop(done)
       })
     })
 
-    it('should put the client on queue when server is full and queue is true', function(done) {
-      assertDisconnected()
+    it('should retry connecting when server is full and reconnect is not 0', function(done) {
+      var dummyClients = [ { port: serverConfig.port }, { port: serverConfig.port } ]
+        , configReconnect = _.extend({}, clientConfig, { reconnect: 50 })
+        , clientReconnect = new websockets.Client(configReconnect)
+      assertDisconnected(clientReconnect)
+      assert.equal(client.id, null)
 
       async.waterfall([
 
-        helpers.dummyWebClients.bind(this, wsServer, serverConfig.port, 2),
-
+        // Fill-up the server with dummy clients. 
+        // Connection for `clientReconnect` should be refused 
+        helpers.dummyWebClients.bind(this, wsServer, dummyClients),
         function(sockets, messages, next) {
-          client.start(function(err) { if (err) throw err })
-          client.once('queued', function(err) { next(err, sockets) })
+          clientReconnect.start(function(err) { if (err) throw err })
+          clientReconnect.once('server full', function(err) { next(err, sockets) })
         },
 
+        // Close one of the dummy clients, now `clientReconnect` should connect
+        // automatically 
         function(sockets, next) {
-          assertDisconnected()
+          assertDisconnected(client)
+          assert.equal(client.id, null)
           sockets[0].close()
-          client.once('connected', next)
+          clientReconnect.once('connected', next)
         }
 
       ], function(err) {
         if (err) throw err
-        assertConnected()
-        done()
+        assertConnected(clientReconnect)
+        clientReconnect.stop(done)
       })
     })
 
@@ -155,7 +169,6 @@ describe('websockets.Client', function() {
 
     beforeEach(function(done) {
       connections.manager = manager
-      client.on('error', function() {}) // Just to avoid throwing
       async.series([
         manager.start.bind(manager),
         wsServer.start.bind(wsServer),
@@ -231,7 +244,6 @@ describe('websockets.Client', function() {
 
     beforeEach(function(done) {
       connections.manager = manager
-      client.on('error', function() {}) // Just to avoid throwing
       async.series([
         manager.start.bind(manager),
         wsServer.start.bind(wsServer),
@@ -367,16 +379,18 @@ describe('websockets.Client', function() {
 
   describe('auto-reconnect', function() {
 
-    var client = new websockets.Client(_.extend({}, clientConfig, { reconnect: 50 }))
+    var configReconnect = _.extend({}, clientConfig, { reconnect: 50 })
+      , client = new websockets.Client(configReconnect)
       , manager = new connections.ConnectionManager({
-        store: new connections.NoStore()
-      })
+          store: new connections.NoStore()
+        })
       , received = []
 
     beforeEach(function(done) {
       connections.manager = manager
       client.on('error', function() {}) // Just to avoid throwing
       client.on('connection lost', function() { received.push('connection lost') })
+      client.on('server full', function() { received.push('server full') })
       client.on('connected', function() { received.push('connected') })
       received = []
       async.series([
@@ -394,31 +408,22 @@ describe('websockets.Client', function() {
       helpers.afterEach([wsServer, client, manager], done)
     })
 
-    var assertConnected = function() {
-      assert.ok(_.isString(client.id) && client.id.length > 0)
-      assert.equal(client.status(), 'started')
-    }
-
-    var assertDisconnected = function() {
-      assert.equal(client.status(), 'stopped')
-    }
-
     it('should reconnect', function(done) {
       client._config.reconnect = 50
       assert.deepEqual(received, ['connected'])
-      assertConnected()
+      assertConnected(client)
       async.series([
         function(next) {
           client.once('connection lost', next)
           wsServer.connections[0].close()
         },
         function(next) {
-          assertDisconnected()
+          assertDisconnected(client)
           client.once('connected', next)
         }
       ], function(err) {
         if (err) throw err
-        assertConnected()
+        assertConnected(client)
         assert.deepEqual(received, ['connected', 'connection lost', 'connected'])
         done()
       })
@@ -427,7 +432,7 @@ describe('websockets.Client', function() {
     it('should work as well when reconnecting several times', function(done) {
       client._config.reconnect = 30
       assert.deepEqual(received, ['connected'])
-      assertConnected()
+      assertConnected(client)
 
       // Test that we don't bind handlers several times when reconnection happens.
       // For this we just listen to 'subscribe' acknowledgment and see that we got
@@ -447,14 +452,14 @@ describe('websockets.Client', function() {
           // Stop the server to cause a disconnection,
           // wait for a few retries to happen.
           function(next) {
-            assertConnected()
+            assertConnected(client)
             wsServer.stop()
             setTimeout(next, 250)
           },
 
           // Restart the server
           function(next) {
-            assertDisconnected()
+            assertDisconnected(client)
             wsServer.start(next)
           },
 
@@ -491,54 +496,54 @@ describe('websockets.Client', function() {
     })
 
     it('should work fine if the server is full when trying to reconnect', function(done) {
-      var dummySockets
+      var dummyClients, dummySockets = []
       client._config.reconnect = 100
 
-      assertConnected()
+      assertConnected(client)
+
+      var disconnectReconnect = function(done) {
+        async.series([
+          // Stop the client and fill-up the server with other sockets
+          client.stop.bind(client),
+          function(next) {
+            var serverSpace = serverConfig.maxSockets - wsServer._getActiveSockets().length
+            dummyClients = _.range(serverSpace).map(function() { 
+              return { port: serverConfig.port }
+            })
+            helpers.dummyWebClients(wsServer, dummyClients, function(err, sockets) {
+              sockets.forEach(function(socket) { dummySockets.push(socket) })
+              next()
+            })
+          },
+
+          // Start the client, connection attempts are rejected because server is full
+          function(next) {
+            assertDisconnected(client)
+            client.start()
+            var serverFullCb = helpers.waitForAnswers(3, function() { 
+              client.removeAllListeners('server full')
+              next()
+            })
+            client.on('server full', serverFullCb)
+          },
+
+          // Make space on the server by closing the first active socket, 
+          // the client should now manage to connect
+          function(next) {
+            _.find(dummySockets, function(socket) { return socket.readyState <= 1 }).close()
+            client.once('connected', next)
+          }
+        ], function(err) {
+          if (err) throw err
+          assertConnected(client)
+          done()
+        })
+      }
+
       async.series([
-        function(next) {
-          wsServer.connections[0].close()
-          setTimeout(next, 10)
-        },
-        function(next) {
-          helpers.dummyWebClients(wsServer, serverConfig.port, 2, function(err, sockets) {
-            dummySockets = sockets
-            next()
-          })
-        },
-        function(next) {
-          assertDisconnected()
-          client.once('queued', next)
-        },
-        function(next) {
-          dummySockets[0].close()
-          client.once('connected', next)
-        },
-        function(next) {
-          assertConnected()
-          wsServer.stop() // do it again
-          setTimeout(next, 150)
-        },
-        function(next) {
-          wsServer.start(next)
-          assertDisconnected()
-          helpers.dummyWebClients(wsServer, serverConfig.port, 2, function(err, sockets) {
-            dummySockets = sockets
-            next()
-          })
-        },
-        function(next) {
-          client.once('queued', next)
-        },
-        function(next) {
-          dummySockets[0].close()
-          client.once('connected', next)
-        }
-      ], function(err) {
-        if (err) throw err
-        assertConnected()
-        done()
-      })
+        disconnectReconnect,
+        disconnectReconnect
+      ], done)
     })
 
   })
@@ -589,7 +594,7 @@ describe('websockets.Client', function() {
     })
 
 
-    it('should recover the client infos (os, browser, ...) if the client is known', function(done) {
+    it('should recover the client infos (subscriptions, os, ...) if the client is known', function(done) {
       var client2 = new websockets.Client(clientConfig)
         , savedId = client.id
       client2._isBrowser = true
@@ -613,21 +618,24 @@ describe('websockets.Client', function() {
         function(next) {
           assert.equal(manager._nsTree.get('/blou').connections.length, 0)
           client2.start(next)
-        },
+        }
+        
+      ], function(err) {
+        if (err) throw err
 
         // Check that the client gets assigned the same id, check that subscriptions
         // are restored.
-        function(next) {
-          assert.equal(client2.id, savedId)
-          assert.equal(manager._nsTree.get('/blou').connections.length, 1)
-          // Test that the connection infos got restored
-          assert.deepEqual(
-            manager._nsTree.get('/blou').connections[0].infos,
-            {os: 'seb OS', browser: 'seb Agent'}
-          )
-          next()
-        }
-      ], done)
+        assert.equal(client2.id, savedId)
+        assert.equal(manager._nsTree.get('/blou').connections.length, 1)
+        
+        // Test that the connection infos got restored
+        assert.deepEqual(
+          manager._nsTree.get('/blou').connections[0].infos,
+          {os: 'seb OS', browser: 'seb Agent'}
+        )
+
+        client2.stop(done)
+      })
     })
 
 

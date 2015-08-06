@@ -1,4 +1,5 @@
 var assert = require('assert')
+  , querystring = require('querystring')
   , fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
@@ -23,23 +24,27 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 }
 
 // Helper to create dummy web clients
-exports.dummyWebClients = function(wsServer, port, count, done) {
-  var countBefore = wsServer._wsServer.clients.length
-  async.series(_.range(count).map(function(i) {
+exports.dummyWebClients = function(wsServer, clients, done) {
+  var countBefore = wsServer._wsServer.clients.length 
+    , url
+  async.series(clients.map(function(client) {
     return function(next) {
-      socket = new WebSocket('ws://localhost:' + port + '/?dummies')
+      _.defaults(client, { query: {} })
+      client.query.dummies = ''
+      url = 'ws://localhost:' + client.port + '/?' + querystring.stringify(client.query)
+      socket = new WebSocket(url)
       _dummyWebClients.push(socket)
+      
       socket.on('open', function() {
-        socket.on('message', function(msg) {
+        socket.once('message', function(msg) {
           msg = oscMin.fromBuffer(msg)
           var args = _.pluck(msg.args, 'value')
           if (msg.address === coreMessages.connectionStatusAddress) next(null, args)
-          else throw new Error('unexpected ' + msg)
+          else throw new Error('unexpected message ' + msg.address + ' ' + msg.args.join(', '))
         })
       })
     }
   }), function(err, messages) {
-    assert.equal(wsServer._wsServer.clients.length, countBefore + count)
     if (done) done(err, _dummyWebClients, messages)
   })
 }

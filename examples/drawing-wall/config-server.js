@@ -5,7 +5,7 @@ module.exports = {
   },
 
   websockets: {
-    usersLimit: 5,
+    maxSockets: 5,
   },
 
   http: {

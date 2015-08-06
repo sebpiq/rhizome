@@ -35,9 +35,9 @@ module.exports = {
     // listen on the same port.
     port: 8001,
 
-    // [default=1000] : maximum number of users that can be connected simultaneously on
-    // the web socket server. Extra users will be queued until space is available.
-    usersLimit: 1000
+    // [default=200] : maximum number of sockets that can be connected simultaneously on
+    // the web socket server.
+    maxSockets: 200
   },
 
   // [Optional] : Configures the general connections management.

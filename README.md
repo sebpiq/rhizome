@@ -230,6 +230,13 @@ npm run coverage
 Changelog
 -----------
 
+- 0.7.0
+
+  - websockets.Server:
+    - changed setting `usersLimit` to `maxSockets`. 
+    - removed the queuing system. When server is full, socket is simply closed.
+    - each connection can have several sockets open (with same id on client side).
+
 - 0.6.3
 
   - Added `/sys/connections/getlist` to get a list of connected clients
