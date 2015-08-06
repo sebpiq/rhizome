@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Copyright 2014, Sébastien Piquemal <sebpiq@gmail.com>
+ * Copyright 2014-2015, Sébastien Piquemal <sebpiq@gmail.com>
  *
  * rhizome is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
