@@ -93,11 +93,13 @@ describe('websockets.Server', function() {
 
     it('shouldnt open several connections if sockets connect with same id', function(done) {
       var dummyClients = [
-        { port: config.port, query: { id: 'qwerty' } }, 
-        { port: config.port, query: { id: 'qwerty' } }
-      ]
+          { port: config.port, query: { id: 'qwerty' } }, 
+          { port: config.port, query: { id: 'qwerty' } }
+        ]
+        , received = []
       assert.equal(wsServer._wsServer.clients.length, 0)
       assert.equal(wsServer.connections.length, 0)
+      wsServer.on('connection', function() { received.push('connection') })
 
       helpers.dummyWebClients(wsServer, dummyClients, function(err, sockets, messages) {
         if (err) throw err
@@ -110,10 +112,12 @@ describe('websockets.Server', function() {
         })
 
         // Check that we indeed have 2 sockets but only 1 actual connection
+        assert.deepEqual(received, ['connection'])
         assert.equal(wsServer._wsServer.clients.length, 2)
         assert.equal(wsServer.connections.length, 1)
         assert.equal(wsServer.connections[0]._sockets.length, 2)
 
+        wsServer.removeAllListeners('connection')
         done()
       })
     })
@@ -189,16 +193,18 @@ describe('websockets.Server', function() {
 
     it('should keep the connection open if it still has active sockets', function(done) {
       var dummyClients = [ 
-        { port: config.port, query: { id: 'abc' } }, 
-        { port: config.port, query: { id: 'abc' } }
-      ]
+          { port: config.port, query: { id: 'abc' } }, 
+          { port: config.port, query: { id: 'abc' } }
+        ]
+        , received = [], connection1
       assert.equal(wsServer._wsServer.clients.length, 0)
 
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
 
         function(sockets, messages, next) {
-          var connection1 = wsServer.connections[0]
+          connection1 = wsServer.connections[0]
+          connection1.on('close', function() { received.push('close') })
           assert.equal(wsServer.connections.length, 1)
           assert.equal(wsServer._wsServer.clients.length, 2)
           assert.equal(connection1._sockets.length, 2)
@@ -214,8 +220,10 @@ describe('websockets.Server', function() {
 
       ], function(err) {
         if (err) throw err
-        // Check that everything has been cleaned properly
+        // Check that everything has been cleaned properly, and connection is still open
         assert.equal(wsServer.connections.length, 1)
+        assert.equal(connection1.status, 'open')
+        assert.deepEqual(received, [])
         assert.equal(wsServer._wsServer.clients.length, 1)
         assert.equal(manager._nsTree.get('/someAddr').connections.length, 1)
         done()
