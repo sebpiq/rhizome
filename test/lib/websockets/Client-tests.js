@@ -631,6 +631,7 @@ describe('websockets.Client', function() {
 
         // Stop it, and create another client with id read from the cookie
         client.stop.bind(client),
+        function(next) { wsServer.connections[0].once('close', next) },
         function(next) {
           assert.equal(manager._nsTree.get('/blou').connections.length, 0)
           client2.start(next)
