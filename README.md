@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/sebpiq/rhizome.png)](https://travis-ci.org/sebpiq/rhizome)
+[![Dependency status](https://david-dm.org/sebpiq/rhizome.svg)](https://david-dm.org/sebpiq/rhizome)
 
 rhizome
 =========
