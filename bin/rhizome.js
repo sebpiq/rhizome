@@ -23,6 +23,8 @@ var path = require('path')
   , program = require('commander')
   , async = require('async')
   , express = require('express')
+  , morgan = require('morgan')
+  , serveStatic = require('serve-static')
   , clc = require('cli-color')
   , expect = require('chai').expect
   , version = require('../package.json').version
@@ -137,12 +139,9 @@ if (require.main === module) {
         var app = express()
         httpServer = require('http').createServer(app)
         app.set('port', config.http.port)
-        app.use(express.logger('dev'))
-        app.use(express.bodyParser())
-        app.use(express.methodOverride())
-        app.use(app.router)
-        app.use('/rhizome', express.static(buildDir))
-        app.use('/', express.static(config.http.staticDir))
+        app.use(morgan('combined', { skip: function (req, res) { return res.statusCode < 400 } }))
+        app.use('/rhizome', serveStatic(buildDir))
+        app.use('/', serveStatic(config.http.staticDir))
 
         httpServer.listen(app.get('port'), function() {
           successLog.push('HTTP server running at '
