@@ -17,6 +17,7 @@
     "validation-pod": "x",
     "debug": "^2.2.0",
     "ws": "^0.7.0",
+    "tmp": "0.0.27",
     "moscow": "x",
     "express": "3.3.x",
     "async": "^1.4.0",
