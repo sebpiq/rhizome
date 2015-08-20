@@ -60,7 +60,7 @@ describe('websockets.Client', function() {
     afterEach(function(done) {
       client.removeAllListeners()
       client._isBrowser = false
-      delete global.Modernizr
+      delete global.rhizome
       helpers.afterEach([wsServer, client, manager], done)
     })
 
@@ -86,8 +86,7 @@ describe('websockets.Client', function() {
     it('should return an error if client is not supported', function(done) {
       var received = []
       // Fake Modernizr
-      global.Modernizr = { websocketsbinary: true }
-      Modernizr.websocketsbinary = false
+      global.rhizome = { Modernizr: { websocketsbinary: false } }
       client._isBrowser = true
       client.on('connected', function() { throw new Error('should not connect') })
       client.start(function(err) {
@@ -588,7 +587,7 @@ describe('websockets.Client', function() {
       global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
 
       // Fake Modernizr
-      global.Modernizr = { websocketsbinary: true }
+      global.rhizome = { Modernizr: { websocketsbinary: true } }
 
       client.on('error', function() {}) // Just to avoid throwing
       async.series([
@@ -605,7 +604,7 @@ describe('websockets.Client', function() {
       cookies.get = cookies._get
       client.removeAllListeners()
       delete global.navigator
-      delete global.Modernizr
+      delete global.rhizome
       helpers.afterEach([wsServer, client, manager], done)
     })
 
