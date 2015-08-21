@@ -31,7 +31,6 @@ var path = require('path')
   , websockets = require('../lib/websockets')
   , osc = require('../lib/osc')
   , connections = require('../lib/connections')
-  , connectionManagerDefaults = connections.ConnectionManager.prototype.configDefaults
   , coreUtils = require('../lib/core/utils')
   , coreValidation = require('../lib/core/validation')
   , starter = require('../lib/core/starter')
@@ -98,8 +97,8 @@ if (require.main === module) {
     , manager
 
   // Create the `ConnectionManager` instance, add a default connections manager if not defined
-  config.connections = config.connections || _.extend({}, connectionManagerDefaults)
-  manager = new connections.ConnectionManager(config.connections)
+  manager = new connections.ConnectionManager(
+    config.connections || _.clone(connections.ConnectionManager.prototype.configDefaults))
 
   // Create instances of servers 
   _.pairs(allServers).forEach(function(pair, i) {
@@ -107,9 +106,10 @@ if (require.main === module) {
       , servers = pair[1]
       , serverClass = serverClasses[type]
     
-    // TODO : won't work cause it will crash when trying to start the server
-    if (!serverClass)
+    if (!serverClass) {
+      delete allServers[type]
       return validationErrors['servers.' + i] = 'invalid server type ' + type
+    }
 
     servers.forEach(function(server, i) {
       servers[i] = new (serverClass)(server.config)
@@ -138,18 +138,21 @@ if (require.main === module) {
     websockets.renderClientBrowser.bind(websockets, buildDir),
     starter.bind(starter, manager, _.chain(allServers).values().flatten().value())
   ], function(err) {
-    // combine into ValidationError, or create a new ValidationError
+    // combine into existing ValidationError, or create a new ValidationError
     if (err && err instanceof errors.ValidationError)
       err = new errors.ValidationError(_.extend(validationErrors, err.fields))
     else if (_.keys(validationErrors).length)
       err = new errors.ValidationError(validationErrors)
-
     utils.handleError(err)
 
+    // Print a warning if a server type has no instance defined
     _.keys(serverClasses).forEach(function(type) {
       if (!allServers[type]) warningLog.push('no ' + type + ' server')  
     })
 
+    warningLog.forEach(function(msg) { utils.logWarning(msg) })
+
+    // Logs each instance of server created
     ;(allServers.http || []).forEach(function(server) {
       successLog.push('HTTP server running at '
         + clc.bold('http://<serverIP>:' + server._config.port + '/') 
@@ -165,8 +168,7 @@ if (require.main === module) {
       successLog.push('OSC server running on port ' + clc.bold(server._config.port))
     })
 
-    warningLog.forEach(function(msg) { console.log(clc.yellow.bold('(!) ') + msg) })
-    successLog.forEach(function(msg) { console.log(clc.green.bold('(*) ') + msg) })
+    successLog.forEach(function(msg) { utils.logSuccess(msg) })
 
   })
 }

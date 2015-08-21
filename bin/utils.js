@@ -31,4 +31,14 @@ exports.handleError = function(err) {
     printConfigErrors(err)
     process.exit(1)
   } else throw err
-} 
+}
+
+exports.logWarning = function() {
+  var args = [clc.yellow.bold('(!)')].concat(_.toArray(arguments))
+  console.log.apply(console, args)
+}
+
+exports.logSuccess = function() {
+  var args = [clc.green.bold('(*)')].concat(_.toArray(arguments))
+  console.log.apply(console, args)
+}

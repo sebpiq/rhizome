@@ -72,7 +72,7 @@ describe('core.starter', function() {
       assert.equal(server2.started, false)
       assert.equal(manager._storeWriteInt, null)
       assert.deepEqual(_.keys(err.fields), [
-        'ConnectionManager().store', 'FakeServer(120).b', 'FakeServer(55).b'])
+        'connections.store', 'servers.0.b', 'servers.1.b'])
       done()
     })
   })
