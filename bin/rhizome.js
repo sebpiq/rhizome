@@ -31,82 +31,48 @@ var path = require('path')
   , websockets = require('../lib/websockets')
   , osc = require('../lib/osc')
   , connections = require('../lib/connections')
+  , connectionManagerDefaults = connections.ConnectionManager.prototype.configDefaults
   , coreUtils = require('../lib/core/utils')
   , coreValidation = require('../lib/core/validation')
+  , starter = require('../lib/core/starter')
   , errors = require('../lib/core/errors')
   , utils = require('./utils')
 
-var httpServer, wsServer, oscServer
-
 console.log(clc.bold('rhizome ' + version) )
 
-// Validation for the http section of the configuration
-var httpValidator = new coreValidation.ChaiValidator({
-  port: function(val) {
-    expect(val).to.be.a('number')
-    expect(val).to.be.within(0, 65535)
-  },
-  staticDir: function(val, doneDirName) {
-    expect(val).to.be.a('string')
-    val = this.staticDir = path.resolve(this.staticDir)
-    // Make sure `staticDir` ends with no /
-    if (_.last(val) === '/')
-      val = this.staticDir = val.slice(0, -1)
-    coreUtils.validateDirExists(val, doneDirName)
-  }
-})
-
-// Function to validate a full config. Calls `done(err)` when done.
-// If validation failed, `err` is `ValidationError`.
-var validateConfig = exports.validateConfig = function(config, done) {
-  var asyncValidOps = []
-  
-  // Build list of async validation operations to perform
-  config.connections = config.connections || {}
-  _.defaults(config.connections, connections.ConnectionManager.prototype.configDefaults)
-  var connectionsValidator = connections.ConnectionManager.prototype.configValidator
-  asyncValidOps.push(connectionsValidator.run.bind(connectionsValidator, config.connections))
-
-  if (config.http) {
-    asyncValidOps.push(httpValidator.run.bind(httpValidator, config.http))
-  }
-
-  if (config.websockets) {
-    if (config.http) config.websockets.serverInstance = {}
-    _.defaults(config.websockets, websockets.Server.prototype.configDefaults)
-    var wsValidator = websockets.Server.prototype.configValidator
-    asyncValidOps.push(wsValidator.run.bind(wsValidator, config.websockets))
-  }
-
-  if (config.osc) {
-    _.defaults(config.osc, osc.Server.prototype.configDefaults)
-    var oscValidator = osc.Server.prototype.configValidator
-    asyncValidOps.push(oscValidator.run.bind(oscValidator, config.osc))
-  }
-
-  // Perform validation operations
-  async.series(asyncValidOps, function(err, results) {
-    if (err) return done(err)
-    var prefixes = []
-
-    // Build list of prefixes for validation errors
-    prefixes.push('.connections')
-    if (config.http) prefixes.push('.http')
-    if (config.websockets) prefixes.push('.websockets')
-    if (config.osc) prefixes.push('.osc')
-
-    // Prefix validation errors, merge them and print them
-    var merged = {}
-    results.forEach(function(errors, i) {
-      _.pairs(errors).forEach(function(p) {
-        merged[prefixes[i] + p[0]] = p[1]
-      })
-    })
-    
-    if (_.keys(merged).length) done(new errors.ValidationError(merged))
-    else done()
-  })
+var HTTPServer = function(config) {
+  this._config = config
+  this._app = express()
+  this._httpServer = require('http').createServer(this._app)
+  this._app.set('port', this._config.port)
+  this._app.use(morgan('combined', { skip: function (req, res) { return res.statusCode < 400 } }))
+  this._app.use('/rhizome', serveStatic(buildDir))
+  this._app.use('/', serveStatic(this._config.staticDir))
 }
+
+_.extend(HTTPServer.prototype, coreValidation.ValidateConfigMixin, {
+  
+  start: function(done) {
+    this._httpServer.listen(this._app.get('port'), done)
+  },
+
+  configDefaults: {},
+  configValidator: new coreValidation.ChaiValidator({
+    port: function(val) {
+      expect(val).to.be.a('number')
+      expect(val).to.be.within(0, 65535)
+    },
+    staticDir: function(val, doneDirName) {
+      expect(val).to.be.a('string')
+      val = this.staticDir = path.resolve(this.staticDir)
+      // Make sure `staticDir` ends with no /
+      if (_.last(val) === '/')
+        val = this.staticDir = val.slice(0, -1)
+      coreUtils.validateDirExists(val, doneDirName)
+    }
+  })
+
+})
 
 // Code that will run if the module is main
 if (require.main === module) {
@@ -120,79 +86,87 @@ if (require.main === module) {
   }
 
   var config = require(path.join(process.cwd(), process.argv[2]))
+    , packageRootPath = path.join(__dirname, '..')
+    , buildDir = path.join(packageRootPath, 'build')
+    , warningLog = [], successLog = [], validationErrors = {}
+    , allServers = _.groupBy(config.servers, 'type')
+    , serverClasses = {
+      'http': HTTPServer,
+      'websockets': websockets.Server,
+      'osc': osc.Server
+    }
+    , manager
 
-  validateConfig(config, function(err) {
+  // Create the `ConnectionManager` instance, add a default connections manager if not defined
+  config.connections = config.connections || _.extend({}, connectionManagerDefaults)
+  manager = new connections.ConnectionManager(config.connections)
+
+  // Create instances of servers 
+  _.pairs(allServers).forEach(function(pair, i) {
+    var type = pair[0]
+      , servers = pair[1]
+      , serverClass = serverClasses[type]
+    
+    // TODO : won't work cause it will crash when trying to start the server
+    if (!serverClass)
+      return validationErrors['servers.' + i] = 'invalid server type ' + type
+
+    servers.forEach(function(server, i) {
+      servers[i] = new (serverClass)(server.config)
+    })
+  })
+
+  // Combine HTTP and websockets servers that have the same port
+  if (allServers.http && allServers.websockets) {
+    _.chain(allServers.http.concat(allServers.websockets))
+      .groupBy(function(server) { return server._config.port })
+      .values()
+      .forEach(function(servers) {
+        if (servers.length > 1) {
+          var httpServer = _.find(servers, function(server) { 
+            return server instanceof serverClasses.http 
+          })
+          servers.forEach(function(server) {
+            if (server instanceof serverClasses.websockets)
+              server._config.serverInstance = httpServer._httpServer
+          })
+        }
+      }).value()
+  }
+
+  async.series([
+    websockets.renderClientBrowser.bind(websockets, buildDir),
+    starter.bind(starter, manager, _.chain(allServers).values().flatten().value())
+  ], function(err) {
+    // combine into ValidationError, or create a new ValidationError
+    if (err && err instanceof errors.ValidationError)
+      err = new errors.ValidationError(_.extend(validationErrors, err.fields))
+    else if (_.keys(validationErrors).length)
+      err = new errors.ValidationError(validationErrors)
+
     utils.handleError(err)
-    var packageRootPath = path.join(__dirname, '..')
-      , buildDir = path.join(packageRootPath, 'build')
-      , asyncStartOps = []
-      , warningLog = []
-      , successLog = []
-      
-    // Connection manager
-    connections.manager = new connections.ConnectionManager(config.connections)
-    asyncStartOps.push(connections.manager.start.bind(connections.manager))
 
-    // HTTP server
-    if (config.http) {
-      asyncStartOps.push(function(next) {
-        var app = express()
-        httpServer = require('http').createServer(app)
-        app.set('port', config.http.port)
-        app.use(morgan('combined', { skip: function (req, res) { return res.statusCode < 400 } }))
-        app.use('/rhizome', serveStatic(buildDir))
-        app.use('/', serveStatic(config.http.staticDir))
-
-        httpServer.listen(app.get('port'), function() {
-          successLog.push('HTTP server running at '
-            + clc.bold('http://<serverIP>:' + config.http.port + '/') 
-            + '\n    serving content from ' + clc.bold(config.http.staticDir)
-          )
-          next()
-        })
-      })
-    } else
-      warningLog.push('no http server')
-
-    // Websocket server
-    if (config.websockets) {
-      asyncStartOps.push(websockets.renderClientBrowser.bind(websockets, buildDir))
-      asyncStartOps.push(function(next) {
-        if (config.http) config.websockets.serverInstance = httpServer
-        wsServer = new websockets.Server(config.websockets)
-        wsServer.start(function(err) {
-          successLog.push('websockets server running on port '
-            + clc.bold(config.http ? config.http.port : config.websockets.port))
-          next(err)
-        })
-      })
-    } else
-      warningLog.push('no websockets server')
-
-    // OSC server
-    if (config.osc) {
-      asyncStartOps.push(function(next) {
-        oscServer = new osc.Server(config.osc)
-        oscServer.start(function(err) {
-          successLog.push('OSC server running on port ' + clc.bold(config.osc.port))
-          next(err)
-        })
-      })
-    } else
-      warningLog.push('no osc server')
-
-    // Start servers
-    async.parallel(asyncStartOps, function(err) {
-      if (err) throw err
-      var count = 1
-      warningLog.forEach(function(msg) {
-        console.log(clc.yellow.bold('(!) ') + msg)
-      })
-      successLog.forEach(function(msg) {
-        console.log(clc.green.bold('('+ (count++) +') ') + msg)
-      })
+    _.keys(serverClasses).forEach(function(type) {
+      if (!allServers[type]) warningLog.push('no ' + type + ' server')  
     })
 
+    ;(allServers.http || []).forEach(function(server) {
+      successLog.push('HTTP server running at '
+        + clc.bold('http://<serverIP>:' + server._config.port + '/') 
+        + '\n    serving content from ' + clc.bold(server._config.staticDir)
+      )
+    })
+
+    ;(allServers.websockets || []).forEach(function(server) {
+      successLog.push('websockets server running on port ' + clc.bold(server._config.port))
+    })
+
+    ;(allServers.osc || []).forEach(function(server) {
+      successLog.push('OSC server running on port ' + clc.bold(server._config.port))
+    })
+
+    warningLog.forEach(function(msg) { console.log(clc.yellow.bold('(!) ') + msg) })
+    successLog.forEach(function(msg) { console.log(clc.green.bold('(*) ') + msg) })
 
   })
 }
