@@ -16,7 +16,7 @@
     "underscore": "^1.8.0",
     "validation-pod": "x",
     "debug": "^2.2.0",
-    "ws": "^0.7.0",
+    "ws": "^0.8.0",
     "tmp": "0.0.27",
     "moscow": "x",
     "express": "^4.13.3",
