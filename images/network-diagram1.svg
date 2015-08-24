@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="700"
+   height="700"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="network-diagram1.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="209.42996"
+     inkscape:cy="376.30388"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1317"
+     inkscape:window-height="744"
+     inkscape:window-x="49"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-352.36218)">
+    <rect
+       style="opacity:0.76543214;fill:#111111;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect2990"
+       width="290"
+       height="264.28571"
+       x="203"
+       y="385.21927" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3768"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       transform="translate(-32.857143,276.64789)"><flowRegion
+         id="flowRegion3770"><rect
+           id="rect3772"
+           width="214.28569"
+           height="120.00001"
+           x="275.71429"
+           y="131.42857" /></flowRegion><flowPara
+         id="flowPara3774"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;font-family:Futura Std;-inkscape-font-specification:Futura Std Light">WIFI </flowPara><flowPara
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;font-family:Futura Std;-inkscape-font-specification:Futura Std Light"
+         id="flowPara3924">ROUTER</flowPara></flowRoot>    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776"
+       width="30"
+       height="30"
+       x="221.42857"
+       y="617.36218" />
+    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776-1"
+       width="30"
+       height="30"
+       x="283.57144"
+       y="617.36218" />
+    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776-1-2"
+       width="30"
+       height="30"
+       x="316.42856"
+       y="617.36218" />
+    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776-1-2-6"
+       width="30"
+       height="30"
+       x="349.28571"
+       y="617.36218" />
+    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776-1-2-6-2"
+       width="30"
+       height="30"
+       x="381.7374"
+       y="617.36218" />
+    <rect
+       style="opacity:0.76543214;fill:#111111;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect2990-4"
+       width="290"
+       height="264.28571"
+       x="203"
+       y="728.79077" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3768-4"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       transform="translate(-50.714277,724.50508)"><flowRegion
+         id="flowRegion3770-6"><rect
+           id="rect3772-1"
+           width="239.99997"
+           height="131.42857"
+           x="275.71429"
+           y="131.42857" /></flowRegion><flowPara
+         id="flowPara3774-6"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;font-family:Futura Std;-inkscape-font-specification:Futura Std Light">RHIZOME SERVER</flowPara></flowRoot>    <rect
+       style="opacity:0.76543214;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect3776-5"
+       width="30"
+       height="30"
+       x="222.14285"
+       y="730.93365" />
+    <path
+       style="fill:none;stroke:#0042ff;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 237.14286,392.85715 c -4.70929,-28.12569 12.39112,-39.44853 34.28571,-48.57144 34.72587,-8.35135 20.85889,-40.99912 28.57143,-62.85714"
+       id="path3897"
+       inkscape:connector-curvature="0"
+       transform="translate(0,352.36218)"
+       sodipodi:nodetypes="ccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="287.14288"
+       y="602.36218"
+       id="text3899"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3901"
+         x="287.14288"
+         y="602.36218"
+         style="font-size:25px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Futura Std;-inkscape-font-specification:Futura Std Light">LAN ports</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="219.53638"
+       y="793.01038"
+       id="text3899-6"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3901-7"
+         x="219.53638"
+         y="793.01038"
+         style="font-size:25px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-family:Futura Std;-inkscape-font-specification:Futura Std Light;fill:#ffffff;fill-opacity:1">Ethernet port</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="208.61292"
+       y="602.5257"
+       id="text3899-8"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3901-78"
+         x="208.61292"
+         y="602.5257"
+         style="font-size:25px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Futura Std;-inkscape-font-specification:Futura Std Light">WAN</tspan></text>
+  </g>
+</svg>
