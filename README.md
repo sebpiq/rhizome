@@ -76,6 +76,12 @@ Rhizome feature list
 **Reliability**. Crashes shouldn't happen, but in case they do, your server can be restarted cleanly, and its whole state will be restored.
 
 
+Reads and links
+-----------------
+
+Blog post on how to set-up your wireless network for use with rhizome : http://funktion.fm/#post/rhizome-interactive-performances-and-network-topologies
+
+
 API
 ----
 
