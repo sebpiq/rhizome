@@ -250,7 +250,7 @@ describe('websockets.Server', function() {
 
     })
 
-    it('should send to all sockets', function(done) {
+    it('should send to all sockets associated to one connection', function(done) {
       var dummyClients = [ 
         { port: config.port, query: { id: 'abc' } }, 
         { port: config.port, query: { id: 'abc' } }
@@ -283,6 +283,49 @@ describe('websockets.Server', function() {
 
     })
 
+
+  })
+
+  describe('onMessage', function() {
+
+    it('should transmit to connection manager if message is a string or a buffer', function(done) {
+      var strMsg = (oscMin.toBuffer({ address: '/imastr', args: [ 0, 56, 'bla', 23 ] })).toString()
+        , bufMsg = oscMin.toBuffer({ address: '/imabuf', args: ['ploplo'] })
+        , received = []
+        , dummyConnection = new helpers.DummyConnection(function(address, args) {
+          received.push([address, args])
+        })
+      dummyConnection.id = 'dummy1'
+
+      assert.equal(wsServer._wsServer.clients.length, 0)
+      async.series([
+        helpers.dummyWebClients.bind(helpers, wsServer, [ { port: config.port } ]),
+        manager.open.bind(manager, dummyConnection),
+        
+        function(next) {
+          manager.subscribe(dummyConnection, '/imastr')
+          manager.subscribe(dummyConnection, '/imabuf')
+
+          wsServer.connections[0]._onMessage(strMsg)
+          assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]]])
+
+          wsServer.connections[0]._onMessage(bufMsg)
+          assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]], ['/imabuf', ['ploplo']]]) 
+
+          next()
+        }
+      ], done)
+    })
+
+    it('shouldnt crash if message couldnt be decoded', function(done) {
+      assert.equal(wsServer._wsServer.clients.length, 0)
+      helpers.dummyWebClients(wsServer, [ { port: config.port } ], function(err, sockets, messages) {
+        if (err) throw err
+        console.log('\nDO NOT PANIC : this is just a test (should say "invalid websocket message")')
+        wsServer.connections[0]._onMessage(null)
+        done()
+      })
+    })
 
   })
 
