@@ -301,6 +301,36 @@ describe('websockets.Client', function() {
 
     })
 
+    it('should send messages correctly when client converts to string (e.g. iOS7)', function(done) {
+      // Creating dummy connections
+      var dummyConnections = helpers.dummyConnections(1, 1, function(received) {
+        helpers.assertSameElements(received, [
+          [0, '/bla', [11, 22]]
+        ])
+        done()
+      })
+      // Assign id to connections
+      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
+
+      async.series([
+        manager.open.bind(manager, dummyConnections[0])
+      ], function(err) {
+        if (err) throw err
+
+        // Subscribing them to receive what's sent by our client
+        manager.subscribe(dummyConnections[0], '/')
+
+        // Faking nasty socket to would convert to string before sending
+        client._socket.send = function(msg) { 
+          return WebSocket.prototype.send.call(this, msg.toString()) 
+        }
+
+        // Sending messages
+        client.send('/bla', [11, 22])
+      })
+
+    })
+
     it('should handle things correctly when sending blobs', function(done) {
       // Creating dummy connections
       var dummyConnections = helpers.dummyConnections(6, 2, function(received) {

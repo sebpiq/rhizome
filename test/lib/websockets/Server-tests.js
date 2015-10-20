@@ -289,7 +289,7 @@ describe('websockets.Server', function() {
   describe('onMessage', function() {
 
     it('should transmit to connection manager if message is a string or a buffer', function(done) {
-      var strMsg = (oscMin.toBuffer({ address: '/imastr', args: [ 0, 56, 'bla', 23 ] })).toString()
+      var strMsg = (oscMin.toBuffer({ address: '/imastr', args: [ 0, 56, 'bla', 23 ] })).toString('binary')
         , bufMsg = oscMin.toBuffer({ address: '/imabuf', args: ['ploplo'] })
         , received = []
         , dummyConnection = new helpers.DummyConnection(function(address, args) {
