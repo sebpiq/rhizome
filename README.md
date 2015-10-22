@@ -237,6 +237,11 @@ npm run coverage
 Changelog
 -----------
 
+- 0.7.1
+
+  - websockets.Client:
+    - added `protocol` parameter.
+
 - 0.7.0
 
   - websockets.Server:

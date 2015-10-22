@@ -4,6 +4,7 @@ var _ = require('underscore')
   , oscMin = require('osc-min')
   , async = require('async')
   , assert = require('assert')
+  , http = require('http')
   , websockets = require('../../../lib/websockets')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
@@ -49,6 +50,18 @@ describe('websockets.Server', function() {
         [new websockets.Server({rootUrl: '/', port: 90, maxSockets: 'bla'}), ['.maxSockets']],
         [new websockets.Server({rootUrl: '/', port: 90, wot: '???'}), ['.']]
       ], done)
+    })
+
+    it('should start even if `serverInstance` is already listening', function(done) {
+      var httpServer = http.createServer()
+        , wsServer = new websockets.Server({ serverInstance: httpServer })
+      httpServer.listen(8888)
+      httpServer.on('listening', function() {
+        wsServer.start(function(err) {
+          if (err) throw err
+          wsServer.stop(done)
+        })
+      })
     })
 
   })
