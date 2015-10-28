@@ -27,6 +27,7 @@ var path = require('path')
   , serveStatic = require('serve-static')
   , bodyParser = require('body-parser')
   , rimraf = require('rimraf')
+  , browserify = require('browserify')
   , websockets = require('../../lib/websockets')
   , connections = require('../../lib/connections')
   , helpers = require('../helpers-backend')
@@ -43,7 +44,7 @@ var packageRootPath = path.join(__dirname, '..', '..')
   , manager
 
 exports.config = {
-  port: parseInt(process.env.ZUUL_PORT, 10)
+  port: parseInt(process.env.ZUUL_PORT, 10) || 8000
 }
 
 var getOpenClients = function() {
@@ -76,6 +77,7 @@ app.use(morgan('combined', { skip: function (req, res) { return res.statusCode <
 app.use(bodyParser.raw())
 app.use(bodyParser.json())
 app.use('/rhizome', serveStatic(buildDir))
+app.use('/local', serveStatic(__dirname))
 
 app.post('/server/start', function(req, res) {
   var config = req.body
@@ -191,7 +193,20 @@ exports.start = function(done) {
       httpServer.once('listening', next)
       httpServer.listen(exports.config.port)
     },
+    
+    // Rendering the rhizome browser client
     websockets.renderClientBrowser.bind(websockets, buildDir),
+    
+    // Rendering the client test suite in case we don't want to use zuul
+    function(next) {
+      var b = browserify()
+        , destStream = fs.createWriteStream(path.join(buildDir, 'Client-tests.js'))
+      b.add(path.resolve(__dirname, '..', 'lib', 'websockets', 'Client-tests.js'))
+      b.exclude('./test/browser/websocket-server.js')
+      b.bundle().pipe(destStream)
+      destStream.on('finish', next)
+    }
+
   ], done)
 }
 

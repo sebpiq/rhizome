@@ -23,6 +23,8 @@ if (!isBrowser) {
 
 describe('websockets.Client', function() {
 
+  if (isBrowser) this.timeout(15000)
+
   before(function(done) {
     if (!isBrowser) {
       wss = require('../../browser/websocket-server')
