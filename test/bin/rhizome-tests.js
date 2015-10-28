@@ -4,7 +4,7 @@ var path = require('path')
   , _ = require('underscore')
   , async = require('async')
   , rhizomeBin = require('../../bin/rhizome')
-  , helpers = require('../helpers')
+  , helpers = require('../helpers-backend')
 
 var rhizomePath = path.resolve(__dirname, '../../bin/rhizome.js')
   , sampleConfigPath = './bin/config-samples/rhizome-config.js'

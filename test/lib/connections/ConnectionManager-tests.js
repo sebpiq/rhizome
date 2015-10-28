@@ -6,7 +6,7 @@ var assert = require('assert')
   , ConnectionManager = require('../../../lib/connections/ConnectionManager')
   , persistence = require('../../../lib/connections/persistence')
   , coreUtils = require('../../../lib/core/utils')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 
 describe('ConnectionManager', function() {

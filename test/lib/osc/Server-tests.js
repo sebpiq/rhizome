@@ -6,7 +6,7 @@ var _ = require('underscore')
   , osc = require('../../../lib/osc')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 var config = {
   port: 9000,

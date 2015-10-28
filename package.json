@@ -43,7 +43,8 @@
     "istanbul": "^0.3.14",
     "mocha": "^2.0.0",
     "rimraf": "2.2.x",
-    "stats-lite": "1.0.x"
+    "stats-lite": "1.0.x",
+    "body-parser": "^1.14.1"
   },
   "bin": {
     "rhizome": "./bin/rhizome.js",

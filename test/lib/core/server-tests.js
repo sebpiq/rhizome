@@ -4,7 +4,7 @@ var _ = require('underscore')
   , Connection = require('../../../lib/core/server').Connection
   , connections = require('../../../lib/connections') 
   , coreMessages = require('../../../lib/core/messages')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 
 describe('core.server.Connection', function() {

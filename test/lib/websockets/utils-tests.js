@@ -1,7 +1,7 @@
 var _ = require('underscore')
   , assert = require('assert')
   , utils = require('../../../lib/websockets/utils')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 describe('websockets.utils', function() {
 

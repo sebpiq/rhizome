@@ -1,5 +1,4 @@
-var assert = require('assert')
-  , querystring = require('querystring')
+var querystring = require('querystring')
   , fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
@@ -12,6 +11,8 @@ var assert = require('assert')
   , coreMessages = require('../lib/core/messages')
   , ValidationError = require('../lib/core/errors').ValidationError
   , utils = require('../lib/core/utils')
+  , helpersEverywhere = require('./helpers-everywhere')
+_.extend(exports, helpersEverywhere)
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -26,7 +27,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 // Helper to create dummy web clients
 exports.dummyWebClients = function(wsServer, clients, done) {
   var countBefore = wsServer._wsServer.clients.length 
-    , url
+    , url, socket
   async.series(clients.map(function(client) {
     return function(next) {
       _.defaults(client, { query: {} })
@@ -34,6 +35,11 @@ exports.dummyWebClients = function(wsServer, clients, done) {
       url = 'ws://localhost:' + client.port + '/?' + querystring.stringify(client.query)
       socket = new WebSocket(url)
       _dummyWebClients.push(socket)
+
+      socket.on('error', function(err) {
+        console.error('dummy socket error : ' + err)
+        throw err
+      })
       
       socket.on('open', function() {
         socket.once('message', function(msg) {
@@ -52,7 +58,7 @@ var _dummyWebClients = []
 
 // Helper to create dummy osc clients
 exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
-  var answerReceived = waitForAnswers(expectedMsgCount, function() {
+  var answerReceived = exports.waitForAnswers(expectedMsgCount, function() {
     var _arguments = arguments
     async.series(servers.map(function(server) {
       return server.stop.bind(server)
@@ -86,19 +92,10 @@ _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
 })
 
 exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
-  var answerReceived = waitForAnswers(expectedMsgCount, handler)
+  var answerReceived = exports.waitForAnswers(expectedMsgCount, handler)
   return _.range(connectionCount).map(function(i) {
     return new DummyConnection(answerReceived.bind(this, i))
   })
-}
-
-// Helper for asynchronous tests, waiting for `expectedCount` answers and then calling `done`
-var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
-  var received = []
-  return function () {
-    received.push(_.toArray(arguments))
-    if (received.length >= expectedCount) done(received)
-  }
 }
 
 exports.beforeEach = function(manager, toStart, done) {
@@ -138,39 +135,4 @@ exports.afterEach = function(toStop, done) {
   
   if (asyncOps.length) async.series(asyncOps, done)
   else done()
-}
-
-// Helper to assert that 2 arrays contain the same elements (using deepEqual)
-exports.assertSameElements = function(arr1, arr2) {
-  var sorted1 = _.sortBy(arr1, _sortFunc)
-    , sorted2 = _.sortBy(arr2, _sortFunc)
-  assert.deepEqual(sorted1, sorted2)
-}
-var _sortFunc = function(obj) {
-  vals = obj
-  if (_.isObject(obj)) {
-    vals = _.chain(obj).pairs()
-      .sortBy(function(p) { return p[0] })
-      .pluck(1).value()
-  }
-  return vals.map(function(v) { return v === null ? 'null' : v.toString() }).join('')
-}
-
-var assertValidationError = exports.assertValidationError = function(err, expected) {
-  if (!(err instanceof ValidationError)) throw new Error('Expected ValidationError, got :' + err)
-  var actual = _.keys(err.fields)
-  actual.sort()
-  expected.sort()
-  assert.deepEqual(actual, expected)
-}
-
-exports.assertConfigErrors = function(testList, done) {
-  async.forEach(testList, function(p, next) {
-    var obj = p[0]
-      , expected = p[1]
-    obj.start(function(err) {
-      assertValidationError(err, expected)
-      next()
-    })
-  }, done)
 }

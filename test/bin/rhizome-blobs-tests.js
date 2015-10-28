@@ -3,7 +3,7 @@ var path = require('path')
   , spawn = require('child_process').spawn
   , _ = require('underscore')
   , async = require('async')
-  , helpers = require('../helpers')
+  , helpers = require('../helpers-backend')
 
 var rhizomeBlobsPath = path.resolve(__dirname, '../../bin/rhizome-blobs.js')
   , sampleConfigPath = './bin/config-samples/rhizome-blobs-config.js'

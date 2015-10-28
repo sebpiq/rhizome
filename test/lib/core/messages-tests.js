@@ -1,7 +1,7 @@
 var _ = require('underscore')
   , assert = require('assert')
   , coreMessages = require('../../../lib/core/messages')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 describe('core.messages', function() {
 

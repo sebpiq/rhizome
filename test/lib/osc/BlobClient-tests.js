@@ -6,7 +6,7 @@ var _ = require('underscore')
   , coreMessages = require('../../../lib/core/messages')
   , BlobClient = require('../../../lib/osc/BlobClient')
   , connections = require('../../../lib/connections')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 
 var clientConfig = {

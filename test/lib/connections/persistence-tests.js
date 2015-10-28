@@ -3,7 +3,7 @@ var assert = require('assert')
   , async = require('async')
   , rimraf = require('rimraf')
   , persistence = require('../../../lib/connections/persistence')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 describe('persistence', function() {
 

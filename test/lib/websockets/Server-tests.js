@@ -9,7 +9,7 @@ var _ = require('underscore')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
   , ValidationError = require('../../../lib/core/errors').ValidationError
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 var config = {
   port: 8000,

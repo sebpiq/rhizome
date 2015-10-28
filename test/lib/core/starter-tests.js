@@ -6,7 +6,7 @@ var _ = require('underscore')
   , coreValidation = require('../../../lib/core/validation')
   , errors = require('../../../lib/core/errors')
   , connections = require('../../../lib/connections')
-  , helpers = require('../../helpers')
+  , helpers = require('../../helpers-backend')
 
 
 describe('core.starter', function() {
