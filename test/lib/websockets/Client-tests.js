@@ -23,12 +23,11 @@ if (!isBrowser) {
 
 describe('websockets.Client', function() {
 
-  if (isBrowser) this.timeout(15000)
+  if (isBrowser) this.timeout(30000)
 
   before(function(done) {
     if (!isBrowser) {
-      wss = require('../../browser/websocket-server')
-      wss.config.port = clientConfig.port
+      wss = new (require('../../browser/websocket-server'))({ port: clientConfig.port })
       wss.start(done)
     } else done()
   })

@@ -3,17 +3,63 @@
   <meta charset="utf-8">
   <title>Rhizome websocket client tests</title>
   <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+  <style type="text/css">
+  body { font-family: courier; }
+  .pass { color: green; }
+  .fail { color: red; }
+  </style>
 </head>
 <body>
   <div id="mocha"></div>
 
   <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+  <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
 
-  <script>mocha.setup('bdd')</script>
+  <script>
+    mocha.setup('bdd')
+  </script>
   <script src="/rhizome/Client-tests.js"></script>
   <script>
-    //mocha.checkLeaks()
-    mocha.run()
+    // This is to report test results for SauceLabs
+    // Ref : https://github.com/tejacques/saucelabs-mocha-reporter
+    onload = function(){
+      var runner = mocha.run();
+      var allTests = [];
+      var failedTests = [];
+      runner.on('end', function () {
+        window.mochaResults = runner.stats;
+        window.mochaResults.reports = failedTests;
+        window.mochaResults.tests = allTests;
+      });
+      runner.on('pass', logTest(true, allTests));
+      runner.on('fail', logTest(false, allTests));
+      runner.on('fail', logTest(false, failedTests));
+      function logTest(result, tests) {
+        return function (test, err) {
+          var flattenTitles = function (test) {
+            var titles = [];
+            while (test.parent.title) {
+              titles.push(test.parent.title);
+              test = test.parent;
+            }
+            return titles.reverse();
+          };
+          var testResult = {
+            name: test.title,
+            result: result,
+            titles: flattenTitles(test),
+            speed: test.speed,
+            duration: test.duration
+          };
+          if (err) {
+            testResult.message = err.message;
+            testResult.stack = err.stack;
+          }
+          tests.push(testResult);
+        };
+      }
+    };
+
   </script>
 </body>
 </html>

@@ -233,6 +233,21 @@ And generate a coverage report like so :
 npm run coverage
 ```
 
+#### Cross-browser testing with saucelabs
+
+WebSocket client can be tested on the browser locally by running `node test/browser/websocket-server`, and opening your browser to [http://localhost:8000/index.html](http://localhost:8000/index.html).
+
+There is also a test runner for saucelabs, which allow to test the client on different browser. First you need to create a saucelabs account, and then in `test/browser/` create a file `config.js` like this :
+
+```javascript
+module.exports = {
+  username: "<saucelabs_username>",
+  password: "<saucelabs_key>"
+}
+``` 
+
+Then run `node test/browser/saucelabs` to start the tests.
+
 
 Changelog
 -----------
@@ -241,6 +256,7 @@ Changelog
 
   - websockets.Client:
     - added `protocol` parameter.
+    - bug fixes
 
 - 0.7.0
 

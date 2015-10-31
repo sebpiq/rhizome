@@ -51,8 +51,8 @@ exports.sendMessage = function(address, args, done) {
   done = done || function(err) { if (err) throw err }
   request
     .post(exports.config.baseUrl + '/message/send')
-    .set('Content-Type', 'application/octet-stream')
-    .send(oscMin.toBuffer({ address: address, args: args }))
+    .set('Content-Type', 'text/plain')
+    .send(oscMin.toBuffer({ address: address, args: args }).toString('binary'))
     .end(function(err) { done(err) })
 }
 

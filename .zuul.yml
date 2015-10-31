@@ -1,9 +1,0 @@
-ui: mocha-bdd
-browsers:
-  - name: chrome
-    version: latest
-browserify:
-  - exclude: ./test/browser/websocket-server.js
-scripts:
-  - "/rhizome/rhizome.js"
-server: node test/browser/websocket-server.js

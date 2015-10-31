@@ -45,7 +45,10 @@
     "rimraf": "2.2.x",
     "stats-lite": "1.0.x",
     "body-parser": "^1.14.1",
-    "superagent": "^1.4.0"
+    "superagent": "^1.4.0",
+    "git-rev": "^0.2.1",
+    "saucelabs": "^1.0.1",
+    "ngrok": "^0.1.99"
   },
   "bin": {
     "rhizome": "./bin/rhizome.js",
@@ -56,7 +59,7 @@
     "node": ">=0.10"
   },
   "scripts": {
-    "test": "mocha test/ --recursive --timeout 20000",
+    "test": "mocha test/bin/ test/lib/ --recursive --timeout 20000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive --timeout 20000",
     "cloc": "cloc bin/ lib/"
   }

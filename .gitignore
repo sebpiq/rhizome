@@ -4,3 +4,4 @@ coverage
 build
 .DS_Store
 tmp
+test/browser/config.js
