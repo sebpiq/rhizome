@@ -73,7 +73,10 @@ _.extend(Server.prototype, {
     app.use('/rhizome', serveStatic(buildDir))
     app.use('/', serveStatic(__dirname))
 
-    // Start the websocket server and the connection manager.
+    // AJAX API for testing
+    //----------------------
+
+    // Start the websocket server and the connection manager (with or without persistence).
     app.post('/server/start', function(req, res) {
       var config = req.body
         , store = config.store ? new connections.NEDBStore(config.store) : new connections.NoStore()
@@ -87,6 +90,7 @@ _.extend(Server.prototype, {
       })
     })
 
+    // Stop the server and the connection manager, erase persisted info
     app.post('/server/stop', function(req, res) {
       var config = req.body
         , asyncOps = [
@@ -111,12 +115,14 @@ _.extend(Server.prototype, {
       })
     })
 
+    // Returns the count of connected web clients
     app.get('/server/connected', function(req, res) {
       var allOpenClients = getOpenClients()
         , dummyWebClients = getDummyWebClients()
       res.json({ count: allOpenClients.length - dummyWebClients.length })
     })
 
+    // Fill-up the server with web clients so that it is full
     app.post('/server/fill-up', function(req, res) {
       var dummyClients = _.range(wsServer._config.maxSockets).map(function() { 
         return { port: self.config.port }
@@ -127,12 +133,14 @@ _.extend(Server.prototype, {
       })
     })
 
+    // Kick-out the connected rhizome client (to simulate connection drop)
     app.post('/server/kick-out', function(req, res) {
       var socket = getWebClient()
       if (socket) socket.close()
       res.end()
     })
 
+    // Make space on the server by removing some dummy clients
     app.post('/server/free-up', function(req, res) {
       var socket = getDummyWebClients()[0]
       socket.once('close', function() {
@@ -141,6 +149,7 @@ _.extend(Server.prototype, {
       socket.close()
     })
 
+    // Simulate another client sending a message to rhizome server
     app.post('/message/send', function(req, res) {
       var msg = oscMin.fromBuffer(new Buffer(req.body, 'binary'))
         , address = msg.address
@@ -149,6 +158,7 @@ _.extend(Server.prototype, {
       res.end()
     })
 
+    // Create a dummy connection subscribed at the given addresses
     app.post('/message/receive', function(req, res) {
       var addresses = req.body
         , connection = new helpers.DummyConnection(function(address, args) {
@@ -165,13 +175,15 @@ _.extend(Server.prototype, {
       })
     })
 
-    // Format [[<connection index>, <address>, <args>] ...]
+    // Returns the messages received by the dummy connections
+    // Format of returned data [[<connection index>, <address>, <args>] ...]
     app.get('/message/received', function(req, res) {
       res.json(getDummyClients().reduce(function(cum, c, i) { 
         return cum.concat(c.received.map(function(msg) { return [i].concat(msg) }))
       }, []))
     })
 
+    // Returns the infos of the given namespace
     app.get('/namespace/infos', function(req, res) {
       var address = req.query.address
       if (!connections.manager._nsTree.has(address)) {
@@ -189,6 +201,10 @@ _.extend(Server.prototype, {
       res.end()
     })
 
+
+    // Starting everything
+    //----------------------
+
     async.parallel([
       function(next) { 
         httpServer.once('listening', next)
@@ -198,7 +214,7 @@ _.extend(Server.prototype, {
       // Rendering the rhizome browser client
       websockets.renderClientBrowser.bind(websockets, buildDir),
       
-      // Rendering the client test suite in case we don't want to use zuul
+      // Rendering the client test suite
       function(next) {
         var b = browserify()
           , destStream = fs.createWriteStream(path.join(buildDir, 'Client-tests.js'))
