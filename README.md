@@ -82,6 +82,16 @@ Reads and links
 Blog post on how to set-up your wireless network for use with rhizome : http://funktion.fm/#post/rhizome-interactive-performances-and-network-topologies
 
 
+Notes about performance and scaling
+------------------------------------
+
+Rhizome is made of many parts integrated together, and the maximum amount of people that can use the system simultaneously varies dramatically depending on many factors : how many messages go through the system in a very short time? do you transfer big files? etc ... To figure this out, you might need to do some testing. As a general rule, if you don't send big files, and don't bombard the system with messages, **100 simultaneous connections** should work fine.
+
+If the system alone can't handle the load, it might be necessary to implement a more modular architecture with several servers (both rhizome and HTTP server) running at the same time (possibly on different machines) and a load balancer. 
+
+At the moment, the rhizome command only runs one server and even by programming yourself using rhizome node API, it is not really possible ... but in a near future it will work (see issues #76, #90, #112)
+
+
 API
 ----
 
