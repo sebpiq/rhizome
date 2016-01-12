@@ -1,0 +1,92 @@
+<!doctype html>
+<html class="no-js">
+<head>
+  <meta charset="utf-8">
+  <title>metronome</title>
+  <meta name="description" content="">
+  <meta name="author" content="Fredrik Olofsson">
+  <meta name="viewport" content="width=device-width">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="metro">
+    <canvas id="canvas" width="320" height="240"></canvas>
+  </div>
+  
+  <script src="/rhizome/rhizome.js"></script>
+  <script>
+    (function() {
+        var ctx
+          , maxBars = 100
+          , maxBeat = 3
+          , can
+
+        var ctxInit = function() {
+          can = document.getElementById('canvas')
+          can.setAttribute('width', window.innerWidth)
+          can.setAttribute('height', window.innerHeight)
+          ctx = can.getContext('2d')
+          ctx.font= ''+(can.width*0.1)+'px sans-serif'
+        }
+        
+        var ctxClear = function() {
+          ctx.clearRect(0, 0, can.width, can.height)
+        }
+
+        var ctxMetro = function(bar, beat) {
+          var x, r
+          ctxClear()
+          ctx.beginPath()
+          ctx.fillStyle= 'white'
+          ctx.fillText(''+bar+'/'+maxBars, can.width*0.05, can.height*0.5)
+          if (beat === 0) {
+            ctx.fillStyle = 'red'
+          } else {
+            ctx.fillStyle = 'grey'
+          }
+          r = (can.width*0.5)/maxBeat
+          x = beat*r
+          ctx.arc(x+(can.width*0.5), can.height*0.45, r*0.5, 0, 2*Math.PI)
+          ctx.fill()
+        }
+
+        console.log('metro starting....')
+
+        rhizome.start(function(err) {
+          if (err) throw err
+          console.log('metro subscribing...')
+          rhizome.send('/sys/subscribe', ['/metro'])
+          rhizome.send('/sys/subscribe', ['/reset'])
+          rhizome.send('/sys/subscribe', ['/init'])
+        })
+
+        rhizome.on('message', function(addr, args) {
+          console.log('received:', addr, args)
+          if (addr === '/metro')
+            ctxMetro(args[0], args[1])
+          else if(addr === '/reset')
+            ctxMetro(0, 0)
+          else if(addr === '/init') {
+            
+            if (typeof(args[0]) === 'undefined') 
+              maxBars = 100
+            else maxBars = args[0]
+            
+            if (typeof(args[1]) === 'undefined')
+              maxBeat = 3
+            else maxBeat= args[1]
+            
+            console.log('setting maxBars to '+maxBars+' and maxBeat to '+maxBeat)
+            ctxClear() //blackout
+          }
+        })
+
+        rhizome.on('connected', function() { console.log('metro connected') })
+
+        ctxInit()
+    })();
+
+  </script>
+</body>
+</html>
