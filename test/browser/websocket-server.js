@@ -219,7 +219,7 @@ _.extend(Server.prototype, {
         var b = browserify()
           , destStream = fs.createWriteStream(path.join(buildDir, 'Client-tests.js'))
         b.add(path.resolve(__dirname, '..', 'lib', 'websockets', 'Client-tests.js'))
-        b.exclude('./test/browser/websocket-server.js')
+        b.exclude(path.join(__dirname, 'websocket-server.js'))
         b.bundle().pipe(destStream)
         destStream.on('finish', next)
       }
@@ -238,6 +238,6 @@ if (require.main === module) {
   var server = new Server({})
   server.start(function(err) {
     if (err) throw err
-    console.log('websocket test server running')
+    console.log('websocket test server running on port ' + server.config.port)
   })
 }
