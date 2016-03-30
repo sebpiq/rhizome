@@ -15,7 +15,6 @@
   "dependencies": {
     "async": "^1.4.0",
     "browserify": "^13.0.0",
-    "bufferutil": "^1.2.1",
     "chai": "^3.2.0",
     "cli-color": "^1.0.0",
     "commander": "^2.8.0",
@@ -35,11 +34,14 @@
     "through2": "^2.0.0",
     "tmp": "^0.0.28",
     "underscore": "^1.8.0",
-    "utf-8-validate": "^1.2.1",
     "validation-pod": "x",
     "vinyl-buffer": "1.0.x",
     "vinyl-source-stream": "^1.1.0",
     "ws": "^0.8.0"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^1.2.1",
+    "utf-8-validate": "^1.2.1"
   },
   "devDependencies": {
     "istanbul": "^0.3.14",
