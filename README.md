@@ -262,6 +262,11 @@ Then run `node test/browser/saucelabs` to start the tests.
 Changelog
 -----------
 
+- 0.7.2
+
+  - updated dependencies
+  - bug fixes
+
 - 0.7.1
 
   - websockets.Client:
