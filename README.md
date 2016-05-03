@@ -262,6 +262,10 @@ Then run `node test/browser/saucelabs` to start the tests.
 Changelog
 -----------
 
+- 0.7.3
+  - update node-ws
+  - bug fixes
+
 - 0.7.2
 
   - updated dependencies

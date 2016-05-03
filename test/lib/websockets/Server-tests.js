@@ -18,7 +18,6 @@ var config = {
 }
 
 var wsServer = new websockets.Server(config)
-helpers.wsServer = wsServer
 
 
 describe('websockets.Server', function() {
@@ -248,6 +247,15 @@ describe('websockets.Server', function() {
 
   describe('send', function() {
 
+    before(function() {
+      WebSocket._Server = WebSocket.Server
+    })
+
+    // Restore original WebSocket.Server
+    afterEach(function() {
+      WebSocket.Server = WebSocket._Server
+    })
+
     it('shouldn\'t crash if socket is not opened', function(done) {
       assert.equal(wsServer._wsServer.clients.length, 0)
 
@@ -262,6 +270,39 @@ describe('websockets.Server', function() {
         done()
       })
 
+    })
+
+    it('shouldn\'t crash if socket closed right before connection status message sent ', function(done) {
+      // We override node-ws Server so that every new connection will be immediatelly closed.
+      // This will cause the rhizome websockets.Server to try sending connection status messages
+      // on a closed socket.
+      var _WSServer = function(opts) {
+        var wsServer = new WebSocket._Server(opts) 
+        wsServer.on('connection', function(socket) {
+          socket.close()
+        })
+        return wsServer
+      }
+      WebSocket.Server = _WSServer
+
+      var closingWsServer = new websockets.Server(config)
+
+      async.series([
+        // Close automatically started server to avoid using same port
+        wsServer.stop.bind(wsServer),
+        closingWsServer.start.bind(wsServer),
+        // Since WebSockets are closed immediatelly, dummyWebClients 
+        // won't manage to connect properly, so we call a timeout to go to next.
+        function(next) {
+          helpers.dummyWebClients(wsServer, [ { port: config.port } ], next)
+          setTimeout(next, 100)
+        },
+        closingWsServer.stop.bind(wsServer),
+      ], function(err) {
+        if (err) throw err
+        console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
+        done()
+      })
     })
 
     it('should send to all sockets associated to one connection', function(done) {
