@@ -37,7 +37,7 @@
     "validation-pod": "x",
     "vinyl-buffer": "1.0.x",
     "vinyl-source-stream": "^1.1.0",
-    "ws": "^0.8.0"
+    "ws": "^1.1.0"
   },
   "optionalDependencies": {
     "bufferutil": "^1.2.1",

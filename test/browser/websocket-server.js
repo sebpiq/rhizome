@@ -220,6 +220,7 @@ _.extend(Server.prototype, {
           , destStream = fs.createWriteStream(path.join(buildDir, 'Client-tests.js'))
         b.add(path.resolve(__dirname, '..', 'lib', 'websockets', 'Client-tests.js'))
         b.exclude(path.join(__dirname, 'websocket-server.js'))
+        b.ignore('ws')
         b.bundle().pipe(destStream)
         destStream.on('finish', next)
       }

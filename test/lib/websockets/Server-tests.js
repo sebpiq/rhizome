@@ -52,16 +52,17 @@ describe('websockets.Server', function() {
       ], done)
     })
 
-    it('should start even if `serverInstance` is already listening', function(done) {
+    it('should start properly even if `serverInstance` is already listening', function(done) {
       var httpServer = http.createServer()
         , wsServer = new websockets.Server({ serverInstance: httpServer })
       httpServer.listen(8888)
-      httpServer.on('listening', function() {
-        wsServer.start(function(err) {
-          if (err) throw err
-          wsServer.stop(done)
-        })
-      })
+      async.series([
+        httpServer.on.bind(httpServer, 'listening'),
+        wsServer.start.bind(wsServer),
+        // Test connection
+        helpers.dummyWebClients.bind(helpers, wsServer, [{ port: 8888 }]),
+        wsServer.stop.bind(wsServer)
+      ], done)
     })
 
   })

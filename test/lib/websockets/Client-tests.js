@@ -16,6 +16,7 @@ var clientConfig = {
 }
 
 if (!isBrowser) {
+  WebSocket = global.WebSocket
   clientConfig.port = 8000
   clientConfig.hostname = 'localhost'
   wssCommands.config.baseUrl = 'http://' + clientConfig.hostname + ':' + clientConfig.port
@@ -310,8 +311,9 @@ describe('websockets.Client', function() {
 
     it('should send messages correctly when client converts to string (e.g. iOS7)', function(done) {
       // Faking nasty socket to would convert to string before sending
+      client._socket._send = client._socket.send
       client._socket.send = function(msg) { 
-        return WebSocket.prototype.send.call(this, msg.toString()) 
+        return client._socket._send.call(this, msg.toString()) 
       }
 
       async.waterfall([

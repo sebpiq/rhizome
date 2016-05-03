@@ -24,7 +24,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
   })
 }
 
-// Helper to create dummy web clients
+// Helper to create dummy web clients. Callack is called only when sockets all opened.
 exports.dummyWebClients = function(wsServer, clients, done) {
   var countBefore = wsServer._wsServer.clients.length 
     , url, socket
