@@ -20,6 +20,7 @@ var doConnection = function(clients) {
   return function(done) {
     var usingBlobClient = clients.filter(function(c) { return c.useBlobClient })
     usingBlobClient.forEach(function(c) {
+      var args
       if (c.blobsPort) args = [c.appPort, 'blobClient', c.blobsPort]
       else args = [c.appPort, 'blobClient']
       sendToServer.send(coreMessages.configureAddress, args)
@@ -117,7 +118,7 @@ describe('osc.Server', function() {
 
       ], function(err, results) {
         if (err) throw err
-        received = results.pop()
+        var received = results.pop()
         helpers.assertSameElements(received, [
           [9001, '/bla/blo', [0, 1, '2']],
           [9003, '/bla/blo', [0, 1, '2']]

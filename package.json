@@ -58,12 +58,12 @@
     "rhizome": "./bin/rhizome.js",
     "rhizome-blobs": "./bin/rhizome-blobs.js"
   },
-  "license": "GPL",
+  "license": "GPL-3.0",
   "engines": {
-    "node": ">=0.10"
+    "node": ">=4"
   },
   "scripts": {
-    "test": "mocha test/bin/ test/lib/ --recursive --timeout 20000",
+    "test": "mocha test/bin/ test/lib/ --check-leaks --globals rhizome,navigator,b --recursive --timeout 20000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive --timeout 20000",
     "cloc": "cloc bin/ lib/"
   }

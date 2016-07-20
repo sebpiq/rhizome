@@ -273,8 +273,9 @@ describe('websockets.Server', function() {
     })
 
     it('shouldn\'t crash if socket closed right before connection status message sent ', function(done) {
+      console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
       // We override node-ws Server so that every new connection will be immediatelly closed.
-      // This will cause the rhizome websockets.Server to try sending connection status messages
+      // This will cause the rhizome `websockets.Server` to try sending connection status messages
       // on a closed socket.
       var _WSServer = function(opts) {
         var wsServer = new WebSocket._Server(opts) 
@@ -300,7 +301,6 @@ describe('websockets.Server', function() {
         closingWsServer.stop.bind(wsServer),
       ], function(err) {
         if (err) throw err
-        console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
         done()
       })
     })

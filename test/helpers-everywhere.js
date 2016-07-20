@@ -19,7 +19,7 @@ exports.assertSameElements = function(arr1, arr2) {
   assert.deepEqual(sorted1, sorted2)
 }
 var _sortFunc = function(obj) {
-  vals = obj
+  var vals = obj
   if (_.isObject(obj)) {
     vals = _.chain(obj).pairs()
       .sortBy(function(p) { return p[0] })
