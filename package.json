@@ -13,7 +13,7 @@
     "websocket"
   ],
   "dependencies": {
-    "async": "^1.4.0",
+    "async": "^2.0.0",
     "browserify": "^13.0.0",
     "chai": "^3.2.0",
     "cli-color": "^1.0.0",
@@ -37,7 +37,7 @@
     "validation-pod": "x",
     "vinyl-buffer": "1.0.x",
     "vinyl-source-stream": "^1.1.0",
-    "ws": "^1.1.0"
+    "ws": "^1.1.1"
   },
   "optionalDependencies": {
     "bufferutil": "^1.2.1",
