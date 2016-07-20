@@ -2,7 +2,7 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , moscow = require('moscow')
+  , oscTransport = require('../../../lib/osc/transport')
   , osc = require('../../../lib/osc')
   , connections = require('../../../lib/connections')
   , coreMessages = require('../../../lib/core/messages')
@@ -36,7 +36,7 @@ var doConnection = function(clients) {
 
 }
 
-var sendToServer = new moscow.createClient('localhost', config.port, 'udp')
+var sendToServer = new oscTransport.createClient('localhost', config.port, 'udp')
 
 describe('osc.Server', function() {
   var manager = new connections.ConnectionManager({

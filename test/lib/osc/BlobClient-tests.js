@@ -2,9 +2,9 @@ var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')
   , assert = require('assert')
-  , moscow = require('moscow')
   , coreMessages = require('../../../lib/core/messages')
   , BlobClient = require('../../../lib/osc/BlobClient')
+  , oscTransport = require('../../../lib/osc/transport')
   , connections = require('../../../lib/connections')
   , helpers = require('../../helpers-backend')
 
@@ -17,9 +17,9 @@ var clientConfig = {
 }
 
 
-var sendToBlobClient = new moscow.createClient('localhost', clientConfig.blobsPort, 'tcp')
-  , fakeServer = new moscow.createServer(clientConfig.serverBlobsPort, 'tcp')
-  , sendToServer = new moscow.createClient(clientConfig.serverHostname, clientConfig.serverBlobsPort, 'tcp')
+var sendToBlobClient = new oscTransport.createClient('localhost', clientConfig.blobsPort, 'tcp')
+  , fakeServer = new oscTransport.createServer(clientConfig.serverBlobsPort, 'tcp')
+  , sendToServer = new oscTransport.createClient(clientConfig.serverHostname, clientConfig.serverBlobsPort, 'tcp')
   , client = new BlobClient(clientConfig)
 
 

@@ -3,9 +3,9 @@ var querystring = require('querystring')
   , _ = require('underscore')
   , async = require('async')
   , WebSocket = require('ws')
-  , moscow = require('moscow')
   , oscMin = require('osc-min')
   , oscServer = require('../lib/osc/Server')
+  , oscTransport = require('../lib/osc/transport')
   , connections = require('../lib/connections')
   , coreServer = require('../lib/core/server')
   , coreMessages = require('../lib/core/messages')
@@ -69,7 +69,7 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   })
 
   var servers = clients.map(function(client, i) {
-    var server = new moscow.createServer(client.appPort, client.transport || 'udp')
+    var server = new oscTransport.createServer(client.appPort, client.transport || 'udp')
     server.start(function(err) { if (err) throw err })
     server.on('message', function(address, args) {
       answerReceived(client.appPort, address, args)
