@@ -1,3 +1,4 @@
+"use strict";
 var querystring = require('querystring')
   , fs = require('fs')
   , _ = require('underscore')

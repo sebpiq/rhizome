@@ -1,3 +1,4 @@
+"use strict";
 var _ = require('underscore')
   , fs = require('fs')
   , async = require('async')

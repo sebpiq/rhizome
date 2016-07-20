@@ -1,3 +1,4 @@
+"use strict";
 var assert = require('assert')
   , fs = require('fs')
   , _ = require('underscore')

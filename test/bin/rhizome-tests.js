@@ -1,3 +1,4 @@
+"use strict";
 var path = require('path')
   , assert = require('assert')
   , spawn = require('child_process').spawn

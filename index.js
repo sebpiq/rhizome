@@ -14,7 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with rhizome.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+"use strict";
+
 exports.websockets = require('./lib/websockets')
 exports.osc = require('./lib/osc')
 exports.connections = require('./lib/connections')

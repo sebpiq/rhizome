@@ -1,3 +1,4 @@
+"use strict";
 var async = require('async')
   , ngrok = require('ngrok')
   , git = require('git-rev')

@@ -1,3 +1,4 @@
+"use strict";
 var _ = require('underscore')
   , assert = require('assert')
   , utils = require('../../../lib/websockets/utils')
