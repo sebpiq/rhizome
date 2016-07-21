@@ -20,21 +20,15 @@
     "commander": "^2.8.0",
     "cookies-js": "^1.2.1",
     "debug": "^2.2.0",
-    "event-stream": "^3.3.1",
     "express": "^4.13.3",
     "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-util": "3.0.x",
-    "modernizr": "^3.0.0-alpha.4",
     "morgan": "^1.6.1",
     "nedb": "^1.1.2",
     "osc-min": "^1.1.1",
     "serve-static": "^1.10.0",
-    "through2": "^2.0.0",
     "tmp": "^0.0.28",
     "underscore": "^1.8.0",
     "validation-pod": "x",
-    "vinyl-buffer": "1.0.x",
     "vinyl-source-stream": "^1.1.0",
     "ws": "^1.1.1"
   },
@@ -62,7 +56,7 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "mocha test/bin/ test/lib/ --check-leaks --globals rhizome,navigator,b --recursive --timeout 20000",
+    "test": "mocha test/bin/ test/lib/ --check-leaks --globals window,location,navigator,b --recursive --timeout 20000",
     "coverage": "istanbul cover _mocha -- test --reporter spec --recursive --timeout 20000",
     "cloc": "cloc bin/ lib/"
   }

@@ -40,6 +40,8 @@ var path = require('path')
 
 console.log(clc.bold('rhizome ' + version) )
 
+// Wraps express http server in a class, so we can use the same
+// validation system as the other servers.
 var HTTPServer = function(config) {
   this._config = config
   this._app = express()
@@ -136,8 +138,10 @@ if (require.main === module) {
   }
 
   async.series([
+  
     websockets.renderClientBrowser.bind(websockets, buildDir),
     starter.bind(starter, manager, _.chain(allServers).values().flatten().value())
+  
   ], function(err) {
     // combine into existing ValidationError, or create a new ValidationError
     if (err && err instanceof errors.ValidationError)

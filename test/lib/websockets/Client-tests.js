@@ -17,7 +17,6 @@ var clientConfig = {
 }
 
 if (!isBrowser) {
-  WebSocket = global.WebSocket
   clientConfig.port = 8000
   clientConfig.hostname = 'localhost'
   wssCommands.config.baseUrl = 'http://' + clientConfig.hostname + ':' + clientConfig.port
@@ -29,6 +28,10 @@ describe('websockets.Client', function() {
 
   before(function(done) {
     if (!isBrowser) {
+      // This is used for mocking-up browser tests on node
+      global.location = { protocol: 'http:' }
+      global.window = { WebSocket: WebSocket }
+      global.navigator = null
       wss = new (require('../../browser/websocket-server'))({ port: clientConfig.port })
       wss.start(done)
     } else done()
@@ -38,21 +41,27 @@ describe('websockets.Client', function() {
     if (!isBrowser) {
       wss.stop(done)
     } else done()
+    if (!isBrowser) {
+      delete global.window
+      delete global.location
+      delete global.navigator
+    }
+  })
+
+  afterEach(function() {
+    global.window.WebSocket = WebSocket
   })
 
   describe('start', function() {
     var client = new WebSocketClient(clientConfig)
 
-    beforeEach(function(done) { 
-      // Fake Modernizr
-      global.rhizome = { Modernizr: { websocketsbinary: true } }
-      wssCommands.startServer({}, done) 
+    beforeEach(function(done) {
+      wssCommands.startServer({}, done)
     })
 
     afterEach(function(done) {
-      client.removeAllListeners()
       client._isBrowser = false
-      delete global.rhizome
+      client.removeAllListeners()
       async.series([
         _.bind(client.stop, client), 
         _.bind(wssCommands.stopServer, this, {})
@@ -89,10 +98,10 @@ describe('websockets.Client', function() {
     })
 
     it('should return an error if client is not supported', function(done) {
-      var received = []
-      // Fake Modernizr
-      global.rhizome = { Modernizr: { websocketsbinary: false } }
+      // Fake a browser with no WebSocket support
       client._isBrowser = true
+      delete global.window.WebSocket
+
       client.on('connected', function() { throw new Error('should not connect') })
       client.start(function(err) {
         assert.ok(err)
@@ -171,7 +180,6 @@ describe('websockets.Client', function() {
     var client = new WebSocketClient(clientConfig)
 
     beforeEach(function(done) {
-      global.rhizome = { Modernizr: { websocketsbinary: true } }
       async.series([
         _.bind(wssCommands.startServer, this, {}),
         client.start.bind(client)
@@ -584,17 +592,15 @@ describe('websockets.Client', function() {
 
     beforeEach(function(done) {
       // Cookie mock-up for testing
-      cookies._set = cookies.set
-      cookies._get = cookies.get
-      cookies.get = function() { return cookies._value }
-      cookies.set = function(key, value) { cookies._value = value }
-      cookies._value = null
-
-      // navigator mock-up for testing
-      global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
-
-      // Fake Modernizr
-      global.rhizome = { Modernizr: { websocketsbinary: true } }
+      if (!isBrowser) {
+        cookies._set = cookies.set
+        cookies._get = cookies.get
+        cookies.get = function() { return cookies._value }
+        cookies.set = function(key, value) { cookies._value = value }
+        cookies._value = null
+        // navigator mock-up for testing
+        global.navigator = { oscpu: 'seb OS', userAgent: 'seb Agent' }
+      }
 
       client.on('error', function() {}) // Just to avoid throwing
       async.series([
@@ -604,12 +610,12 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
-      cookies._value = null
-      cookies.set = cookies._set
-      cookies.get = cookies._get
+      if (!isBrowser) {
+        cookies._value = null
+        cookies.set = cookies._set
+        cookies.get = cookies._get
+      }
       client.removeAllListeners()
-      delete global.navigator
-      delete global.rhizome
       async.series([
         _.bind(client.stop, client), 
         _.bind(wssCommands.stopServer, this, { store: dbDir })
@@ -620,9 +626,12 @@ describe('websockets.Client', function() {
     it('should recover the client infos (subscriptions, os, ...) if the client is known', function(done) {
       var client2 = new WebSocketClient(clientConfig)
         , savedId = client.id
-      client2._isBrowser = true
-      cookies._value = client.id
-      global.navigator = { oscpu: 'should be ignored', userAgent: 'should be ignored' }
+
+      if (!isBrowser) {
+        client2._isBrowser = true
+        cookies._value = client.id
+        global.navigator = { oscpu: 'should be ignored', userAgent: 'should be ignored' }
+      }
 
       async.waterfall([
         _.bind(wssCommands.getNamespaceInfos, this, '/blou'),
@@ -679,8 +688,11 @@ describe('websockets.Client', function() {
       var client2 = new WebSocketClient(clientConfig)
         , id2 = 'Idontexist'
       client2.id = id2
-      client2._isBrowser = true
-      cookies._value = id2
+
+      if (!isBrowser) {
+        client2._isBrowser = true
+        cookies._value = id2
+      }
 
       async.series([
         // Start the client
