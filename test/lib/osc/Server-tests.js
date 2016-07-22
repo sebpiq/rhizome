@@ -311,8 +311,9 @@ describe('osc.Server', function() {
       sendToServer.send(coreMessages.subscribeAddress, ['/blabla'])
       sendToServer.send(coreMessages.subscribeAddress, [-10])
       sendToServer.send(coreMessages.subscribeAddress, [10000000])
+      sendToServer.send(coreMessages.subscribeAddress, [config.port])
 
-      console.log('\nDO NOT PANIC : this is just a test (should say "invalid port")')
+      console.log('\nDO NOT PANIC : this is just a test (should say "invalid port" and "currently in use by the rhizome server")')
       setTimeout(done, 1800)
     })
 

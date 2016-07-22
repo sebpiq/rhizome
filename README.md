@@ -101,6 +101,8 @@ The following messages are used for communication between one connection and the
 
 #### From OSC client
 
+  **note** : you must assign your client a different port number than the server, even if that server is running on a different machine.
+
   - `/sys/subscribe <appPort> <address>` : subscribes the OSC client running at `<appPort>` to all messages sent at `<address>`.
   - `/sys/resend <appPort> <address>` : resends the last message sent at `<address>` to the OSC client running at `<appPort>`.
   - `/sys/blob <appPort> <address> <blobPath> [<arg1> <arg2> ...]` : sends the file `<blobPath>` from an OSC application to the server using **rhizome-blobs**.
@@ -265,6 +267,10 @@ Changelog
 
   - websockets.Client:
     - `isSupported` moved to `websocket.Client.isSupported()`.
+
+  - osc.Server:
+    - `appPort` must now be different than the server port.
+
 
 - 0.7.3
   - update node-ws
