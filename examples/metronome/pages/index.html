@@ -21,6 +21,7 @@
           , maxBars = 100
           , maxBeat = 3
           , can
+          , client = new rhizome.Client()
 
         var ctxInit = function() {
           can = document.getElementById('canvas')
@@ -53,15 +54,15 @@
 
         console.log('metro starting....')
 
-        rhizome.start(function(err) {
+        client.start(function(err) {
           if (err) throw err
           console.log('metro subscribing...')
-          rhizome.send('/sys/subscribe', ['/metro'])
-          rhizome.send('/sys/subscribe', ['/reset'])
-          rhizome.send('/sys/subscribe', ['/init'])
+          client.send('/sys/subscribe', ['/metro'])
+          client.send('/sys/subscribe', ['/reset'])
+          client.send('/sys/subscribe', ['/init'])
         })
 
-        rhizome.on('message', function(addr, args) {
+        client.on('message', function(addr, args) {
           console.log('received:', addr, args)
           if (addr === '/metro')
             ctxMetro(args[0], args[1])
@@ -82,7 +83,7 @@
           }
         })
 
-        rhizome.on('connected', function() { console.log('metro connected') })
+        client.on('connected', function() { console.log('metro connected') })
 
         ctxInit()
     })();

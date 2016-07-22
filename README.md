@@ -137,7 +137,7 @@ This event is sent when the client successfully connected (or re-connected) with
 This is the event you need to listen in order to receive messages. For example :
 
 ```javascript
-rhizome.on('message', function(address, args) {
+client.on('message', function(address, args) {
   if (address === '/background/color') setBgColor(args[0])
 })
 ```
@@ -148,13 +148,13 @@ rhizome.on('message', function(address, args) {
 This event is sent when connection fails because the server is full.
 
 ```javascript
-rhizome.start()
+client.start()
 
-rhizome.on('server full', function() {
+client.on('server full', function() {
   showMessage('Waiting for an available space')
 })
 
-rhizome.on('connected', function() {
+client.on('connected', function() {
   hideMessage()
 })
 ```
@@ -165,25 +165,34 @@ rhizome.on('connected', function() {
 Emitted when the connection to the server has been lost. You can use this e.g. to deactivate the user interface if the device is not connected anymore :
 
 ```javascript
-rhizome.on('connection lost', function() {
+client.on('connection lost', function() {
   hideControls()
   showMessage('Reconnecting ... be patient')
 })
 ```
 
+#### rhizome.Client.isSupported()
 
-#### rhizome.start([done])
+Static method. Returns `true` if the current browser is supported, `false` otherwise.
+
+
+#### client.id
+
+Unique id of the client. It is `null` if the web client is not connected.
+
+
+#### client.start([done])
 
 Starts the client, and executes `done(err)` when complete. The fact that the client is started, doesn't mean that the client is connected. For example, if the server is full, the client will start properly but connection will be delayed until space become available.
 
 
-#### rhizome.send(address[, args])
+#### client.send(address[, args])
 
 Sends a message to `address`, with an optional list of arguments `args`. For example :
 
 ```javascript
-rhizome.send('/ring', ['wake up', 8.0])
-rhizome.send('/mood/bad')
+client.send('/ring', ['wake up', 8.0])
+client.send('/mood/bad')
 ```
 
 
@@ -198,24 +207,13 @@ This is a helper to limit the number of messages sent to the server. Sending too
 // `rhizome.utils.throttle` to send every 100 milliseconds instead.
 
 var sendValue = rhizome.utils.throttle(100, function(xy) {
-  rhizome.send('/mouse/xy', xy)
+  client.send('/mouse/xy', xy)
 })
 
 var onMouseMove function(x, y) {
   sendValue([x, y])
 }
 ```
-
-
-#### rhizome.isSupported()
-
-Returns `true` if the current browser is supported, `false` otherwise.
-
-
-#### rhizome.id
-
-Unique id of the client. It is `null` if the web client is not connected.
-
 
 
 For contributors
@@ -261,6 +259,12 @@ Then run `node test/browser/saucelabs` to start the tests.
 
 Changelog
 -----------
+
+- 0.8.0
+  - Now users have to create a client in web page with `new rhizome.Client()` instead of the default created client `rhizome`.
+
+  - websockets.Client:
+    - `isSupported` moved to `websocket.Client.isSupported()`.
 
 - 0.7.3
   - update node-ws

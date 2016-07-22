@@ -1,3 +1,5 @@
+var path = require('path')
+
 module.exports = {
   
   servers: [
@@ -21,7 +23,7 @@ module.exports = {
       type: 'http',
       config: {
         port: 8000,
-        staticDir: './pages'
+        staticDir: path.join(__dirname, 'pages')
       }
     }
 

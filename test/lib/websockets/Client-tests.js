@@ -60,7 +60,7 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
-      client._isBrowser = false
+      WebSocketClient._isBrowser = false
       client.removeAllListeners()
       async.series([
         _.bind(client.stop, client), 
@@ -99,7 +99,7 @@ describe('websockets.Client', function() {
 
     it('should return an error if client is not supported', function(done) {
       // Fake a browser with no WebSocket support
-      client._isBrowser = true
+      WebSocketClient._isBrowser = true
       delete global.window.WebSocket
 
       client.on('connected', function() { throw new Error('should not connect') })
@@ -588,9 +588,9 @@ describe('websockets.Client', function() {
     var cookies = require('cookies-js')
       , dbDir = '/tmp/rhizome-test-db/'
       , client = new WebSocketClient(clientConfig)
-    client._isBrowser = true
 
     beforeEach(function(done) {
+      WebSocketClient._isBrowser = true
       // Cookie mock-up for testing
       if (!isBrowser) {
         cookies._set = cookies.set
@@ -628,7 +628,6 @@ describe('websockets.Client', function() {
         , savedId = client.id
 
       if (!isBrowser) {
-        client2._isBrowser = true
         cookies._value = client.id
         global.navigator = { oscpu: 'should be ignored', userAgent: 'should be ignored' }
       }
@@ -689,10 +688,8 @@ describe('websockets.Client', function() {
         , id2 = 'Idontexist'
       client2.id = id2
 
-      if (!isBrowser) {
-        client2._isBrowser = true
+      if (!isBrowser)
         cookies._value = id2
-      }
 
       async.series([
         // Start the client

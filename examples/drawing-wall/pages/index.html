@@ -40,12 +40,13 @@
         , canvas = document.getElementById('c')
         , messageDiv = document.getElementById('message')
         , URL = window.URL || window.webkitURL
+        , client = new rhizome.Client()
 
       canvas.setAttribute('width', canvasSize)
       canvas.setAttribute('height', canvasSize)
 
       // Test for browser support
-      if (!rhizome.isSupported() || !URL)
+      if (!rhizome.Client.isSupported() || !URL)
         return alert('Your browser is not supported')
 
       var showMessage = function(msg) {
@@ -59,7 +60,7 @@
         document.body.style.overflow = 'auto'
       }
 
-      rhizome.start(function(err) {
+      client.start(function(err) {
         if (err) {
           document.body.innerHTML = 'client failed starting : ' + err
           throw err
@@ -71,7 +72,7 @@
           canvas.toBlob(function(jpegFile) {
             var fileReader = new FileReader()
             fileReader.onload = function() {
-              rhizome.send('/drawing', [this.result])
+              client.send('/drawing', [this.result])
             }
             fileReader.readAsArrayBuffer(jpegFile)
           })
@@ -79,20 +80,20 @@
       })
       showMessage('Connecting ...')
 
-      rhizome.on('server full', function() {
+      client.on('server full', function() {
         showMessage('The server is full, please wait ...')
       })
 
-      rhizome.on('connected', function() {
+      client.on('connected', function() {
         hideMessage()
-        rhizome.send('/sys/subscribe', ['/mosaic'])
+        client.send('/sys/subscribe', ['/mosaic'])
       })
 
-      rhizome.on('connection lost', function() {
+      client.on('connection lost', function() {
         showMessage('Reconnecting, please wait ...')
       })
 
-      rhizome.on('message', function(address, args) {
+      client.on('message', function(address, args) {
         if (address === '/sys/subscribed') {
           console.log('successfully subscribed to ' + args[0])
 

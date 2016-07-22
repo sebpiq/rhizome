@@ -7,10 +7,11 @@
   <link rel="stylesheet" type="text/css" href="css/styles.css" />
   <script>
     $(function() {
+      var client = new rhizome.Client()
 
       // `rhizome.start` is the first function that should be called.
       // The function inside is executed once the client managed to connect.
-      rhizome.start(function(err) {
+      client.start(function(err) {
         if (err) {
           $('body').html('client failed starting : ' + err)
           throw err
@@ -23,14 +24,14 @@
           if (args.length)
             args = args.split(' ').map(function(arg) { return JSON.parse(arg) })
           else args = []
-          rhizome.send(address, args)
+          client.send(address, args)
         })
 
         // We want to receive all the messages, so we subscribe to '/'
-        rhizome.send('/sys/subscribe', ['/'])
+        client.send('/sys/subscribe', ['/'])
       })
 
-      rhizome.on('message', function(address, args) { 
+      client.on('message', function(address, args) { 
         $('#received .message').slice(20).remove()
         var message = $('<div class="message"><span class="ad"></span><span class="ar"></span></div>')
           .prependTo('#received')
@@ -38,15 +39,15 @@
         message.find('.ar').html(args.map(function(arg) { return JSON.stringify(arg) }).join(' '))
       })
 
-      rhizome.on('connected', function() {
+      client.on('connected', function() {
         alert('connected!')
       })
 
-      rhizome.on('connection lost', function() {
+      client.on('connection lost', function() {
         alert('connection lost!')
       })
 
-      rhizome.on('server full', function() {
+      client.on('server full', function() {
         alert('server is full!')
       })
 
