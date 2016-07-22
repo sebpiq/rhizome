@@ -174,6 +174,11 @@ describe('websockets.Client', function() {
       client.stop(done)
     })
 
+    it('should not cause a problem if websocket is starting', function(done) {
+      client.start(function() { done(new Error('shouldn\'t start')) })
+      client.stop(done)
+    })
+
   })
 
   describe('message', function() {
