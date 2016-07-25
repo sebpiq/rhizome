@@ -163,32 +163,6 @@ describe('persistence', () => {
 
     })
 
-    describe('eventInsert', () => {
-
-      it('should insert events in the store', (done) => {
-        var event1 = { timestamp: +(new Date), eventType: 'open', id: 'john', namespace: 'people' }
-          , event2 = { timestamp: +(new Date) + 10, eventType: 'close', id: 'jack', namespace: 'people' }
-          , event3 = { timestamp: +(new Date) + 100, eventType: 'start', id: 'jimi', namespace: 'people' }
-
-        async.series([
-          store.eventList.bind(store),
-          store.eventInsert.bind(store, [event1, event3]),
-          store.eventList.bind(store),
-          store.eventInsert.bind(store, [event2]),
-          store.eventList.bind(store)
-        ], (err, results) => {
-          if (err) throw err
-          assert.deepEqual(results.shift(), [])
-          results.shift()
-          helpers.assertSameElements(results.shift(), [event1, event3])
-          results.shift()
-          helpers.assertSameElements(results.shift(), [event1, event2, event3])
-          done()
-        })
-      })
-
-    })
-
     describe('managerSave/managerRestore', () => {
 
       it('should save/restore manager state', (done) => {

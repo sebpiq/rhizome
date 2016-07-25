@@ -273,6 +273,8 @@ Changelog
   - osc.Server:
     - `appPort` must now be different than the server port.
 
+  - ConnectionManager:
+    - removed `collectStats` parameter and stats collection code
 
 - 0.7.3
   - update node-ws

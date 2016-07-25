@@ -86,41 +86,18 @@ describe('ConnectionManager', () => {
 
   describe('open', () => {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true, storeWriteTime: 1 })
+      , connections = new ConnectionManager({ store: store, storeWriteTime: 1 })
     beforeEach((done) => { connections.start(done) })
     afterEach((done) => { connections.stop(done) })    
 
-    it('should open properly and log events if collectStats', (done) => {
+    it('should open connection properly', (done) => {
       var connection = new helpers.DummyConnection()
       connection.id = '1234'
 
       connections.open(connection, (err) => {
         if (err) throw err
         assert.deepEqual(connections._openConnections, [connection])
-
-        // As the event is created after the connection has been opened,
-        // without acknowledgement, we need to wait before it is inserted
-        var events = []
-        async.whilst(
-          () => events.length < 1,
-          (next) => {
-            store.eventList((err, eList) => {
-              events = eList
-              setTimeout(next.bind(this, err), 20)
-            })
-          },
-          (err) => {
-            if (err) throw err
-            assert.equal(events.length, 1)
-            var event = events[0]
-            assert.equal(event.namespace, 'dummy')
-            assert.equal(event.id, connection.id)
-            assert.equal(event.eventType, 'open')
-            assert.ok(_.isNumber(event.timestamp))
-            done()
-          }
-        )
-
+        done()
       })
     })
 
@@ -128,11 +105,11 @@ describe('ConnectionManager', () => {
 
   describe('close', () => {
     var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, collectStats: true, storeWriteTime: 1 })
+      , connections = new ConnectionManager({ store: store, storeWriteTime: 1 })
     beforeEach((done) => { connections.start(done) })
     afterEach((done) => { connections.stop(done) })    
 
-    it('should close properly and log events if collectStats', (done) => {
+    it('should close connection properly', (done) => {
       var connection = new helpers.DummyConnection()
       connection.id = '5678'
 
@@ -145,30 +122,7 @@ describe('ConnectionManager', () => {
       ], (err) => {
         if (err) throw err
         assert.deepEqual(connections._openConnections, [])
-
-        // As the event is created after the connection has been closed,
-        // without acknowledgement, we need to wait before it is inserted
-        var events = []
-        async.whilst(
-          () => events.length < 2,
-          (next) => {
-            store.eventList((err, eList) => {
-              events = eList
-              setTimeout(next.bind(this, err), 20)
-            })
-          },
-          (err) => {
-            if (err) throw err
-            assert.equal(events.length, 2)
-            var event = events[1]
-            assert.equal(event.namespace, 'dummy')
-            assert.equal(event.id, connection.id)
-            assert.equal(event.eventType, 'close')
-            assert.ok(_.isNumber(event.timestamp))
-            done()
-          }
-        )
-
+        done()
       })
     })
 
