@@ -17,8 +17,7 @@ _.extend(exports, helpersEverywhere)
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
-  var self = this
-    , handlerList = this._events[name]
+  var handlerList = this._events[name]
   handlerList = _.isFunction(handlerList) ? [handlerList] : handlerList
   this._events[name] = _.reject(handlerList, (other) => other._listener === cb)
 }

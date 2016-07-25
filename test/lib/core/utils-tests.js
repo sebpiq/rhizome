@@ -6,17 +6,17 @@ var fs = require('fs')
   , helpers = require('../../helpers-backend')
   , utils = require('../../../lib/core/utils')
 
-describe('core.utils', function() {
+describe('core.utils', () => {
 
-  describe('saveBlob', function() {
+  describe('saveBlob', () => {
 
-    it('should save the blob in the given directory and pick a name automatically', function(done) {
+    it('should save the blob in the given directory and pick a name automatically', (done) => {
       var buf = new Buffer('blabla')
 
       async.waterfall([
-        function(next) { utils.saveBlob('/tmp', buf, next) },
-        function(filePath, next) { fs.readFile(filePath, next) }
-      ], function(err, readBuf) {
+        (next) => utils.saveBlob('/tmp', buf, next),
+        (filePath, next) => fs.readFile(filePath, next)
+      ], (err, readBuf) => {
         if (err) throw err
         assert.equal(readBuf.toString(), 'blabla')
         done()
@@ -24,16 +24,16 @@ describe('core.utils', function() {
 
     })
 
-    it('should save the blob with the given extension', function(done) {
+    it('should save the blob with the given extension', (done) => {
       var buf = new Buffer('blabla')
 
       async.waterfall([
-        function(next) { utils.saveBlob('/tmp', buf, next, '.wav') },
-        function(filePath, next) {
+        (next) => utils.saveBlob('/tmp', buf, next, '.wav'),
+        (filePath, next) => {
           assert.equal(filePath.slice(-4), '.wav')
           fs.readFile(filePath, next)
         }
-      ], function(err, readBuf) {
+      ], (err, readBuf) => {
         if (err) throw err
         assert.equal(readBuf.toString(), 'blabla')
         done()
@@ -43,11 +43,11 @@ describe('core.utils', function() {
 
   })
 
-  describe('NsTree', function() {
+  describe('NsTree', () => {
 
-    describe('has', function() {
+    describe('has', () => {
 
-      it('should work correctly', function() {
+      it('should work correctly', () => {
         var nsTree = utils.createNsTree()
         nsTree._root = {children: {
           '': {address: '/', children: {
@@ -70,9 +70,9 @@ describe('core.utils', function() {
       })
     })
 
-    describe('get', function() {
+    describe('get', () => {
 
-      it('should create the namespace dynamically', function() {
+      it('should create the namespace dynamically', () => {
         var nsTree = utils.createNsTree()
 
         assert.ok(!nsTree.has('/'))
@@ -88,7 +88,7 @@ describe('core.utils', function() {
         assert.ok(nsTree.has('/bla/blo'))
       })
 
-      it('should work also for the root', function() {
+      it('should work also for the root', () => {
         var nsTree = utils.createNsTree()
 
         assert.ok(!nsTree.has('/'))
@@ -98,16 +98,16 @@ describe('core.utils', function() {
         assert.deepEqual(nsTree._root.children, {'': { address: '/', connections: [], lastMessage: null, children: {} }})
       })
 
-      it('shouldn\'t make a difference whether there is trailing slash or not', function() {
+      it('shouldn\'t make a difference whether there is trailing slash or not', () => {
         var nsTree = utils.createNsTree()
         assert.equal(nsTree.get('/bla'), nsTree.get('/bla/'))
       })
 
     })
 
-    describe('toJSON', function() {
+    describe('toJSON', () => {
 
-      it('should serialize the tree', function() {
+      it('should serialize the tree', () => {
         var nsTree = utils.createNsTree()
         nsTree.get('/bla/bli').lastMessage = ['lolo']
         nsTree.get('/bla').lastMessage = [1, 2, 'boo']
@@ -122,9 +122,9 @@ describe('core.utils', function() {
 
     })
 
-    describe('fromJSON', function() {
+    describe('fromJSON', () => {
 
-      it('should deserialize the tree', function() {
+      it('should deserialize the tree', () => {
         var nsTree = utils.createNsTree()
         nsTree.fromJSON([
           { address: '/', lastMessage: null },
@@ -150,16 +150,16 @@ describe('core.utils', function() {
 
   })
 
-  describe('NsNode', function() {
+  describe('NsNode', () => {
 
-    describe('forEach', function() {
+    describe('forEach', () => {
 
-      it('should iterate over all namespaces no matter depth', function() {
+      it('should iterate over all namespaces no matter depth', () => {
         var nsTree = utils.createNsTree()
           , allData = []
-          , iter = function(ns) { allData.push(ns.address) }
+          , iter = (ns) => allData.push(ns.address)
 
-        var testIter = function(root, expected) {
+        var testIter = (root, expected) => {
           nsTree.get(root).forEach(iter)
           assert.deepEqual(allData, expected)
           allData = []

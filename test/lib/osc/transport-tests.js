@@ -7,18 +7,14 @@ var assert = require('assert')
   , oscTransport = require('../../../lib/osc/transport')
 
 
-describe('osc.transport', function() {
+describe('osc.transport', () => {
 
-  it('should throw an error for an invalid transport', function() {
-    assert.throws(function() {
-      oscTransport.createServer(5000, 'dontexist')
-    })
-    assert.throws(function() {
-      oscTransport.createClient(5000, 'blabla', 'dontexist')
-    })
+  it('should throw an error for an invalid transport', () => {
+    assert.throws(() => oscTransport.createServer(5000, 'dontexist'))
+    assert.throws(() => oscTransport.createClient(5000, 'blabla', 'dontexist'))
   })
 
-  describe('core._BaseServer', function() {
+  describe('core._BaseServer', () => {
 
     var FakeServer = function() { oscTransport._BaseServer.apply(this) }
     _.extend(FakeServer.prototype, oscTransport._BaseServer.prototype, {
@@ -38,20 +34,20 @@ describe('osc.transport', function() {
       }
     })
 
-    describe('start', function() {
+    describe('start', () => {
 
-      it('should return an error in callback if connection fails', function(done) {
+      it('should return an error in callback if connection fails', (done) => {
         var server = new FakeServer2()
-        server.start(function(err) {
+        server.start((err) => {
           assert.ok(err)
           done()
         })
         server._sock.emit('error', 'wow')
       })
 
-      it('should emit an error if connection fails', function(done) {
+      it('should emit an error if connection fails', (done) => {
         var server = new FakeServer2()
-        server.on('error', function(err) {
+        server.on('error', (err) => {
           assert.ok(err)
           done()
         })
@@ -61,12 +57,12 @@ describe('osc.transport', function() {
 
     })
 
-    describe('errors', function() {
+    describe('errors', () => {
 
-      it('should bubble up the error if the socket receives an error while running', function(done) {
+      it('should bubble up the error if the socket receives an error while running', (done) => {
         var server = new FakeServer()
-        server.start(function() {
-          server.on('error', function(err) {
+        server.start(() => {
+          server.on('error', (err) => {
             assert.ok(err)
             done()
           })
@@ -79,11 +75,11 @@ describe('osc.transport', function() {
 
   })
 
-  var serverTestSuite = exports.serverTestSuite = function(transport) {
+  var serverTestSuite = exports.serverTestSuite = (transport) => {
 
-    describe('OSCServer - ' + transport, function() {
+    describe('OSCServer - ' + transport, () => {
 
-      it('should not cause problem with if starting/stopping several times', function(done) {
+      it('should not cause problem with if starting/stopping several times', (done) => {
         var client = new oscTransport.createClient('127.0.0.1', 9001, transport)
           , server = new oscTransport.createServer(9001, transport)
           , messageHandler
@@ -91,9 +87,9 @@ describe('osc.transport', function() {
         async.series([
           server.start.bind(server),
 
-          function(next) {
-            var _messageHandler = helpers.waitForAnswers(2, function(received) { next(null, received) })
-            messageHandler = function(address, args) { _messageHandler(1, address, args) }
+          (next) => {
+            var _messageHandler = helpers.waitForAnswers(2, (received) => next(null, received))
+            messageHandler = (address, args) => _messageHandler(1, address, args)
             server.on('message', messageHandler)
             client.send('/blabla', [1, 2, 3])
             client.send('/hello/helli', [])
@@ -104,22 +100,22 @@ describe('osc.transport', function() {
           server.start.bind(server),
           server.start.bind(server),
 
-          function(next) {
+          (next) => {
             server.removeListener('message', messageHandler)
-            var _messageHandler = helpers.waitForAnswers(1, function(received) { next(null, received) })
-            messageHandler = function(address, args) { _messageHandler(2, address, args) }
+            var _messageHandler = helpers.waitForAnswers(1, (received) => next(null, received))
+            messageHandler = (address, args) => _messageHandler(2, address, args)
             server.on('message', messageHandler)
             client.send('/bloblo', ['hello'])
           }
 
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           results.shift()
           assert.deepEqual(results.shift(), [
             [1, '/blabla', [1, 2, 3]],
             [1, '/hello/helli', []]
           ])
-          _(4).times(function() { results.shift() })
+          _(4).times(() => results.shift())
           assert.deepEqual(results.shift(), [
             [2, '/bloblo', ['hello']]
           ])
@@ -127,34 +123,34 @@ describe('osc.transport', function() {
         })
       })
 
-      it('should start the server and be able to receive', function(done) {
+      it('should start the server and be able to receive', (done) => {
         var server = new oscTransport.createServer(9001, transport)
           , client = new oscTransport.createClient('127.0.0.1', 9001, transport)
           , messageHandler
 
-        messageHandler = helpers.waitForAnswers(2, function(received) {
+        messageHandler = helpers.waitForAnswers(2, (received) => {
           assert.deepEqual(received, [
             ['/blabla', [1, 2, 3]],
             ['/hello/helli', []],
           ])
           server.stop(done)
         })
-        server.on('message', function(address, args) { messageHandler(address, args) })
+        server.on('message', (address, args) => messageHandler(address, args))
 
-        server.start(function(err) {
+        server.start((err) => {
           if (err) throw err
           client.send('/blabla', [1, 2, 3])
           client.send('/hello/helli', [])
         })
       })
 
-      it('should return an error in callback if starting twice servers on same port', function(done) {
+      it('should return an error in callback if starting twice servers on same port', (done) => {
         var server1 = new oscTransport.createServer(9001, transport)
           , server2 = new oscTransport.createServer(9001, transport)
 
-        server1.start(function(err) {
+        server1.start((err) => {
           if (err) throw err
-          server2.start(function(err) {
+          server2.start((err) => {
             assert.ok(err)
             done()
           })
@@ -168,21 +164,21 @@ describe('osc.transport', function() {
   serverTestSuite('tcp')
 
 
-  var clientTestSuite = exports.clientTestSuite = function(transport, extra) {
+  var clientTestSuite = exports.clientTestSuite = (transport, extra) => {
 
-    describe('OSCClient - ' + transport, function() {
+    describe('OSCClient - ' + transport, () => {
 
-      it('should send small buffers', function(done) {
+      it('should send small buffers', (done) => {
         var client = new oscTransport.createClient('127.0.0.1', 4444, transport)
           , buf = new Buffer(10)
-        assertBufferGetSent(client, buf, function(err, rBuf) {
+        assertBufferGetSent(client, buf, (err, rBuf) => {
           if (err) throw err
           assert.deepEqual(buf, rBuf)
           done()
         })
       })
 
-      it('should close properly', function(done) {
+      it('should close properly', (done) => {
         var client = new oscTransport.createClient('127.0.0.1', 4444, transport)
           , buf = new Buffer(10)
 
@@ -200,19 +196,19 @@ describe('osc.transport', function() {
 
   }
 
-  clientTestSuite('udp', function() {
+  clientTestSuite('udp', () => {
 
-    it('should fail to send big buffers', function(done) {
+    it('should fail to send big buffers', (done) => {
       var client = new oscTransport.createClient('127.0.0.1', 4444, 'udp')
         , buf = new Buffer(Math.pow(2, 16))
         , server
 
-      client.on('error', function(err) {
+      client.on('error', (err) => {
         assert.equal(err.code, 'EMSGSIZE')
         done()
       })
 
-      server = assertBufferGetSent(client, buf, function(err, rBuf) {
+      server = assertBufferGetSent(client, buf, (err, rBuf) => {
         if (err) throw err
         done(new Error('shouldnt come here'))
       })
@@ -220,12 +216,12 @@ describe('osc.transport', function() {
 
   })
 
-  clientTestSuite('tcp', function() {
+  clientTestSuite('tcp', () => {
 
-    it('should send big buffers', function(done) {
+    it('should send big buffers', (done) => {
       var client = new oscTransport.createClient('127.0.0.1', 4444, 'tcp')
         , buf = new Buffer(Math.pow(2, 16))
-      assertBufferGetSent(client, buf, function(err, rBuf) {
+      assertBufferGetSent(client, buf, (err, rBuf) => {
         if (err) throw err
         assert.deepEqual(buf, rBuf)
         done()
@@ -243,8 +239,8 @@ var assertBufferGetSent = exports.assertBufferGetSent = function(client, buf, do
   async.waterfall([
     server.start.bind(server),
 
-    function(next) {
-      server.once('message', function(address, args) {
+    (next) => {
+      server.once('message', (address, args) => {
         assert.equal(address, '/someBuffer')
         assert.equal(args.length, 1)
         next(null, args[0])
@@ -252,8 +248,8 @@ var assertBufferGetSent = exports.assertBufferGetSent = function(client, buf, do
       client.send('/someBuffer', [buf])
     },
 
-    function(buf, next) {
-      server.stop(function(err) { next(err, buf) })
+    (buf, next) => {
+      server.stop((err) => next(err, buf))
     }
 
   ], done)

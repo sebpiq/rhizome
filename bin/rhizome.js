@@ -49,7 +49,7 @@ var HTTPServer = function(config) {
   this._app = express()
   this._httpServer = require('http').createServer(this._app)
   this._app.set('port', this._config.port)
-  this._app.use(morgan('combined', { skip: function (req, res) { return res.statusCode < 400 } }))
+  this._app.use(morgan('combined', { skip: (req, res) => { return res.statusCode < 400 } }))
   this._app.use('/rhizome', serveStatic(buildDir))
   this._app.use('/', serveStatic(this._config.staticDir))
 }
@@ -72,7 +72,7 @@ _.extend(HTTPServer.prototype, EventEmitter.prototype, coreValidation.ValidateCo
       // Make sure `staticDir` ends with no /
       if (_.last(val) === '/')
         val = this.staticDir = val.slice(0, -1)
-      coreUtils.validateDirExists(val, doneDirName)
+      coreUtils.assertDirExists(val, doneDirName)
     }
   })
 
@@ -106,7 +106,7 @@ if (require.main === module) {
     config.connections || _.clone(connections.ConnectionManager.prototype.configDefaults))
 
   // Create instances of servers 
-  _.pairs(allServers).forEach(function(pair, i) {
+  _.pairs(allServers).forEach((pair, i) => {
     var type = pair[0]
       , servers = pair[1]
       , serverClass = serverClasses[type]
@@ -116,22 +116,18 @@ if (require.main === module) {
       return validationErrors['servers.' + i] = 'invalid server type ' + type
     }
 
-    servers.forEach(function(server, i) {
-      servers[i] = new (serverClass)(server.config)
-    })
+    servers.forEach((server, i) => servers[i] = new (serverClass)(server.config))
   })
 
   // Combine HTTP and websockets servers that have the same port
   if (allServers.http && allServers.websockets) {
     _.chain(allServers.http.concat(allServers.websockets))
-      .groupBy(function(server) { return server._config.port })
+      .groupBy((server) => server._config.port)
       .values()
-      .forEach(function(servers) {
+      .forEach((servers) => {
         if (servers.length > 1) {
-          var httpServer = _.find(servers, function(server) { 
-            return server instanceof serverClasses.http 
-          })
-          servers.forEach(function(server) {
+          var httpServer = _.find(servers, (server) => server instanceof serverClasses.http)
+          servers.forEach((server) => {
             if (server instanceof serverClasses.websockets)
               server._config.serverInstance = httpServer._httpServer
           })
@@ -151,7 +147,7 @@ if (require.main === module) {
     websockets.renderClientBrowser.bind(websockets, buildDir),
     starter.bind(starter, manager, allServersFlatList)
   
-  ], function(err) {
+  ], (err) => {
     // combine into existing ValidationError, or create a new ValidationError
     if (err && err instanceof errors.ValidationError)
       err = new errors.ValidationError(_.extend(validationErrors, err.fields))
@@ -160,29 +156,29 @@ if (require.main === module) {
     utils.handleError(err)
 
     // Print a warning if a server type has no instance defined
-    _.keys(serverClasses).forEach(function(type) {
+    _.keys(serverClasses).forEach((type) => {
       if (!allServers[type]) warningLog.push('no ' + type + ' server')  
     })
 
-    warningLog.forEach(function(msg) { utils.logWarning(msg) })
+    warningLog.forEach((msg) => utils.logWarning(msg))
 
     // Logs each instance of server created
-    ;(allServers.http || []).forEach(function(server) {
+    ;(allServers.http || []).forEach((server) => {
       successLog.push('HTTP server running at '
         + clc.bold('http://<serverIP>:' + server._config.port + '/') 
         + '\n    serving content from ' + clc.bold(server._config.staticDir)
       )
     })
 
-    ;(allServers.websockets || []).forEach(function(server) {
+    ;(allServers.websockets || []).forEach((server) => {
       successLog.push('websockets server running on port ' + clc.bold(server._config.port))
     })
 
-    ;(allServers.osc || []).forEach(function(server) {
+    ;(allServers.osc || []).forEach((server) => {
       successLog.push('OSC server running on port ' + clc.bold(server._config.port))
     })
 
-    successLog.forEach(function(msg) { utils.logSuccess(msg) })
+    successLog.forEach((msg) => utils.logSuccess(msg))
 
   })
 }

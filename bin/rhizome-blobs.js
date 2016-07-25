@@ -40,7 +40,7 @@ if (require.main === module) {
 
   var client = new BlobClient(require(path.join(process.cwd(), process.argv[2])))
   client.on('error', (err) => console.error(e.stack ? e.stack : e))
-  client.start(function(err) {
+  client.start((err) => {
     utils.handleError(err)
     utils.logSuccess('saving and reading blobs from', clc.bold(client._config.blobsDir))
     utils.logSuccess('receiving blobs on port', clc.bold(client._config.blobsPort))

@@ -24,9 +24,9 @@ var startTest = function(config, done) {
     
     // Start server and ngrok
     testServer.start.bind(testServer),
-    function(next) { 
+    (next) => { 
       console.log('> server started')
-      ngrok.connect(config.port, function(err, url) {
+      ngrok.connect(config.port, (err, url) => {
         if (err) return next(err)
         context.url = 'http' + url.slice('https'.length) // replacing https by http
         console.log('> ngrok connected ' + context.url)
@@ -35,7 +35,7 @@ var startTest = function(config, done) {
     },
 
     // Start the tests
-    function(next) {
+    (next) => {
       saucelabs.send({
         method: 'POST',
         path: ':username/js-tests',
@@ -44,7 +44,7 @@ var startTest = function(config, done) {
           url: context.url,
           framework: 'mocha'
         }
-      }, function(err, resp) {
+      }, (err, resp) => {
         if (err) return next(err)
         console.log('> tests started')
         context.testIds = resp['js tests']
@@ -54,13 +54,13 @@ var startTest = function(config, done) {
     },
 
     // Fetch job id
-    function(next) {
-      var monitorJob = function() {
+    (next) => {
+      var monitorJob = () => {
         saucelabs.send({
           method: 'POST',
           path: ':username/js-tests/status',
           data: { 'js tests': context.testIds }
-        }, function(err, resp) {
+        }, (err, resp) => {
           if (err) return next(err)
           if (resp.completed === false) {
             setTimeout(monitorJob, 5000)
@@ -77,11 +77,10 @@ var startTest = function(config, done) {
     },
 
     // Report test failure / success
-    function(next) {
-      saucelabs.updateJob(context.jobId, { build: config.build }, function(err, resp) { next(err) })
-    },
+    (next) => saucelabs.updateJob(context.jobId, { build: config.build }, (err, resp) => next(err)),
+
     testServer.stop.bind(testServer),
-    function(next) {
+    (next) => {
       console.log('> server stopped, report sent')
       ngrok.disconnect(context.url)
       next()
@@ -128,13 +127,12 @@ var platforms = [
   ['Mac 7', 'safari', '5.0']*/
 ]
 
-git.long(function (sha) {
+git.long((sha) => {
 
   async.eachSeries(platforms, 
-    function(platform, next) { 
-      startTest({ platform: platform, build: sha, port: port++ }, next) 
-    }, 
-    function(err) {
+    (platform, next) => startTest({ platform: platform, build: sha, port: port++ }, next),
+
+    (err) => {
       if (err) throw err
       process.exit(0)
     }

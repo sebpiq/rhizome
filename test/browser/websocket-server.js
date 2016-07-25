@@ -32,8 +32,7 @@ var Server = module.exports = function(config) {
 _.extend(Server.prototype, {
 
   start: function(done) {
-    var self = this
-      , app = express()
+    var app = express()
       , httpServer = require('http').createServer(app)
       , wsServer = new websockets.Server({ 
           maxSockets: 5,
@@ -42,28 +41,27 @@ _.extend(Server.prototype, {
       , manager
     this.httpServer = httpServer
 
-    var getOpenClients = function() {
-      return wsServer._wsServer.clients.filter(function(s) {
-        return s.readyState === WebSocket.OPEN
-      })
+    var getOpenClients = () => {
+      return wsServer._wsServer.clients
+        .filter((s) => s.readyState === WebSocket.OPEN)
     }
 
-    var getDummyWebClients = function() {
-      return getOpenClients().filter(function(s) {
+    var getDummyWebClients = () => {
+      return getOpenClients().filter((s) => {
         var query = urlparse.parse(s.upgradeReq.url, true).query
         return query.hasOwnProperty('dummies')
       })
     }
 
-    var getDummyClients = function() {
-      return connections.manager._openConnections.filter(function(c) { 
+    var getDummyClients = () => {
+      return connections.manager._openConnections.filter((c) => { 
         return c instanceof helpers.DummyConnection 
       })
     }
 
-    var getWebClient = function() {
+    var getWebClient = () => {
       var dummyClients = getDummyWebClients()
-      return _.find(wsServer._wsServer.clients, function(s) {
+      return _.find(wsServer._wsServer.clients, (s) => {
         return s.readyState === WebSocket.OPEN && !_.contains(dummyClients, s)
       })
     }
@@ -78,21 +76,21 @@ _.extend(Server.prototype, {
     //----------------------
 
     // Start the websocket server and the connection manager (with or without persistence).
-    app.post('/server/start', function(req, res) {
+    app.post('/server/start', (req, res) => {
       var config = req.body
         , store = config.store ? new connections.NEDBStore(config.store) : new connections.NoStore()
       connections.manager = new connections.ConnectionManager({ store: store })
       async.series([
         connections.manager.start.bind(connections.manager),
         wsServer.start.bind(wsServer)
-      ], function(err) {
+      ], (err) => {
         if (err) throw err
-        setTimeout(function() { res.end() }, 10)
+        setTimeout(() => res.end(), 10)
       })
     })
 
     // Stop the server and the connection manager, erase persisted info
-    app.post('/server/stop', function(req, res) {
+    app.post('/server/stop', (req, res) => {
       var config = req.body
         , asyncOps = [
           wsServer.stop.bind(wsServer)
@@ -110,48 +108,46 @@ _.extend(Server.prototype, {
       
       if (config.store) asyncOps.push(rimraf.bind(rimraf, config.store))
       
-      async.series(asyncOps, function(err) {
+      async.series(asyncOps, (err) => {
         if (err) throw err
-        setTimeout(function() { res.end() }, 10)
+        setTimeout(() => res.end(), 10)
       })
     })
 
     // Returns the count of connected web clients
-    app.get('/server/connected', function(req, res) {
+    app.get('/server/connected', (req, res) => {
       var allOpenClients = getOpenClients()
         , dummyWebClients = getDummyWebClients()
       res.json({ count: allOpenClients.length - dummyWebClients.length })
     })
 
     // Fill-up the server with web clients so that it is full
-    app.post('/server/fill-up', function(req, res) {
-      var dummyClients = _.range(wsServer._config.maxSockets).map(function() { 
-        return { port: self.config.port }
+    app.post('/server/fill-up', (req, res) => {
+      var dummyClients = _.range(wsServer._config.maxSockets).map(() => { 
+        return { port: this.config.port }
       })
-      helpers.dummyWebClients(wsServer, dummyClients, function(err, sockets) {
+      helpers.dummyWebClients(wsServer, dummyClients, (err, sockets) => {
         if (err) throw err
         res.end()
       })
     })
 
     // Kick-out the connected rhizome client (to simulate connection drop)
-    app.post('/server/kick-out', function(req, res) {
+    app.post('/server/kick-out', (req, res) => {
       var socket = getWebClient()
       if (socket) socket.close()
       res.end()
     })
 
     // Make space on the server by removing some dummy clients
-    app.post('/server/free-up', function(req, res) {
+    app.post('/server/free-up', (req, res) => {
       var socket = getDummyWebClients()[0]
-      socket.once('close', function() {
-        res.end()
-      })
+      socket.once('close', () => res.end())
       socket.close()
     })
 
     // Simulate another client sending a message to rhizome server
-    app.post('/message/send', function(req, res) {
+    app.post('/message/send', (req, res) => {
       var msg = oscMin.fromBuffer(new Buffer(req.body, 'binary'))
         , address = msg.address
         , args = _.pluck(msg.args, 'value')
@@ -160,45 +156,43 @@ _.extend(Server.prototype, {
     })
 
     // Create a dummy connection subscribed at the given addresses
-    app.post('/message/receive', function(req, res) {
+    app.post('/message/receive', (req, res) => {
       var addresses = req.body
-        , connection = new helpers.DummyConnection(function(address, args) {
-          this.received.push([address, args])
+        , connection = new helpers.DummyConnection((address, args) => {
+          connection.received.push([address, args])
         })
       connection.received = []
       connection.id = Math.random().toString()
-      connections.manager.open(connection, function(err) {
+      connections.manager.open(connection, (err) => {
         if (err) throw err
-        addresses.forEach(function(address) {
-          connections.manager.subscribe(connection, address)
-        })
+        addresses.forEach((address) => connections.manager.subscribe(connection, address))
         res.end()
       })
     })
 
     // Returns the messages received by the dummy connections
     // Format of returned data [[<connection index>, <address>, <args>] ...]
-    app.get('/message/received', function(req, res) {
-      res.json(getDummyClients().reduce(function(cum, c, i) { 
-        return cum.concat(c.received.map(function(msg) { return [i].concat(msg) }))
+    app.get('/message/received', (req, res) => {
+      res.json(getDummyClients().reduce((cum, c, i) => { 
+        return cum.concat(c.received.map((msg) => [i].concat(msg)))
       }, []))
     })
 
     // Returns the infos of the given namespace
-    app.get('/namespace/infos', function(req, res) {
+    app.get('/namespace/infos', (req, res) => {
       var address = req.query.address
       if (!connections.manager._nsTree.has(address)) {
         res.json([])
       } else {
         var nsNode = connections.manager._nsTree.get(address)
-        res.json(nsNode.connections.map(function(c) { return c.infos }))
+        res.json(nsNode.connections.map((c) => c.infos))
       }
     })
 
     // The mocha reporter running in the browser sends test results there
     // { failures: <failure count>, passes: <passed count>  }
-    app.post('/tests/report', function(req, res) {
-      self.emitter.emit('tests/report', req.body)
+    app.post('/tests/report', (req, res) => {
+      this.emitter.emit('tests/report', req.body)
       res.end()
     })
 
@@ -207,16 +201,16 @@ _.extend(Server.prototype, {
     //----------------------
 
     async.parallel([
-      function(next) { 
+      (next) => { 
         httpServer.once('listening', next)
-        httpServer.listen(self.config.port)
+        httpServer.listen(this.config.port)
       },
       
       // Rendering the rhizome browser client
       websockets.renderClientBrowser.bind(websockets, buildDir),
       
       // Rendering the client test suite
-      function(next) {
+      (next) => {
         var b = browserify()
           , destStream = fs.createWriteStream(path.join(buildDir, 'Client-tests.js'))
         b.add(path.resolve(__dirname, '..', 'lib', 'websockets', 'Client-tests.js'))
@@ -238,7 +232,7 @@ _.extend(Server.prototype, {
 
 if (require.main === module) {
   var server = new Server({})
-  server.start(function(err) {
+  server.start((err) => {
     if (err) throw err
     console.log('websocket test server running on port ' + server.config.port)
   })

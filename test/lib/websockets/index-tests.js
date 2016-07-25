@@ -4,19 +4,19 @@ var fs = require('fs')
   , async = require('async')
   , websockets = require('../../../lib/websockets')
 
-describe('websockets', function() {
+describe('websockets', () => {
 
-  describe('renderClientBrowser', function() {
+  describe('renderClientBrowser', () => {
 
-    it('should render the client js file to the given folder', function(done) {
+    it('should render the client js file to the given folder', (done) => {
       async.series([
         websockets.renderClientBrowser.bind(websockets, '/tmp'),
         fs.unlink.bind(fs, '/tmp/rhizome.js')
       ], done)
     })
 
-    it('should return errors', function(done) {
-      websockets.renderClientBrowser('/forbidden', function(err) {
+    it('should return errors', (done) => {
+      websockets.renderClientBrowser('/forbidden', (err) => {
         assert.ok(err)
         assert.equal(err.code, 'EACCES')
         done()

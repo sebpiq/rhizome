@@ -22,7 +22,7 @@ var _ = require('underscore')
 
 var printConfigErrors = exports.printConfigErrors = function(configError) {
   console.error(clc.bold.red('Your configuration file is invalid'))
-  _.pairs(configError.fields).forEach(function(p) {
+  _.pairs(configError.fields).forEach((p) => {
     console.error(clc.bold.red('(X)'), clc.bold(p[0]), p[1])
   })
 }

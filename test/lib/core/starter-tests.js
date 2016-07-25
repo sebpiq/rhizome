@@ -10,7 +10,7 @@ var _ = require('underscore')
   , helpers = require('../../helpers-backend')
 
 
-describe('core.starter', function() {
+describe('core.starter', () => {
   var toStop = []
 
   var FakeServer = function(config) { 
@@ -44,15 +44,15 @@ describe('core.starter', function() {
 
   })
 
-  afterEach(function(done) { helpers.afterEach(toStop, done) })
+  afterEach((done) => { helpers.afterEach(toStop, done) })
 
-  it('should start servers and manager', function(done) {
+  it('should start servers and manager', (done) => {
     var manager = new connections.ConnectionManager({ store: '/tmp' })
       , server1 = new FakeServer({ a: 120, b: 'bla' })
       , server2 = new FakeServer({ b: 'uytquytquytq' })
     assert.equal(manager._storeWriteInt, null)
 
-    starter(manager, [ server1, server2 ], function(err) {
+    starter(manager, [ server1, server2 ], (err) => {
       if (err) throw err
       assert.equal(server1.started, true)
       assert.equal(server2.started, true)
@@ -61,13 +61,13 @@ describe('core.starter', function() {
     })
   })
 
-  it('should return validation errors if there is any', function(done) {
+  it('should return validation errors if there is any', (done) => {
     var manager = new connections.ConnectionManager({ store: 2 })
       , server1 = new FakeServer({ a: 120, b: 7 })
       , server2 = new FakeServer({})
     assert.equal(manager._storeWriteInt, null)
 
-    starter(manager, [ server1, server2 ], function(err) {
+    starter(manager, [ server1, server2 ], (err) => {
       assert.ok(err instanceof errors.ValidationError)
       assert.equal(server1.started, false)
       assert.equal(server2.started, false)
