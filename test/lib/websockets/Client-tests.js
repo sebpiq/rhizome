@@ -48,10 +48,6 @@ describe('websockets.Client', function() {
     }
   })
 
-  afterEach(function() {
-    global.window.WebSocket = WebSocket
-  })
-
   describe('start', function() {
     var client = new WebSocketClient(clientConfig)
 
@@ -60,7 +56,7 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
-      WebSocketClient._isBrowser = false
+      delete WebSocketClient._isNotSupported
       client.removeAllListeners()
       async.series([
         _.bind(client.stop, client), 
@@ -99,8 +95,7 @@ describe('websockets.Client', function() {
 
     it('should return an error if client is not supported', function(done) {
       // Fake a browser with no WebSocket support
-      WebSocketClient._isBrowser = true
-      delete global.window.WebSocket
+      WebSocketClient._isNotSupported = true
 
       client.on('connected', function() { throw new Error('should not connect') })
       client.start(function(err) {
@@ -175,7 +170,10 @@ describe('websockets.Client', function() {
     })
 
     it('should not cause a problem if websocket is starting', function(done) {
-      client.start(function() { done(new Error('shouldn\'t start')) })
+      client.start(function(err) { 
+        if (err) return done(err)
+        done(new Error('shouldn\'t start')) 
+      })
       client.stop(done)
     })
 
@@ -615,6 +613,7 @@ describe('websockets.Client', function() {
     })
 
     afterEach(function(done) {
+      WebSocketClient._isBrowser = false
       if (!isBrowser) {
         cookies._value = null
         cookies.set = cookies._set

@@ -19,6 +19,7 @@
 
 var path = require('path')
   , fs = require('fs')
+  , EventEmitter = require('events').EventEmitter
   , _ = require('underscore')
   , debug = require('debug')('rhizome.main')
   , program = require('commander')
@@ -43,6 +44,7 @@ console.log(clc.bold('rhizome ' + version) )
 // Wraps express http server in a class, so we can use the same
 // validation system as the other servers.
 var HTTPServer = function(config) {
+  EventEmitter.apply(this)
   this._config = config
   this._app = express()
   this._httpServer = require('http').createServer(this._app)
@@ -52,7 +54,7 @@ var HTTPServer = function(config) {
   this._app.use('/', serveStatic(this._config.staticDir))
 }
 
-_.extend(HTTPServer.prototype, coreValidation.ValidateConfigMixin, {
+_.extend(HTTPServer.prototype, EventEmitter.prototype, coreValidation.ValidateConfigMixin, {
   
   start: function(done) {
     this._httpServer.listen(this._app.get('port'), done)
@@ -91,7 +93,7 @@ if (require.main === module) {
     , packageRootPath = path.join(__dirname, '..')
     , buildDir = path.join(packageRootPath, 'build')
     , warningLog = [], successLog = [], validationErrors = {}
-    , allServers = _.groupBy(config.servers, 'type')
+    , allServers = _.groupBy(config.servers, 'type'), allServersFlatList
     , serverClasses = {
       'http': HTTPServer,
       'websockets': websockets.Server,
@@ -137,10 +139,17 @@ if (require.main === module) {
       }).value()
   }
 
+  allServersFlatList = _.chain(allServers).values().flatten().value()
+
+  // Log errors
+  allServersFlatList.forEach((server) => {
+    server.on('error', (err) => console.error(e.stack ? e.stack : e))
+  })
+
   async.series([
   
     websockets.renderClientBrowser.bind(websockets, buildDir),
-    starter.bind(starter, manager, _.chain(allServers).values().flatten().value())
+    starter.bind(starter, manager, allServersFlatList)
   
   ], function(err) {
     // combine into existing ValidationError, or create a new ValidationError

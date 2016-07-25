@@ -6,32 +6,32 @@ var assert = require('assert')
   , persistence = require('../../../lib/connections/persistence')
   , helpers = require('../../helpers-backend')
 
-describe('persistence', function() {
+describe('persistence', () => {
 
-  describe('NEDBStore', function() {
+  describe('NEDBStore', () => {
 
     var testDbDir = '/tmp/rhizome-test-db'
       , store = new persistence.NEDBStore(testDbDir)
 
-    var connectionExists = function(connection, done) {
+    var connectionExists = (connection, done) => {
       var query = { connectionId: connection.id, namespace: connection.namespace }
-      store._connectionsCollection.findOne(query, function(err, doc) {
+      store._connectionsCollection.findOne(query, (err, doc) => {
         done(err, Boolean(doc))
       })
     }
 
-    beforeEach(function(done) {
+    beforeEach((done) => {
       async.series([
         rimraf.bind(rimraf, testDbDir),
         fs.mkdir.bind(fs, testDbDir),
         store.start.bind(store)
       ], done)
     })
-    afterEach(function(done) { store.stop(done) })
+    afterEach((done) => { store.stop(done) })
     
-    describe('connectionInsertOrRestore', function() {
+    describe('connectionInsertOrRestore', () => {
 
-      it('should insert connections that dont exist and restore the others', function(done) {
+      it('should insert connections that dont exist and restore the others', (done) => {
         var connection1 = new helpers.DummyConnection()
           , connection2 = new helpers.DummyConnection()
           , restoredConnection
@@ -54,7 +54,7 @@ describe('persistence', function() {
           connectionExists.bind(this, connection2),
 
           // Restore a connection
-          function(next) {
+          (next) => {
             restoredConnection = new helpers.DummyConnection()
             restoredConnection.id = '9abc'
             assert.equal(connection1.restoredTestData, null)
@@ -62,7 +62,7 @@ describe('persistence', function() {
             store.connectionInsertOrRestore(restoredConnection, next)
           }
 
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           var existed1Before = results.shift()
             , existed2Before = results.shift()
@@ -81,11 +81,11 @@ describe('persistence', function() {
 
       })
 
-      it('should insert connections and automatically assign id if null', function(done) {
+      it('should insert connections and automatically assign id if null', (done) => {
         var connection = new helpers.DummyConnection()
         connection.testData = {a: 1, b: 2}
         assert.equal(connection.id, null)
-        store.connectionInsertOrRestore(connection, function(err, results) {
+        store.connectionInsertOrRestore(connection, (err, results) => {
           if (err) throw err
           assert.ok(connection.id !== null)
           assert.ok(connection.id.length > 4)
@@ -93,12 +93,12 @@ describe('persistence', function() {
         })
       })
 
-      it('should assign a new id when autoId is true and connection could not be restored', function(done) {
+      it('should assign a new id when autoId is true and connection could not be restored', (done) => {
         var connection = new helpers.DummyConnection()
           , id = 'Idontexist'
         connection.id = id
         connection.autoId = true
-        store.connectionInsertOrRestore(connection, function(err, results) {
+        store.connectionInsertOrRestore(connection, (err, results) => {
           if (err) throw err
           assert.ok(connection.id !== null)
           assert.ok(connection.id.length > 4)
@@ -109,9 +109,9 @@ describe('persistence', function() {
 
     })
 
-    describe('connectionUpdate', function() {
+    describe('connectionUpdate', () => {
 
-      it('should update connections that exist', function(done) {
+      it('should update connections that exist', (done) => {
         var connection = new helpers.DummyConnection()
           , restoredConnection = new helpers.DummyConnection()
         connection.testData = {a: 1, b: 2}
@@ -120,12 +120,12 @@ describe('persistence', function() {
 
         async.series([
           store.connectionInsertOrRestore.bind(store, connection),
-          function(next) {
+          (next) => {
             connection.testData = {c: 8, d: 99}
             store.connectionUpdate(connection, next)
           },
           store.connectionInsertOrRestore.bind(store, restoredConnection)
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           assert.deepEqual(restoredConnection.restoredTestData, {c: 8, d: 99})
           done()
@@ -135,9 +135,9 @@ describe('persistence', function() {
 
     })
 
-    describe('connectionIdList', function() {
+    describe('connectionIdList', () => {
 
-      it('should list connection ids', function(done) {
+      it('should list connection ids', (done) => {
         var connection1 = new helpers.DummyConnection()
           , connection2 = new helpers.DummyConnection()
           , connection3 = new helpers.DummyConnection()
@@ -152,7 +152,7 @@ describe('persistence', function() {
           store.connectionInsertOrRestore.bind(store, connection2),
           store.connectionInsertOrRestore.bind(store, connection3),
           store.connectionIdList.bind(store, 'dummy')
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           var idList = results.pop()
           idList.sort()
@@ -163,9 +163,9 @@ describe('persistence', function() {
 
     })
 
-    describe('eventInsert', function() {
+    describe('eventInsert', () => {
 
-      it('should insert events in the store', function(done) {
+      it('should insert events in the store', (done) => {
         var event1 = { timestamp: +(new Date), eventType: 'open', id: 'john', namespace: 'people' }
           , event2 = { timestamp: +(new Date) + 10, eventType: 'close', id: 'jack', namespace: 'people' }
           , event3 = { timestamp: +(new Date) + 100, eventType: 'start', id: 'jimi', namespace: 'people' }
@@ -176,7 +176,7 @@ describe('persistence', function() {
           store.eventList.bind(store),
           store.eventInsert.bind(store, [event2]),
           store.eventList.bind(store)
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           assert.deepEqual(results.shift(), [])
           results.shift()
@@ -189,9 +189,9 @@ describe('persistence', function() {
 
     })
 
-    describe('managerSave/managerRestore', function() {
+    describe('managerSave/managerRestore', () => {
 
-      it('should save/restore manager state', function(done) {
+      it('should save/restore manager state', (done) => {
         var state = {
           nsTree: [{a: 5678, b: 122121}, {c: 888, b: 122121}],
           idCounters: {blabla: 1234}
@@ -199,7 +199,7 @@ describe('persistence', function() {
         async.series([
           store.managerSave.bind(store, state),
           store.managerRestore.bind(store)
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           var restored = results.pop()
           assert.deepEqual(restored, state)
@@ -207,15 +207,15 @@ describe('persistence', function() {
         })
       })
 
-      it('should return null if no state saved', function(done) {
-        store.managerRestore(function(err, state) {
+      it('should return null if no state saved', (done) => {
+        store.managerRestore((err, state) => {
           if (err) throw err
           assert.equal(state, null)
           done()
         })
       })
 
-      it('should handle buffers', function(done) {
+      it('should handle buffers', (done) => {
         var state = {nsTree: [
           {address: '/', lastMessage: [122121]},
           {address: '/bla', lastMessage: ['hello', new Buffer('blabla'), 1234]}
@@ -223,7 +223,7 @@ describe('persistence', function() {
         async.series([
           store.managerSave.bind(store, state),
           store.managerRestore.bind(store)
-        ], function(err, results) {
+        ], (err, results) => {
           if (err) throw err
           var restored = results.pop()
           assert.deepEqual(restored, {nsTree: [
@@ -234,7 +234,7 @@ describe('persistence', function() {
         })
       })
 
-      it('shouldnt crash if manager state is missing fields or invalid', function(done) {
+      it('shouldnt crash if manager state is missing fields or invalid', (done) => {
         
         async.series([
           fs.writeFile.bind(fs, store._managerFile, JSON.stringify({})),

@@ -7,7 +7,7 @@ var assert = require('assert')
 // Helper for asynchronous tests, waiting for `expectedCount` answers and then calling `done`
 var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
   var received = []
-  return function () {
+  return function() {
     received.push(_.toArray(arguments))
     if (received.length >= expectedCount) done(received)
   }

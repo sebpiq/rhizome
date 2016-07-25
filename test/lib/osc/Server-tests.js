@@ -18,17 +18,17 @@ var oscServer = new osc.Server(config)
 
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
-  return function(done) {
-    var usingBlobClient = clients.filter(function(c) { return c.useBlobClient })
-    usingBlobClient.forEach(function(c) {
+  return (done) => {
+    var usingBlobClient = clients.filter((c) => c.useBlobClient)
+    usingBlobClient.forEach((c) => {
       var args
       if (c.blobsPort) args = [c.appPort, 'blobClient', c.blobsPort]
       else args = [c.appPort, 'blobClient']
       sendToServer.send(coreMessages.configureAddress, args)
     })
 
-    helpers.dummyOSCClients(usingBlobClient.length, usingBlobClient, function(received) {
-      helpers.assertSameElements(received, usingBlobClient.map(function(c) {
+    helpers.dummyOSCClients(usingBlobClient.length, usingBlobClient, (received) => {
+      helpers.assertSameElements(received, usingBlobClient.map((c) => {
         return [c.appPort, coreMessages.configuredAddress, [c.blobsPort || 44444]]
       }))
       done()
@@ -45,7 +45,10 @@ describe('osc.Server', function() {
   })
 
   beforeEach(function(done) { helpers.beforeEach(manager, [oscServer], done) })
-  afterEach(function(done) { helpers.afterEach([oscServer, manager], done) })
+  afterEach(function(done) {
+    oscServer.removeAllListeners('error') 
+    helpers.afterEach([oscServer, manager], done) 
+  })
 
   describe('start', function() {
 
@@ -87,14 +90,11 @@ describe('osc.Server', function() {
           next()
         },
 
-        // Create a new manager with no open connection, and stop the osc server, before
-        // creating a new, clean one.
+        // Create new clean manager and osc server.
+        oscServer.stop.bind(oscServer),
         function(next) {
           manager = new connections.ConnectionManager({ store: store })
           connections.manager = manager
-          oscServer.stop(next)
-        },
-        function(next) {
           oscServer = new osc.Server(config)
           oscServer.start(next)
         },
@@ -149,12 +149,10 @@ describe('osc.Server', function() {
 
         // Create a new manager with no open connection, and stop the osc server, before
         // creating a new, clean one.
+        oscServer.stop.bind(oscServer),
         function(next) {
           manager = new connections.ConnectionManager({ store: store })
           connections.manager = manager
-          oscServer.stop(next)
-        },
-        function(next) {
           oscServer = new osc.Server(config)
           oscServer.start(next)
         }
@@ -165,6 +163,39 @@ describe('osc.Server', function() {
         assert.deepEqual(connection.infos, { blobsPort: 11111 })
         assert.ok(connection.blobClient)
         assert.equal(connection.blobClient.port, 11111)
+        done()
+      })
+    })
+
+  })
+
+  describe('stop', function() {
+
+    it('should close all connections properly', function(done) {
+      var oscClients = [
+        {ip: '127.0.0.1', appPort: 9001},
+        {ip: '127.0.0.1', appPort: 9002},
+        {ip: '127.0.0.1', appPort: 9003}
+      ]
+      async.series([
+        // Send 'subscribe' messages to trigger creation of 3 osc connections
+        (next) => {
+          sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
+          sendToServer.send(coreMessages.subscribeAddress, [9002, '/bli'])
+          sendToServer.send(coreMessages.subscribeAddress, [9003, '/bla/blo'])
+          helpers.dummyOSCClients(3, oscClients, next.bind(this, null))
+        },
+
+        (next) => {
+          assert.equal(manager._openConnections.length, 3)
+          assert.equal(oscServer.connections.length, 3)
+          oscServer.stop(next)
+        }
+
+      ], (err) => {
+        if (err) done(err)
+        assert.equal(manager._openConnections.length, 0)
+        assert.equal(oscServer.connections.length, 0)
         done()
       })
     })
@@ -281,13 +312,15 @@ describe('osc.Server', function() {
       ])
     })
 
-    it('shouldnt crash if the client has thrown an error', function(done) {
+    it('should bubble-up blob client errors', function(done) {
       // OSC client with a forbidden `blobsPort`.
       var oscClients = [
         {ip: '127.0.0.1', appPort: 9001, blobsPort: 81, useBlobClient: true}
       ]
 
+      oscServer.on('error', (err) => console.error(err))
       console.log('\nDO NOT PANIC : this is just a test (should say "blob client refused connection")')
+      
       async.waterfall([
         doConnection(oscClients),
 
@@ -307,7 +340,8 @@ describe('osc.Server', function() {
 
   describe('sys messages', function() {
 
-    it('shouldnt crash if invalid port value', function(done) {
+    it('should bubble-up error if invalid port value', function(done) {
+      oscServer.on('error', (err) => console.error(err))
       sendToServer.send(coreMessages.subscribeAddress, ['/blabla'])
       sendToServer.send(coreMessages.subscribeAddress, [-10])
       sendToServer.send(coreMessages.subscribeAddress, [10000000])

@@ -21,13 +21,13 @@ var config = {
 var wsServer = new websockets.Server(config)
 
 
-describe('websockets.Server', function() {
+describe('websockets.Server', () => {
 
   var manager = new connections.ConnectionManager({
     store: new connections.NoStore()
   })
 
-  beforeEach(function(done) {
+  beforeEach((done) => {
     connections.manager = manager
     async.series([
       manager.start.bind(manager),
@@ -35,13 +35,14 @@ describe('websockets.Server', function() {
     ], done)
   })
   
-  afterEach(function(done) {
+  afterEach((done) => {
+    wsServer.removeAllListeners('error')
     helpers.afterEach([wsServer, manager], done)
   })
 
-  describe('start', function() {
+  describe('start', () => {
 
-    it('should return ValidationError if config is not valid', function(done) {
+    it('should return ValidationError if config is not valid', (done) => {
       helpers.assertConfigErrors([
         [new websockets.Server({}), ['.port']],
         [new websockets.Server({rootUrl: 12345}), ['.rootUrl', '.port']],
@@ -52,7 +53,7 @@ describe('websockets.Server', function() {
       ], done)
     })
 
-    it('should start properly even if `serverInstance` is already listening', function(done) {
+    it('should start properly even if `serverInstance` is already listening', (done) => {
       var httpServer = http.createServer()
         , wsServer = new websockets.Server({ serverInstance: httpServer })
       httpServer.listen(8888)
@@ -67,9 +68,37 @@ describe('websockets.Server', function() {
 
   })
 
-  describe('connection', function() {
+  describe('stop', () => {
 
-    it('should reject socket when maxSockets reached', function(done) {
+    it('should close all connections properly', (done) => {
+      var wsClients = [
+        { port: config.port },
+        { port: config.port },
+        { port: config.port }
+      ]
+
+      async.series([
+        helpers.dummyWebClients.bind(helpers, wsServer, wsClients),
+
+        (next) => {
+          assert.equal(manager._openConnections.length, 3)
+          assert.equal(wsServer.connections.length, 3)
+          wsServer.stop(next)
+        }
+
+      ], (err) => {
+        if (err) done(err)
+        assert.equal(manager._openConnections.length, 0)
+        assert.equal(wsServer.connections.length, 0)
+        done()
+      })
+    })
+
+  })
+
+  describe('connection', () => {
+
+    it('should reject socket when maxSockets reached', (done) => {
       var dummyClients = [
         { port: config.port },
         { port: config.port, query: { id: 'bla' } },
@@ -80,12 +109,12 @@ describe('websockets.Server', function() {
       ]
       assert.equal(wsServer._wsServer.clients.length, 0)
 
-      helpers.dummyWebClients(wsServer, dummyClients, function(err, sockets, messages) {
+      helpers.dummyWebClients(wsServer, dummyClients, (err, sockets, messages) => {
         if (err) throw err
 
         assert.deepEqual(
           _.pluck(wsServer._wsServer.clients.slice(0, 5), 'readyState'), 
-          _.range(5).map(function() { return WebSocket.OPEN })
+          _.range(5).map(() => WebSocket.OPEN)
         )
 
         // Check that the last socket received connection rejected
@@ -96,7 +125,7 @@ describe('websockets.Server', function() {
         assert.equal(_.last(wsServer._wsServer.clients).readyState, WebSocket.CLOSING)
         
         // Check that all sockets before got connection accepted
-        messages.forEach(function(msg) {
+        messages.forEach((msg) => {
           assert.equal(msg.length, 2)
           assert.equal(msg[0], 0)
           assert.ok(_.isString(msg[1]))
@@ -105,7 +134,7 @@ describe('websockets.Server', function() {
       })
     })
 
-    it('shouldnt open several connections if sockets connect with same id', function(done) {
+    it('shouldnt open several connections if sockets connect with same id', (done) => {
       var dummyClients = [
           { port: config.port, query: { id: 'qwerty' } }, 
           { port: config.port, query: { id: 'qwerty' } }
@@ -113,13 +142,13 @@ describe('websockets.Server', function() {
         , received = []
       assert.equal(wsServer._wsServer.clients.length, 0)
       assert.equal(wsServer.connections.length, 0)
-      wsServer.on('connection', function() { received.push('connection') })
+      wsServer.on('connection', () => received.push('connection'))
 
-      helpers.dummyWebClients(wsServer, dummyClients, function(err, sockets, messages) {
+      helpers.dummyWebClients(wsServer, dummyClients, (err, sockets, messages) => {
         if (err) throw err
 
         // Check that all sockets got connection accepted
-        messages.forEach(function(msg) {
+        messages.forEach((msg) => {
           assert.equal(msg.length, 2)
           assert.equal(msg[0], 0)
           assert.equal(msg[1], 'qwerty')
@@ -138,9 +167,9 @@ describe('websockets.Server', function() {
 
   })
 
-  describe('disconnection', function() {
+  describe('disconnection', () => {
 
-    it('should close the connection and clean when all sockets are closed', function(done) {
+    it('should close the connection and clean when all sockets are closed', (done) => {
       var dummyClients = [ { port: config.port }, { port: config.port }, { port: config.port }]
         , connection1, connection2
       assert.equal(wsServer._wsServer.clients.length, 0)
@@ -148,7 +177,7 @@ describe('websockets.Server', function() {
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
 
-        function(sockets, messages, next) {
+        (sockets, messages, next) => {
           connection1 = wsServer.connections[0]
           connection2 = wsServer.connections[1]
           assert.equal(wsServer.connections.length, 3)
@@ -163,9 +192,9 @@ describe('websockets.Server', function() {
 
           // Close the only socket for that connection
           connection1._sockets[0].close()
-          connection1.on('close', function() { next() })
+          connection1.on('close', () => next())
         }
-      ], function(err) {
+      ], (err) => {
         if (err) throw err
         // Check that everything has been cleaned properly
         assert.equal(wsServer.connections.length, 2)
@@ -176,7 +205,7 @@ describe('websockets.Server', function() {
       })
     })
 
-    it('should close all sockets when connection.close is called', function(done) {
+    it('should close all sockets when connection.close is called', (done) => {
       var dummyClients = [
           { port: config.port, query: { id: 'qwerty' } }, 
           { port: config.port, query: { id: 'qwerty' } }
@@ -187,25 +216,23 @@ describe('websockets.Server', function() {
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
 
-        function(sockets, messages, next) {
+        (sockets, messages, next) => {
           assert.equal(wsServer._wsServer.clients.length, 2)
           assert.equal(wsServer.connections.length, 1)
           assert.equal(wsServer.connections[0]._sockets.length, 2)
           connection = wsServer.connections[0]
           connection.close()
-          setTimeout(function() { next() }, 50)
+          setTimeout(() => next(), 50)
         }
-      ], function(err) {
+      ], (err) => {
         if (err) throw err
-        connection._sockets.forEach(function(socket) { 
-          assert.equal(socket.readyState, WebSocket.CLOSED)
-        })
+        connection._sockets.forEach((socket) => assert.equal(socket.readyState, WebSocket.CLOSED))
         done()
       })
 
     })
 
-    it('should keep the connection open if it still has active sockets', function(done) {
+    it('should keep the connection open if it still has active sockets', (done) => {
       var dummyClients = [ 
           { port: config.port, query: { id: 'abc' } }, 
           { port: config.port, query: { id: 'abc' } }
@@ -216,9 +243,9 @@ describe('websockets.Server', function() {
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
 
-        function(sockets, messages, next) {
+        (sockets, messages, next) => {
           connection1 = wsServer.connections[0]
-          connection1.on('close', function() { received.push('close') })
+          connection1.on('close', () => received.push('close'))
           assert.equal(wsServer.connections.length, 1)
           assert.equal(wsServer._wsServer.clients.length, 2)
           assert.equal(connection1._sockets.length, 2)
@@ -228,11 +255,11 @@ describe('websockets.Server', function() {
           assert.equal(manager._nsTree.get('/someAddr').connections.length, 1)
 
           // Close one socket for that connection
-          connection1._sockets[0].on('close', function() { next() })
+          connection1._sockets[0].on('close', () => next())
           connection1._sockets[0].close()
         }
 
-      ], function(err) {
+      ], (err) => {
         if (err) throw err
         // Check that everything has been cleaned properly, and connection is still open
         assert.equal(wsServer.connections.length, 1)
@@ -246,67 +273,69 @@ describe('websockets.Server', function() {
 
   })
 
-  describe('send', function() {
+  describe('send', () => {
 
-    before(function() {
+    before(() => {
       WebSocket._Server = WebSocket.Server
     })
 
     // Restore original WebSocket.Server
-    afterEach(function() {
+    afterEach(() => {
       WebSocket.Server = WebSocket._Server
     })
 
-    it('shouldn\'t crash if socket is not opened', function(done) {
+    it('should bubble-up socket error when socket is not opened', (done) => {
+      console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
+      wsServer.on('error', (err) => console.error(err))
       assert.equal(wsServer._wsServer.clients.length, 0)
 
       // Create dummy web clients, and immediately close one of them
-      helpers.dummyWebClients(wsServer, [ { port: config.port } ], function(err, sockets) {
+      helpers.dummyWebClients(wsServer, [ { port: config.port } ], (err, sockets) => {
         if (err) throw err
         assert.equal(wsServer._wsServer.clients.length, 1)
         var serverSocket = wsServer._wsServer.clients[0]
         serverSocket.close()
-        console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
         wsServer.connections[0].send('/bla', [1, 2, 3])
         done()
       })
 
     })
 
-    it('shouldn\'t crash if socket closed right before connection status message sent ', function(done) {
+    it('should bubble-up error when socket closed right before connection status message sent ', (done) => {
       console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
+
       // We override node-ws Server so that every new connection will be immediatelly closed.
       // This will cause the rhizome `websockets.Server` to try sending connection status messages
       // on a closed socket.
       var _WSServer = function(opts) {
         var wsServer = new WebSocket._Server(opts) 
-        wsServer.on('connection', function(socket) {
-          socket.close()
-        })
+        wsServer.on('connection', (socket) => socket.close())
         return wsServer
       }
       WebSocket.Server = _WSServer
 
       var closingWsServer = new websockets.Server(config)
+      closingWsServer.on('error', (err) => console.error(err))
 
       async.series([
         // Close automatically started server to avoid using same port
         wsServer.stop.bind(wsServer),
-        closingWsServer.start.bind(wsServer),
+        closingWsServer.start.bind(closingWsServer),
         // Since WebSockets are closed immediatelly, dummyWebClients 
         // won't manage to connect properly, so we call a timeout to go to next.
-        function(next) {
-          helpers.dummyWebClients(wsServer, [ { port: config.port } ], next)
+        (next) => {
+          helpers.dummyWebClients(closingWsServer, [ { port: config.port } ], next)
           setTimeout(next, 100)
         },
-        closingWsServer.stop.bind(wsServer),
-      ], function(err) {
+        closingWsServer.stop.bind(closingWsServer),
+
+      ], (err) => {
         if (err) throw err
         done()
       })
     })
 
-    it('should send to all sockets associated to one connection', function(done) {
+    it('should send to all sockets associated to one connection', (done) => {
       var dummyClients = [ 
         { port: config.port, query: { id: 'abc' } }, 
         { port: config.port, query: { id: 'abc' } }
@@ -316,19 +345,19 @@ describe('websockets.Server', function() {
       async.waterfall([
         helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
 
-        function(sockets, messages, next) {
+        (sockets, messages, next) => {
           assert.equal(wsServer.connections.length, 1)
           assert.equal(wsServer._wsServer.clients.length, 2)
 
-          var onMessage = helpers.waitForAnswers(2, function(received) { next(null, received) })
-          sockets.forEach(function(socket) { socket.on('message', onMessage) })
+          var onMessage = helpers.waitForAnswers(2, (received) => next(null, received))
+          sockets.forEach((socket) => socket.on('message', onMessage))
           wsServer.connections[0].send('/bla', [1, 2, 3])
         }
 
-      ], function(err, received) {
+      ], (err, received) => {
         if (err) throw err
         assert.equal(received.length, 2)
-        received.forEach(function(args) {
+        received.forEach((args) => {
           var message = oscMin.fromBuffer(args[0])
             , address = message.address, args = _.pluck(message.args, 'value')
           assert.equal(address, '/bla')
@@ -342,15 +371,13 @@ describe('websockets.Server', function() {
 
   })
 
-  describe('onMessage', function() {
+  describe('onMessage', () => {
 
-    it('should transmit to connection manager if message is a string or a buffer', function(done) {
+    it('should transmit to connection manager if message is a string or a buffer', (done) => {
       var strMsg = (oscMin.toBuffer({ address: '/imastr', args: [ 0, 56, 'bla', 23 ] })).toString('binary')
         , bufMsg = oscMin.toBuffer({ address: '/imabuf', args: ['ploplo'] })
         , received = []
-        , dummyConnection = new helpers.DummyConnection(function(address, args) {
-          received.push([address, args])
-        })
+        , dummyConnection = new helpers.DummyConnection((address, args) => received.push([address, args]))
       dummyConnection.id = 'dummy1'
 
       assert.equal(wsServer._wsServer.clients.length, 0)
@@ -358,7 +385,7 @@ describe('websockets.Server', function() {
         helpers.dummyWebClients.bind(helpers, wsServer, [ { port: config.port } ]),
         manager.open.bind(manager, dummyConnection),
         
-        function(next) {
+        (next) => {
           manager.subscribe(dummyConnection, '/imastr')
           manager.subscribe(dummyConnection, '/imabuf')
 
@@ -373,11 +400,13 @@ describe('websockets.Server', function() {
       ], done)
     })
 
-    it('shouldnt crash if message couldnt be decoded', function(done) {
+    it('should bubble-up error if message couldnt be decoded', (done) => {
+      console.log('\nDO NOT PANIC : this is just a test (should say "invalid websocket message")')
+      wsServer.on('error', (err) => console.error(err))
+
       assert.equal(wsServer._wsServer.clients.length, 0)
-      helpers.dummyWebClients(wsServer, [ { port: config.port } ], function(err, sockets, messages) {
+      helpers.dummyWebClients(wsServer, [ { port: config.port } ], (err, sockets, messages) => {
         if (err) throw err
-        console.log('\nDO NOT PANIC : this is just a test (should say "invalid websocket message")')
         wsServer.connections[0]._onMessage(null)
         done()
       })

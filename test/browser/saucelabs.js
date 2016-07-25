@@ -15,7 +15,7 @@ var port = 8000
 
 var startTest = function(config, done) {
   console.log('----------')
-  console.log('starting tests ' + config.platform.join(' '))
+  console.log('# starting tests ' + config.platform.join(' '))
 
   var testServer = new TestServer({ port: config.port })
     , context = { url: null, jobId: null, result: null, testIds: null }
@@ -25,9 +25,11 @@ var startTest = function(config, done) {
     // Start server and ngrok
     testServer.start.bind(testServer),
     function(next) { 
+      console.log('> server started')
       ngrok.connect(config.port, function(err, url) {
         if (err) return next(err)
         context.url = 'http' + url.slice('https'.length) // replacing https by http
+        console.log('> ngrok connected ' + context.url)
         next(err)
       }) 
     },
@@ -44,7 +46,7 @@ var startTest = function(config, done) {
         }
       }, function(err, resp) {
         if (err) return next(err)
-        console.log('tests started')
+        console.log('> tests started')
         context.testIds = resp['js tests']
         next(null)
       })
@@ -60,14 +62,13 @@ var startTest = function(config, done) {
           data: { 'js tests': context.testIds }
         }, function(err, resp) {
           if (err) return next(err)
-          if (resp.completed === false)
+          if (resp.completed === false) {
             setTimeout(monitorJob, 5000)
-          else {
+          } else {
             context.result = resp['js tests'][0].result
             context.jobId = resp['js tests'][0].job_id
-            console.log('test done, failures : ' + context.result.failures 
-              + ' / passes : ' + context.result.passes
-              + ' / success? ' + (context.result.failures === 0))
+            console.log('> [fail : ' + context.result.failures + ']' 
+              + '[pass : ' + context.result.passes + ']')
             next()
           }
         })
@@ -81,6 +82,7 @@ var startTest = function(config, done) {
     },
     testServer.stop.bind(testServer),
     function(next) {
+      console.log('> server stopped, report sent')
       ngrok.disconnect(context.url)
       next()
     }
@@ -111,8 +113,8 @@ var platforms = [
   ['Windows 7', 'internet explorer', '9'],
   ['Windows XP', 'internet explorer', '8'],*/
 
-  ['Mac 10.10', 'iphone', '9.1'],
-  ['Mac 10.10', 'iphone', '8.4'],
+  ['Mac 10.10', 'iphone', '9.3'],
+  /*['Mac 10.10', 'iphone', '8.4'],
   ['Mac 10.10', 'iphone', '7.1'],
   ['Mac 10.8', 'iphone', '6.1'],
   ['Mac 10.8', 'iphone', '5.1'],
@@ -123,7 +125,7 @@ var platforms = [
   ['Mac 10.10', 'safari', '8.1'],
   ['Mac 10.9', 'safari', '7.0'],
   ['Mac 10.8', 'safari', '6.0'],
-  ['Mac 7', 'safari', '5.0']
+  ['Mac 7', 'safari', '5.0']*/
 ]
 
 git.long(function (sha) {

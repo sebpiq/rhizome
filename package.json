@@ -37,15 +37,15 @@
     "utf-8-validate": "^1.2.1"
   },
   "devDependencies": {
+    "body-parser": "^1.14.1",
+    "git-rev": "^0.2.1",
     "istanbul": "^0.3.14",
     "mocha": "^2.0.0",
+    "ngrok": "^2.2.2",
     "rimraf": "2.2.x",
+    "saucelabs": "^1.2.0",
     "stats-lite": "1.0.x",
-    "body-parser": "^1.14.1",
-    "superagent": "^1.4.0",
-    "git-rev": "^0.2.1",
-    "saucelabs": "^1.0.1",
-    "ngrok": "^0.1.99"
+    "superagent": "^1.4.0"
   },
   "bin": {
     "rhizome": "./bin/rhizome.js",

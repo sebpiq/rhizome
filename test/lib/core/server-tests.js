@@ -2,13 +2,13 @@
 var _ = require('underscore')
   , assert = require('assert')
   , async = require('async')
-  , Connection = require('../../../lib/core/server').Connection
+  , serverCore = require('../../../lib/core/server')
   , connections = require('../../../lib/connections') 
   , coreMessages = require('../../../lib/core/messages')
   , helpers = require('../../helpers-backend')
 
 
-describe('core.server.Connection', function() {
+describe('core.server', function() {
   var manager = new connections.ConnectionManager({
     store: connections.NoStore()
   })
@@ -16,225 +16,265 @@ describe('core.server.Connection', function() {
   beforeEach(function(done) { helpers.beforeEach(manager, done) })
   afterEach(function(done) { helpers.afterEach([manager], done) })
 
-  describe('open', function() {
+  describe('Connection', function() {
 
-    it('should send a message to all other connections', function(done) {
+    describe('open', function() {
 
-      // Create dummy connection to listen to the 'open' message
-      var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
-        helpers.assertSameElements(received, [
-          [0, coreMessages.connectionOpenAddress + '/dummy', ['1']],
-          [2, coreMessages.connectionOpenAddress + '/dummy', ['1']],
-        ])
-        done()
-      })
+      it('should send a message to all other connections', function(done) {
 
-      // Assign ids
-      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
-
-      async.series([
-        manager.open.bind(manager, dummyConnections[0]),
-        manager.open.bind(manager, dummyConnections[2]),
-      ], function(err) {
-        if (err) throw err
-
-        manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
-        manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
-
-        dummyConnections[1].open()
-      })
-    })
-
-  })
-
-  describe('close', function() {
-
-    it('should send a message to all other connections', function(done) {
-      // Create dummy connections to listen to the 'close' message
-      var dummyConnections = helpers.dummyConnections(2, 4, function(received) {
-        helpers.assertSameElements(received, [
-          [0, coreMessages.connectionCloseAddress + '/dummy', ['3']],
-          [2, coreMessages.connectionCloseAddress + '/dummy', ['3']]
-        ])
-        done()
-      })
-
-      // Assign ids
-      dummyConnections.forEach(function(c, i) { c.id = i.toString() })
-
-      async.series([
-        manager.open.bind(manager, dummyConnections[0]),
-        manager.open.bind(manager, dummyConnections[2]),
-        manager.open.bind(manager, dummyConnections[3])
-      ], function(err, results) {
-        if (err) throw err
-        manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
-        manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
-        dummyConnections[3].close()
-      })
-    })
-
-  })
-
-  describe('onSysMessage', function() {
-
-    it('should queue the messages if the connection is not opened yet', function(done) {
-      var received = []
-      var dummyConnection = new helpers.DummyConnection(function(address, args) {
-        received.push([1, address, args])
-      })
-      dummyConnection.id = '1'
-
-      // Send onSysMessages
-      dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
-      dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/blo'])
-      assert.deepEqual(received, [])
-
-      // The actual subscription happens only after connection has been opened
-      dummyConnection.once('open', function() {
-        helpers.assertSameElements(received, [
-          [1, coreMessages.subscribedAddress, ['/bla']],
-          [1, coreMessages.subscribedAddress, ['/blo']]
-        ])
-        done()
-      })
-      dummyConnection.open()
-    })
-
-    describe('subscribe', function() {
-
-      it('should subscribe the connection to the given address', function(done) {
-        var received = []
-
-        var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
-          received.push([1, address, args])
-        })
-        var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
-          received.push([2, address, args])
-        })
-        dummyConnection1.id = '1'
-        dummyConnection2.id = '2'
-
-        async.parallel([
-          dummyConnection1.once.bind(dummyConnection1, 'open'),
-          dummyConnection2.once.bind(dummyConnection2, 'open')
-        ], function(err) {
-          if (err) throw err
-          dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
-          dummyConnection2.onSysMessage(coreMessages.subscribeAddress, ['/bla/'])
-          dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/'])
-
+        // Create dummy connection to listen to the 'open' message
+        var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
           helpers.assertSameElements(received, [
-            [1, coreMessages.subscribedAddress, ['/bla']],
-            [2, coreMessages.subscribedAddress, ['/bla/']],
-            [1, coreMessages.subscribedAddress, ['/']]
+            [0, coreMessages.connectionOpenAddress + '/dummy', ['1']],
+            [2, coreMessages.connectionOpenAddress + '/dummy', ['1']],
           ])
-          assert.equal(manager._nsTree.get('/bla').connections.length, 2)
-          assert.equal(manager._nsTree.get('/').connections.length, 1)
           done()
         })
-        dummyConnection1.open()
-        dummyConnection2.open()
+
+        // Assign ids
+        dummyConnections.forEach(function(c, i) { c.id = i.toString() })
+
+        async.series([
+          manager.open.bind(manager, dummyConnections[0]),
+          manager.open.bind(manager, dummyConnections[2]),
+        ], function(err) {
+          if (err) throw err
+
+          manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
+          manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
+
+          dummyConnections[1].open()
+        })
       })
 
     })
 
-    describe('resend', function() {
+    describe('close', function() {
 
-      it('should resend the last messages sent at that address', function(done) {
+      it('should send a message to all other connections', function(done) {
+        // Create dummy connections to listen to the 'close' message
+        var dummyConnections = helpers.dummyConnections(2, 4, function(received) {
+          helpers.assertSameElements(received, [
+            [0, coreMessages.connectionCloseAddress + '/dummy', ['3']],
+            [2, coreMessages.connectionCloseAddress + '/dummy', ['3']]
+          ])
+          done()
+        })
+
+        // Assign ids
+        dummyConnections.forEach(function(c, i) { c.id = i.toString() })
+
+        async.series([
+          manager.open.bind(manager, dummyConnections[0]),
+          manager.open.bind(manager, dummyConnections[2]),
+          manager.open.bind(manager, dummyConnections[3])
+        ], function(err, results) {
+          if (err) throw err
+          manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
+          manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
+          dummyConnections[3].close()
+        })
+      })
+
+    })
+
+    describe('onSysMessage', function() {
+
+      it('should queue the messages if the connection is not opened yet', function(done) {
         var received = []
-
         var dummyConnection = new helpers.DummyConnection(function(address, args) {
-          received.push([address, args])
+          received.push([1, address, args])
         })
         dummyConnection.id = '1'
 
-        dummyConnection.once('open', function(err) {
-          if(err) throw err
+        // Send onSysMessages
+        dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+        dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/blo'])
+        assert.deepEqual(received, [])
 
-          manager.send('/bla', [1, 'toitoi', new Buffer('hello')])
-          manager.send('/bla/blo', [111])
-          manager.send('/blu', ['feeling'])
-          manager.send('/bla/blo', [222])
-          manager.send('/bli', [])
-          manager.send('/bly', [new Buffer('tyutyu')])
-          manager.send('/bla', [2, 'tutu', new Buffer('hello')])
-          manager.send('/bla/blo', [333])
-
-          dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla']) // Blobs
-          dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla/blo'])
-          dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bli']) // Empty messages
-          dummyConnection.onSysMessage(coreMessages.resendAddress, ['/neverSeenBefore']) // Address that never received a message
-
+        // The actual subscription happens only after connection has been opened
+        dummyConnection.once('open', function() {
           helpers.assertSameElements(received, [
-            ['/bla', [2, 'tutu', new Buffer('hello')]],
-            ['/bla/blo', [333]],
-            ['/bli', []]
-            // neverSeenBefore shouldnt be resent
+            [1, coreMessages.subscribedAddress, ['/bla']],
+            [1, coreMessages.subscribedAddress, ['/blo']]
           ])
           done()
         })
         dummyConnection.open()
       })
 
-      it('should send empty list if the address exists but no last message', function(done) {
-        var received = []
+      describe('subscribe', function() {
 
-        var dummyConnection = new helpers.DummyConnection(function(address, args) {
-          received.push([address, args])
+        it('should subscribe the connection to the given address', function(done) {
+          var received = []
+
+          var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
+            received.push([1, address, args])
+          })
+          var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
+            received.push([2, address, args])
+          })
+          dummyConnection1.id = '1'
+          dummyConnection2.id = '2'
+
+          async.parallel([
+            dummyConnection1.once.bind(dummyConnection1, 'open'),
+            dummyConnection2.once.bind(dummyConnection2, 'open')
+          ], function(err) {
+            if (err) throw err
+            dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+            dummyConnection2.onSysMessage(coreMessages.subscribeAddress, ['/bla/'])
+            dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/'])
+
+            helpers.assertSameElements(received, [
+              [1, coreMessages.subscribedAddress, ['/bla']],
+              [2, coreMessages.subscribedAddress, ['/bla/']],
+              [1, coreMessages.subscribedAddress, ['/']]
+            ])
+            assert.equal(manager._nsTree.get('/bla').connections.length, 2)
+            assert.equal(manager._nsTree.get('/').connections.length, 1)
+            done()
+          })
+          dummyConnection1.open()
+          dummyConnection2.open()
         })
-        dummyConnection.id = 'bla'
-        
-        dummyConnection.once('open', function(err) {
-          if(err) throw err
 
-          dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
-          dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla'])
+      })
 
-          helpers.assertSameElements(received, [
-            ['/sys/subscribed', ['/bla']],
-            ['/bla', []]
-          ])
-          done()
+      describe('resend', function() {
+
+        it('should resend the last messages sent at that address', function(done) {
+          var received = []
+
+          var dummyConnection = new helpers.DummyConnection(function(address, args) {
+            received.push([address, args])
+          })
+          dummyConnection.id = '1'
+
+          dummyConnection.once('open', function(err) {
+            if(err) throw err
+
+            manager.send('/bla', [1, 'toitoi', new Buffer('hello')])
+            manager.send('/bla/blo', [111])
+            manager.send('/blu', ['feeling'])
+            manager.send('/bla/blo', [222])
+            manager.send('/bli', [])
+            manager.send('/bly', [new Buffer('tyutyu')])
+            manager.send('/bla', [2, 'tutu', new Buffer('hello')])
+            manager.send('/bla/blo', [333])
+
+            dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla']) // Blobs
+            dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla/blo'])
+            dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bli']) // Empty messages
+            dummyConnection.onSysMessage(coreMessages.resendAddress, ['/neverSeenBefore']) // Address that never received a message
+
+            helpers.assertSameElements(received, [
+              ['/bla', [2, 'tutu', new Buffer('hello')]],
+              ['/bla/blo', [333]],
+              ['/bli', []]
+              // neverSeenBefore shouldnt be resent
+            ])
+            done()
+          })
+          dummyConnection.open()
         })
-        dummyConnection.open()
+
+        it('should send empty list if the address exists but no last message', function(done) {
+          var received = []
+
+          var dummyConnection = new helpers.DummyConnection(function(address, args) {
+            received.push([address, args])
+          })
+          dummyConnection.id = 'bla'
+          
+          dummyConnection.once('open', function(err) {
+            if(err) throw err
+
+            dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+            dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla'])
+
+            helpers.assertSameElements(received, [
+              ['/sys/subscribed', ['/bla']],
+              ['/bla', []]
+            ])
+            done()
+          })
+          dummyConnection.open()
+
+        })
+
+      })
+
+      describe('connectionsSendList', function() {
+
+        it('should send the id list of opened connections', function(done) {
+          var received = []
+
+          var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
+            received.push([1, address, args])
+          })
+          var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
+            received.push([2, address, args])
+          })
+          dummyConnection1.id = '1'
+          dummyConnection2.id = '2'
+
+          async.parallel([
+            dummyConnection1.once.bind(dummyConnection1, 'open'),
+            dummyConnection2.once.bind(dummyConnection2, 'open')
+          ], function(err) {
+            if (err) throw err
+            dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
+            dummyConnection2.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
+            dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, [])
+
+            helpers.assertSameElements(received, [
+              [1, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
+              [2, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
+              [1, coreMessages.connectionsTakeListAddress + '/undefined', []]
+            ])
+            done()
+          })
+          dummyConnection1.open()
+          dummyConnection2.open()
+
+        })
 
       })
 
     })
+  
+  })
 
-    describe('connectionsSendList', function() {
+  describe('Server', function() {
 
-      it('should send the id list of opened connections', function(done) {
-        var received = []
+    describe('stop', function() {
 
-        var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
-          received.push([1, address, args])
-        })
-        var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
-          received.push([2, address, args])
-        })
-        dummyConnection1.id = '1'
-        dummyConnection2.id = '2'
+      it('should close properly all connections', function(done) {
+        var dummyServer = new serverCore.Server()
+          , connectionIdCounter = 0
+          , connectionClosedCount = 0
 
-        async.parallel([
-          dummyConnection1.once.bind(dummyConnection1, 'open'),
-          dummyConnection2.once.bind(dummyConnection2, 'open')
-        ], function(err) {
-          if (err) throw err
-          dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
-          dummyConnection2.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
-          dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, [])
+        var _newConnection = function(next) {
+          var connection = new helpers.DummyConnection(() => {}, dummyServer)
+          connection.id = '' + connectionIdCounter++
+          dummyServer.once('connection', () => next())
+          connection.on('close', () => connectionClosedCount++)
+          dummyServer.open(connection)
+        }
 
-          helpers.assertSameElements(received, [
-            [1, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
-            [2, coreMessages.connectionsTakeListAddress + '/dummy', ['1', '2']],
-            [1, coreMessages.connectionsTakeListAddress + '/undefined', []]
-          ])
+        // Add 3 dummy connections to the server
+        async.series([
+          _newConnection,
+          _newConnection,
+          _newConnection,
+
+          dummyServer.stop.bind(dummyServer)
+        ], function() {
+          assert.equal(dummyServer.connections.length, 0)
+          assert.equal(connectionClosedCount, 3)
           done()
         })
-        dummyConnection1.open()
-        dummyConnection2.open()
 
       })
 

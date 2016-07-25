@@ -182,6 +182,18 @@ describe('osc.transport', function() {
         })
       })
 
+      it('should close properly', function(done) {
+        var client = new oscTransport.createClient('127.0.0.1', 4444, transport)
+          , buf = new Buffer(10)
+
+        async.parallel([
+          assertBufferGetSent.bind(this, client, buf),
+          (next) => client.on('close', next),
+          (next) => client.on('_sendsAllDone', next)
+        ], done)
+        client.close()
+      })
+
       if (extra) extra()
 
     })

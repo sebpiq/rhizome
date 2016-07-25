@@ -264,6 +264,8 @@ Changelog
 
 - 0.8.0
   - Now users have to create a client in web page with `new rhizome.Client()` instead of the default created client `rhizome`.
+  - Errors are all bubbled up to rhizome servers and connections. Add a handler to catch them 
+    `s.on('error', (err) => console.error(err))`
 
   - websockets.Client:
     - `isSupported` moved to `websocket.Client.isSupported()`.

@@ -6,8 +6,9 @@
   <script src="js/jquery-2.1.0.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/styles.css" />
   <script>
+    var client
     $(function() {
-      var client = new rhizome.Client()
+      client = new rhizome.Client()
 
       // `rhizome.start` is the first function that should be called.
       // The function inside is executed once the client managed to connect.

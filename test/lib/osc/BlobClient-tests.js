@@ -24,12 +24,12 @@ var sendToBlobClient = new oscTransport.createClient('localhost', clientConfig.b
   , client = new BlobClient(clientConfig)
 
 
-describe('blob-client', function() {
+describe('blob-client', () => {
   var manager = new connections.ConnectionManager({
     store: new connections.NoStore()
   })
 
-  beforeEach(function(done) {
+  beforeEach((done) => {
     connections.manager = manager
     async.series([
       client.start.bind(client), 
@@ -38,16 +38,16 @@ describe('blob-client', function() {
     ], done)
   })
 
-  afterEach(function(done) {
+  afterEach((done) => {
     async.series([
       fakeServer.stop.bind(fakeServer),
       helpers.afterEach.bind(helpers, [client, manager])
     ], done)
   })
 
-  describe('start', function() {
+  describe('start', () => {
 
-    it('should return ValidationError if config is not valid', function(done) {
+    it('should return ValidationError if config is not valid', (done) => {
       helpers.assertConfigErrors([
         [new BlobClient({blobsDir: '/IdontExist'}), ['.blobsDir']]
       ], done)
@@ -55,33 +55,29 @@ describe('blob-client', function() {
 
   })
 
-  describe('receive blob', function() {
+  describe('receive blob', () => {
 
-    it('should save the blob and send a message to the app client (Pd, Processing...)', function(done) {
+    it('should save the blob and send a message to the app client (Pd, Processing...)', (done) => {
       var bigBuf = new Buffer(Math.pow(2, 15))
         , oscClients = [
           { appPort: 9001 },
           { appPort: 9002 }
         ]
 
-      helpers.dummyOSCClients(2, oscClients, function(received) {
+      helpers.dummyOSCClients(2, oscClients, (received) => {
         // We collect the filePaths so that we can open them and replace the filepath
         // by the actual content of the file in our test. 
-        var filePaths = _.chain(received).pluck(2).reduce(function(all, args, i) {
-          args.forEach(function(arg, j) {
-            if (/\/tmp.*/.exec(arg)) all.push([i, j, arg])
-          })
+        var filePaths = _.chain(received).pluck(2).reduce((all, args, i) => {
+          args.forEach((arg, j) => { if (/\/tmp.*/.exec(arg)) all.push([i, j, arg]) })
           return all
         }, []).value()
 
         // Open all the files, and replace the filePaths with the actual file content for test purpose.
-        async.series(filePaths.map(function(filePath) {
-          return function(next) { fs.readFile(filePath[2], next) }
-        }), function(err, results) {
+        async.series(
+          filePaths.map((filePath) => ((next) => fs.readFile(filePath[2], next))
+        ), (err, results) => {
           if (err) throw err
-          results.forEach(function(contents, i) {
-            received[filePaths[i][0]][2][filePaths[i][1]] = results[i]
-          })
+          results.forEach((contents, i) => received[filePaths[i][0]][2][filePaths[i][1]] = results[i])
 
           helpers.assertSameElements(received, [
             [9001, '/bla/blob', [bigBuf, 'holle', 12345, new Buffer('bloblo')]],
@@ -95,7 +91,7 @@ describe('blob-client', function() {
       sendToBlobClient.send('/', [9001, 56789, new Buffer('hihihi')])
     })
 
-    it('should save the blob with the given extension', function(done) {
+    it('should save the blob with the given extension', (done) => {
       var oscClients = [ { appPort: 9001 } ]
         , blobClient = new BlobClient(_.extend({}, clientConfig, { fileExtension: '.wav' }))
 
@@ -103,12 +99,12 @@ describe('blob-client', function() {
         client.stop.bind(client),
         blobClient.start.bind(blobClient),
 
-        function(next) {
-          helpers.dummyOSCClients(1, oscClients, function(received) { next(null, received) })
+        (next) => {
+          helpers.dummyOSCClients(1, oscClients, (received) => next(null, received))
           sendToBlobClient.send('/bla/blob', [9001, new Buffer('bloblo'), 111])
         },
 
-        function(received, next) {
+        (received, next) => {
           var filePath = received[0][2][0]
           received[0][2][0] = null
           helpers.assertSameElements(received, [
@@ -124,13 +120,13 @@ describe('blob-client', function() {
 
   })
 
-  describe('send blob', function() {
+  describe('send blob', () => {
 
-    it('should send a blob to the server', function(done) {
+    it('should send a blob to the server', (done) => {
       var received = []
         , bigBuf = new Buffer(Math.pow(2, 15))
 
-      fakeServer.on('message', function(address, args) {
+      fakeServer.on('message', (address, args) => {
 
         if (address === coreMessages.sendBlobAddress) {
           sendToBlobClient.send(coreMessages.sendBlobAddress, args)
@@ -152,7 +148,7 @@ describe('blob-client', function() {
         fs.writeFile.bind(fs, '/tmp/blob1', bigBuf),
         fs.writeFile.bind(fs, '/tmp/blob2', 'blobbyB'),
         fs.writeFile.bind(fs, '/tmp/blob3', 'blobbyC')
-      ], function(err) {
+      ], (err) => {
         if (err) throw err
         sendToServer.send(coreMessages.sendBlobAddress, ['/bla/bli', '/tmp/blob1', 1234, 'blabla'])
         sendToServer.send(coreMessages.sendBlobAddress, ['/blo/', '/tmp/blob2'])
@@ -160,8 +156,8 @@ describe('blob-client', function() {
       })
     })
 
-    it('should refuse to send a blob that is not in the configured dirName', function(done) {
-      fakeServer.on('message', function(address, args) {
+    it('should refuse to send a blob that is not in the configured dirName', (done) => {
+      fakeServer.on('message', (address, args) => {
         assert.equal(address, coreMessages.errorAddress)
         done()
       })
