@@ -49,9 +49,24 @@ describe('ConnectionManager', () => {
       manager._nsTree.get('/bla/ho').lastMessage = ['hoho', 1, 'huhu']
       manager._nsTree.get('/blu').lastMessage = [122222.901]
 
+      // Hack to wait for next save to persistence to be executed.
+      // What happens otherwise is that there is race conditions causing tests to fail
+      var _waitNextSave = (next) => {
+        var store = manager._config.store
+        store._managerSave = store.managerSave
+        store.managerSave = function(state, done) {
+          store._managerSave(state, (err) => {
+            if (err) return done(err)
+            store.managerSave = store._managerSave
+            done()
+            next()
+          })
+        }
+      }
+
       async.series([
         manager.start.bind(manager),
-        (next) => setTimeout(next, 5), // wait for manager to save state
+        _waitNextSave,
         restoredManager.start.bind(restoredManager),
         (next) => {
           helpers.assertSameElements(restoredManager._nsTree.toJSON(), [
