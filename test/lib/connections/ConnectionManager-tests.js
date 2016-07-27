@@ -91,9 +91,7 @@ describe('ConnectionManager', () => {
     afterEach((done) => { connections.stop(done) })    
 
     it('should open connection properly', (done) => {
-      var connection = new helpers.DummyConnection()
-      connection.id = '1234'
-
+      var connection = new helpers.DummyConnection([ () => {}, '1234' ])
       connections.open(connection, (err) => {
         if (err) throw err
         assert.deepEqual(connections._openConnections, [connection])
@@ -110,9 +108,7 @@ describe('ConnectionManager', () => {
     afterEach((done) => { connections.stop(done) })    
 
     it('should close connection properly', (done) => {
-      var connection = new helpers.DummyConnection()
-      connection.id = '5678'
-
+      var connection = new helpers.DummyConnection([ () => {}, '5678' ])
       async.series([
         connections.open.bind(connections, connection),
         // Wait a bit so 'open' and 'close' events are not simultaneous
@@ -136,8 +132,10 @@ describe('ConnectionManager', () => {
 
     it('should send messages from subspaces', (done) => {
       var received = []
-        , connection = new helpers.DummyConnection((address, args) => received.push([address, args]))
-      connection.id = '9abc'
+        , connection = new helpers.DummyConnection([ 
+          (address, args) => received.push([address, args]), 
+          '9abc'
+        ])
 
       connections.open(connection, (err) => {
         if(err) throw err
@@ -169,13 +167,33 @@ describe('ConnectionManager', () => {
     afterEach((done) => { connections.stop(done) })
 
     it('should return an error message if address in not valid', (done) => {
-      var connection = new helpers.DummyConnection()
-      connection.id = 'defg'
+      var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
       connections.open(connection, (err) => {
         if(err) throw err
         assert.ok(_.isString(connections.subscribe(connection, '')))
         assert.ok(_.isString(connections.subscribe(connection, 'bla')))
         assert.ok(_.isString(connections.subscribe(connection, '/sys/bla')))
+        done()
+      })
+    })
+
+  })
+
+  describe('isSubscribed', () => {
+
+    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
+    beforeEach((done) => { connections.start(done) })
+    afterEach((done) => { connections.stop(done) })
+
+    it('should return true if connection subscribed, false otherwise', (done) => {
+      var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
+      connections.open(connection, (err) => {
+        if(err) return done(err)
+        assert.ok(!connections.isSubscribed(connection, '/bla'))
+        connections.subscribe(connection, '/bla')
+        assert.ok(connections.isSubscribed(connection, '/bla'))
+        assert.ok(!connections.isSubscribed(connection, '/'))
+        assert.ok(!connections.isSubscribed(connection, '/blo'))
         done()
       })
     })
@@ -189,11 +207,8 @@ describe('ConnectionManager', () => {
     afterEach((done) => { connections.stop(done) })
 
     it('should return an error message if address in not valid', (done) => {
-      var connection = new helpers.DummyConnection()
-        , connection2 = new helpers.DummyConnection()
-      connection.id = 'defg'
-      connection2.id = 'hijk'
-
+      var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
+        , connection2 = new helpers.DummyConnection([ () => {}, 'hijk' ])
       async.series([
         connections.open.bind(connections, connection),
         connections.open.bind(connections, connection2)

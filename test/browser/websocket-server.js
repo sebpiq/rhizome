@@ -38,7 +38,8 @@ _.extend(Server.prototype, {
           maxSockets: 5,
           serverInstance: httpServer
         })
-      , manager
+      , dummyServer
+
     this.httpServer = httpServer
 
     var getOpenClients = () => {
@@ -79,6 +80,8 @@ _.extend(Server.prototype, {
     app.post('/server/start', (req, res) => {
       var config = req.body
         , store = config.store ? new connections.NEDBStore(config.store) : new connections.NoStore()
+      dummyServer = new helpers.DummyServer()
+
       connections.manager = new connections.ConnectionManager({ store: store })
       async.series([
         connections.manager.start.bind(connections.manager),
@@ -158,13 +161,16 @@ _.extend(Server.prototype, {
     // Create a dummy connection subscribed at the given addresses
     app.post('/message/receive', (req, res) => {
       var addresses = req.body
-        , connection = new helpers.DummyConnection((address, args) => {
-          connection.received.push([address, args])
-        })
-      connection.received = []
-      connection.id = Math.random().toString()
-      connections.manager.open(connection, (err) => {
+
+      dummyServer.openConnection([
+        // Message callback
+        function(address, args) { this.received.push([address, args]) },
+        // Connection id
+        Math.random().toString()
+
+      ], (err, connection) => {
         if (err) throw err
+        connection.received = []
         addresses.forEach((address) => connections.manager.subscribe(connection, address))
         res.end()
       })

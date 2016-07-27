@@ -2,126 +2,160 @@
 var _ = require('underscore')
   , assert = require('assert')
   , async = require('async')
-  , serverCore = require('../../../lib/core/server')
+  , coreServer = require('../../../lib/core/server')
   , connections = require('../../../lib/connections') 
   , coreMessages = require('../../../lib/core/messages')
   , helpers = require('../../helpers-backend')
 
 
-describe('core.server', function() {
-  var manager = new connections.ConnectionManager({
-    store: connections.NoStore()
+describe('core.server', () => {
+  var manager
+
+  beforeEach((done) => { 
+    manager = new connections.ConnectionManager({ store: connections.NoStore() })
+    helpers.beforeEach(manager, done) 
   })
+  afterEach((done) => { helpers.afterEach([manager], done) })
 
-  beforeEach(function(done) { helpers.beforeEach(manager, done) })
-  afterEach(function(done) { helpers.afterEach([manager], done) })
+  describe('Connection', () => {
 
-  describe('Connection', function() {
+    describe('open', () => {
 
-    describe('open', function() {
+      it('should send an "open" message to all other connections', (done) => {
+        var dummyServer = new helpers.DummyServer()
+        // We wait for our dummy connections to receive 2 messages, and exit the test
+          , messageHandler = helpers.waitForAnswers(2, (received) => {
+            helpers.assertSameElements(received, [
+              [0, coreMessages.connectionOpenAddress + '/dummy', ['1']],
+              [2, coreMessages.connectionOpenAddress + '/dummy', ['1']],
+            ])
+            done()
+          })
 
-      it('should send a message to all other connections', function(done) {
+        // Create 2 dummy connections
+        async.series([
+          dummyServer.openConnection.bind(dummyServer, [ (address, args) => messageHandler(0, address, args), '0' ]),
+          dummyServer.openConnection.bind(dummyServer, [ (address, args) => messageHandler(2, address, args), '2' ]),
 
-        // Create dummy connection to listen to the 'open' message
-        var dummyConnections = helpers.dummyConnections(2, 3, function(received) {
-          helpers.assertSameElements(received, [
-            [0, coreMessages.connectionOpenAddress + '/dummy', ['1']],
-            [2, coreMessages.connectionOpenAddress + '/dummy', ['1']],
-          ])
+        ], (err, dummyConnections) => {
+          if (err) return done(err)
+
+          // Subscribing our dummy connections to the broadcast message "open"
+          manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
+          manager.subscribe(dummyConnections[1], coreMessages.connectionOpenAddress)
+
+          // Opening a 3rd connection
+          dummyServer.openConnection([() => {}, '1'], (err) => err && done(err))
+        })
+      })
+
+      it('should restore subscriptions', (done) => {
+        var dummyServer = new helpers.DummyServer()
+
+        // Dummy connection class that will restore subscriptions
+        var DummyConnection = function(args) {
+          var subscriptions = args.pop()
+          helpers.DummyConnection.call(this, args)
+          this.deserialize({ subscriptions: subscriptions })
+        }
+        _.extend(DummyConnection.prototype, helpers.DummyConnection.prototype)
+        dummyServer.ConnectionClass = DummyConnection
+
+        // Open a few connections, with their restore subscriptions
+        async.series([
+          dummyServer.openConnection.bind(dummyServer, [ () => {}, '0', ['/bla/poet', '/blo'] ]),
+          dummyServer.openConnection.bind(dummyServer, [ () => {}, '1', [] ]),
+          dummyServer.openConnection.bind(dummyServer, [ () => {}, '2', ['/u'] ])
+
+        // Check that subscriptions have actually been restored in manager
+        ], (err, dummyConnections) => { 
+          if (err) return done(err)
+          assert.ok(manager.isSubscribed(dummyConnections[0], '/bla/poet'))
+          assert.ok(manager.isSubscribed(dummyConnections[0], '/blo'))
+          assert.ok(!manager.isSubscribed(dummyConnections[1], '/blo'))
+          assert.ok(manager.isSubscribed(dummyConnections[2], '/u'))
           done()
         })
 
-        // Assign ids
-        dummyConnections.forEach(function(c, i) { c.id = i.toString() })
-
-        async.series([
-          manager.open.bind(manager, dummyConnections[0]),
-          manager.open.bind(manager, dummyConnections[2]),
-        ], function(err) {
-          if (err) throw err
-
-          manager.subscribe(dummyConnections[0], coreMessages.connectionOpenAddress)
-          manager.subscribe(dummyConnections[2], coreMessages.connectionOpenAddress)
-
-          dummyConnections[1].open()
-        })
       })
 
     })
 
-    describe('close', function() {
+    describe('close', () => {
 
-      it('should send a message to all other connections', function(done) {
-        // Create dummy connections to listen to the 'close' message
-        var dummyConnections = helpers.dummyConnections(2, 4, function(received) {
-          helpers.assertSameElements(received, [
-            [0, coreMessages.connectionCloseAddress + '/dummy', ['3']],
-            [2, coreMessages.connectionCloseAddress + '/dummy', ['3']]
-          ])
-          done()
-        })
+      it('should send a "close" message to all other connections', (done) => {
+        var dummyServer = new helpers.DummyServer()
+        // We wait for our dummy connections to receive 2 messages, and exit the test
+          , messageHandler = helpers.waitForAnswers(2, (received) => {
+            helpers.assertSameElements(received, [
+              [0, coreMessages.connectionCloseAddress + '/dummy', ['3']],
+              [2, coreMessages.connectionCloseAddress + '/dummy', ['3']]
+            ])
+            done()
+          })
 
-        // Assign ids
-        dummyConnections.forEach(function(c, i) { c.id = i.toString() })
-
+        // Create 4 dummy connections
         async.series([
-          manager.open.bind(manager, dummyConnections[0]),
-          manager.open.bind(manager, dummyConnections[2]),
-          manager.open.bind(manager, dummyConnections[3])
-        ], function(err, results) {
-          if (err) throw err
+          dummyServer.openConnection.bind(dummyServer, [(address, args) => messageHandler(0, address, args), '0']),
+          dummyServer.openConnection.bind(dummyServer, [(address, args) => messageHandler(1, address, args), '1']),
+          dummyServer.openConnection.bind(dummyServer, [(address, args) => messageHandler(2, address, args), '2']),
+          dummyServer.openConnection.bind(dummyServer, [(address, args) => messageHandler(3, address, args), '3'])
+        
+        ], (err, dummyConnections) => {
+          if (err) return done(err)
+
+          // Subscribing our dummy connections to the broadcast message "close"
           manager.subscribe(dummyConnections[0], coreMessages.connectionCloseAddress)
           manager.subscribe(dummyConnections[2], coreMessages.connectionCloseAddress)
+          manager.subscribe(dummyConnections[3], coreMessages.connectionCloseAddress)
+
+          // Closing one of the connections
           dummyConnections[3].close()
         })
       })
 
     })
 
-    describe('onSysMessage', function() {
+    describe('onSysMessage', () => {
 
-      it('should queue the messages if the connection is not opened yet', function(done) {
+      it('should queue the messages if the connection is not opened yet', (done) => {
         var received = []
-        var dummyConnection = new helpers.DummyConnection(function(address, args) {
-          received.push([1, address, args])
-        })
-        dummyConnection.id = '1'
+          , dummyServer = new helpers.DummyServer()
+          , managerOpen
 
-        // Send onSysMessages
-        dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
-        dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/blo'])
-        assert.deepEqual(received, [])
+        // Override `manager.open` method to simulate the connection receiving sys message
+        // right before it is opened.
+        managerOpen = connections.manager.open
+        connections.manager.open = function(connection) {
+          connection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
+          connection.onSysMessage(coreMessages.subscribeAddress, ['/blo'])
+          managerOpen.apply(this, arguments)
+        }
 
-        // The actual subscription happens only after connection has been opened
-        dummyConnection.once('open', function() {
+        // The actual sys messages are executed only after connection has been opened
+        dummyServer.openConnection([ (address, args) => received.push([1, address, args]), '1' ], () => {
           helpers.assertSameElements(received, [
             [1, coreMessages.subscribedAddress, ['/bla']],
             [1, coreMessages.subscribedAddress, ['/blo']]
           ])
           done()
         })
-        dummyConnection.open()
       })
 
-      describe('subscribe', function() {
+      describe('subscribe', () => {
 
-        it('should subscribe the connection to the given address', function(done) {
+        it('should subscribe the connection to the given address', (done) => {
           var received = []
+            , dummyServer = new helpers.DummyServer()
 
-          var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
-            received.push([1, address, args])
-          })
-          var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
-            received.push([2, address, args])
-          })
-          dummyConnection1.id = '1'
-          dummyConnection2.id = '2'
+          async.series([
+            dummyServer.openConnection.bind(dummyServer, [ (address, args) => received.push([1, address, args]), '1']),
+            dummyServer.openConnection.bind(dummyServer, [ (address, args) => received.push([2, address, args]), '2'])
 
-          async.parallel([
-            dummyConnection1.once.bind(dummyConnection1, 'open'),
-            dummyConnection2.once.bind(dummyConnection2, 'open')
-          ], function(err) {
-            if (err) throw err
+          ], (err, results) => {
+            if (err) return done(err)
+            var dummyConnection1 = results[0]
+              , dummyConnection2 = results[1]
             dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
             dummyConnection2.onSysMessage(coreMessages.subscribeAddress, ['/bla/'])
             dummyConnection1.onSysMessage(coreMessages.subscribeAddress, ['/'])
@@ -135,25 +169,19 @@ describe('core.server', function() {
             assert.equal(manager._nsTree.get('/').connections.length, 1)
             done()
           })
-          dummyConnection1.open()
-          dummyConnection2.open()
+
         })
 
       })
 
-      describe('resend', function() {
+      describe('resend', () => {
 
-        it('should resend the last messages sent at that address', function(done) {
+        it('should resend the last messages sent at that address', (done) => {
           var received = []
-
-          var dummyConnection = new helpers.DummyConnection(function(address, args) {
-            received.push([address, args])
-          })
-          dummyConnection.id = '1'
-
-          dummyConnection.once('open', function(err) {
-            if(err) throw err
-
+            , dummyServer = new helpers.DummyServer
+          
+          dummyServer.openConnection([ (address, args) => received.push([address, args]), '1' ], (err, dummyConnection) => {
+            if (err) return done(err)
             manager.send('/bla', [1, 'toitoi', new Buffer('hello')])
             manager.send('/bla/blo', [111])
             manager.send('/blu', ['feeling'])
@@ -176,20 +204,14 @@ describe('core.server', function() {
             ])
             done()
           })
-          dummyConnection.open()
         })
 
-        it('should send empty list if the address exists but no last message', function(done) {
+        it('should send empty list if the address exists but no last message', (done) => {
           var received = []
+            , dummyServer = new helpers.DummyServer()
 
-          var dummyConnection = new helpers.DummyConnection(function(address, args) {
-            received.push([address, args])
-          })
-          dummyConnection.id = 'bla'
-          
-          dummyConnection.once('open', function(err) {
-            if(err) throw err
-
+          dummyServer.openConnection([ (address, args) => received.push([address, args]), 'bla' ], (err, dummyConnection) => {
+            if (err) return done(err)
             dummyConnection.onSysMessage(coreMessages.subscribeAddress, ['/bla'])
             dummyConnection.onSysMessage(coreMessages.resendAddress, ['/bla'])
 
@@ -199,31 +221,25 @@ describe('core.server', function() {
             ])
             done()
           })
-          dummyConnection.open()
 
         })
 
       })
 
-      describe('connectionsSendList', function() {
+      describe('connectionsSendList', () => {
 
-        it('should send the id list of opened connections', function(done) {
+        it('should send the id list of opened connections', (done) => {
           var received = []
+            , dummyServer = new helpers.DummyServer()
 
-          var dummyConnection1 = new helpers.DummyConnection(function(address, args) {
-            received.push([1, address, args])
-          })
-          var dummyConnection2 = new helpers.DummyConnection(function(address, args) {
-            received.push([2, address, args])
-          })
-          dummyConnection1.id = '1'
-          dummyConnection2.id = '2'
+          async.series([
+            dummyServer.openConnection.bind(dummyServer, [ (address, args) => received.push([1, address, args]), '1' ]),
+            dummyServer.openConnection.bind(dummyServer, [ (address, args) => received.push([2, address, args]), '2' ])
 
-          async.parallel([
-            dummyConnection1.once.bind(dummyConnection1, 'open'),
-            dummyConnection2.once.bind(dummyConnection2, 'open')
-          ], function(err) {
-            if (err) throw err
+          ], (err, results) => {
+            if (err) return done(err)
+            var dummyConnection1 = results[0]
+              , dummyConnection2 = results[1]
             dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
             dummyConnection2.onSysMessage(coreMessages.connectionsSendListAddress, ['dummy'])
             dummyConnection1.onSysMessage(coreMessages.connectionsSendListAddress, [])
@@ -235,43 +251,49 @@ describe('core.server', function() {
             ])
             done()
           })
-          dummyConnection1.open()
-          dummyConnection2.open()
 
         })
 
       })
 
     })
-  
+
   })
 
-  describe('Server', function() {
+  describe('Server', () => {
 
-    describe('stop', function() {
+    describe('stop', () => {
 
-      it('should close properly all connections', function(done) {
-        var dummyServer = new serverCore.Server()
+      it('should close properly all connections', (done) => {
+        var dummyServer = new helpers.DummyServer()
           , connectionIdCounter = 0
           , connectionClosedCount = 0
 
-        var _newConnection = function(next) {
-          var connection = new helpers.DummyConnection(() => {}, dummyServer)
-          connection.id = '' + connectionIdCounter++
-          dummyServer.once('connection', () => next())
-          connection.on('close', () => connectionClosedCount++)
-          dummyServer.open(connection)
+        var _newConnection = (next) => {
+          dummyServer.openConnection([() => {}, '' + connectionIdCounter++], (err, connection) => {
+            if (err) return next(err)
+            connection.on('close', () => connectionClosedCount++)
+            next()
+          })
         }
 
         // Add 3 dummy connections to the server
+        assert.equal(connections.manager._openConnections.length, 0)
         async.series([
           _newConnection,
           _newConnection,
           _newConnection,
-
+          (next) => {
+            assert.equal(connections.manager._openConnections.length, 3)
+            assert.equal(dummyServer.connections.length, 3)
+            next()
+          },
           dummyServer.stop.bind(dummyServer)
-        ], function() {
+
+        ], (err) => {
+          if (err) return done(err)
           assert.equal(dummyServer.connections.length, 0)
+          assert.equal(connections.manager._openConnections.length, 0)
           assert.equal(connectionClosedCount, 3)
           done()
         })

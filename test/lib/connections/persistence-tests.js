@@ -32,13 +32,11 @@ describe('persistence', () => {
     describe('connectionInsertOrRestore', () => {
 
       it('should insert connections that dont exist and restore the others', (done) => {
-        var connection1 = new helpers.DummyConnection()
-          , connection2 = new helpers.DummyConnection()
+        var connection1 = new helpers.DummyConnection([ () => {}, '9abc' ])
+          , connection2 = new helpers.DummyConnection([ () => {}, 'fghj' ])
           , restoredConnection
         connection1.testData = {a: 1, b: 2}
-        connection1.id = '9abc'
         connection2.testData = {c: 3, d: 4}
-        connection2.id = 'fghj'
 
         async.series([
           // Check that connections indeed dont exist
@@ -55,8 +53,7 @@ describe('persistence', () => {
 
           // Restore a connection
           (next) => {
-            restoredConnection = new helpers.DummyConnection()
-            restoredConnection.id = '9abc'
+            restoredConnection = new helpers.DummyConnection([ () => {}, '9abc' ])
             assert.equal(connection1.restoredTestData, null)
             assert.equal(connection2.restoredTestData, null)
             store.connectionInsertOrRestore(restoredConnection, next)
@@ -82,7 +79,7 @@ describe('persistence', () => {
       })
 
       it('should insert connections and automatically assign id if null', (done) => {
-        var connection = new helpers.DummyConnection()
+        var connection = new helpers.DummyConnection([ () => {}, null ])
         connection.testData = {a: 1, b: 2}
         assert.equal(connection.id, null)
         store.connectionInsertOrRestore(connection, (err, results) => {
@@ -94,9 +91,8 @@ describe('persistence', () => {
       })
 
       it('should assign a new id when autoId is true and connection could not be restored', (done) => {
-        var connection = new helpers.DummyConnection()
-          , id = 'Idontexist'
-        connection.id = id
+        var id = 'Idontexist'
+          , connection = new helpers.DummyConnection([ () => {}, 'Idontexist' ])
         connection.autoId = true
         store.connectionInsertOrRestore(connection, (err, results) => {
           if (err) throw err
@@ -112,11 +108,9 @@ describe('persistence', () => {
     describe('connectionUpdate', () => {
 
       it('should update connections that exist', (done) => {
-        var connection = new helpers.DummyConnection()
-          , restoredConnection = new helpers.DummyConnection()
+        var connection = new helpers.DummyConnection([ () => {}, '9abc' ])
+          , restoredConnection = new helpers.DummyConnection([ () => {}, connection.id ])
         connection.testData = {a: 1, b: 2}
-        connection.id = '9abc'
-        restoredConnection.id = connection.id
 
         async.series([
           store.connectionInsertOrRestore.bind(store, connection),
@@ -138,14 +132,10 @@ describe('persistence', () => {
     describe('connectionIdList', () => {
 
       it('should list connection ids', (done) => {
-        var connection1 = new helpers.DummyConnection()
-          , connection2 = new helpers.DummyConnection()
-          , connection3 = new helpers.DummyConnection()
-          , connection4 = new helpers.DummyConnection()
-        connection1.id = 'defg'
-        connection2.id = 'hijk'
-        connection3.id = 'lmno'
-        connection4.id = 'pqrs'
+        var connection1 = new helpers.DummyConnection([ () => {}, 'defg' ])
+          , connection2 = new helpers.DummyConnection([ () => {}, 'hijk' ])
+          , connection3 = new helpers.DummyConnection([ () => {}, 'lmno' ])
+          , connection4 = new helpers.DummyConnection([ () => {}, 'pqrs' ])
 
         async.series([
           store.connectionInsertOrRestore.bind(store, connection1),

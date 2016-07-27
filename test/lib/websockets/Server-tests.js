@@ -377,27 +377,25 @@ describe('websockets.Server', () => {
       var strMsg = (oscMin.toBuffer({ address: '/imastr', args: [ 0, 56, 'bla', 23 ] })).toString('binary')
         , bufMsg = oscMin.toBuffer({ address: '/imabuf', args: ['ploplo'] })
         , received = []
-        , dummyConnection = new helpers.DummyConnection((address, args) => received.push([address, args]))
-      dummyConnection.id = 'dummy1'
+        , dummyServer = new helpers.DummyServer
 
       assert.equal(wsServer._wsServer.clients.length, 0)
       async.series([
         helpers.dummyWebClients.bind(helpers, wsServer, [ { port: config.port } ]),
-        manager.open.bind(manager, dummyConnection),
-        
-        (next) => {
-          manager.subscribe(dummyConnection, '/imastr')
-          manager.subscribe(dummyConnection, '/imabuf')
+        dummyServer.openConnection.bind(dummyServer, [ (address, args) => received.push([address, args]), 'dummy1' ])
+      
+      ], (err, results) => {
+        var dummyConnection = results.pop()
+        manager.subscribe(dummyConnection, '/imastr')
+        manager.subscribe(dummyConnection, '/imabuf')
 
-          wsServer.connections[0]._onMessage(strMsg)
-          assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]]])
+        wsServer.connections[0]._onMessage(strMsg)
+        assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]]])
 
-          wsServer.connections[0]._onMessage(bufMsg)
-          assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]], ['/imabuf', ['ploplo']]]) 
-
-          next()
-        }
-      ], done)
+        wsServer.connections[0]._onMessage(bufMsg)
+        assert.deepEqual(received, [['/imastr', [0, 56, 'bla', 23]], ['/imabuf', ['ploplo']]])
+        done()
+      })
     })
 
     it('should bubble-up error if message couldnt be decoded', (done) => {

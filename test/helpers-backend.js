@@ -76,23 +76,31 @@ exports.dummyOSCClients = function(expectedMsgCount, clients, handler) {
   return servers
 }
 
-// Helpers to create dummy server-side connections
-var DummyConnection = exports.DummyConnection = function(callback, server) {
-  this.callback = callback
-  coreServer.Connection.call(this, server)
+// DummyServer and DummyConnection classes that simulate all core.server functionalities.
+// Args: [<on message callback>, <connection id>]
+var DummyConnection = exports.DummyConnection = function(args) {
+  coreServer.Connection.call(this)
+  this.callback = args[0]
+  this.id = args[1]
 }
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
   namespace: 'dummy',
   send: function(address, args) { this.callback(address, args) },
   serialize: function() { return this.testData || {} },
-  deserialize: function(data) { this.restoredTestData = data }
+  deserialize: function(data) { 
+    coreServer.Connection.prototype.deserialize.call(this, data)
+    this.restoredTestData = data 
+  }
 })
 
-exports.dummyConnections = function(expectedMsgCount, connectionCount, handler) {
-  var answerReceived = exports.waitForAnswers(expectedMsgCount, handler)
-  return _.range(connectionCount).map((i) => new DummyConnection(answerReceived.bind(this, i)))
+var DummyServer = exports.DummyServer = function() {
+  coreServer.Server.apply(this)
 }
+_.extend(DummyServer.prototype, coreServer.Server.prototype, {
+  ConnectionClass: DummyConnection
+})
 
+// Common tasks to be executed before all tests
 exports.beforeEach = function(manager, toStart, done) {
   var asyncOps = [
     (next) => {
@@ -115,7 +123,7 @@ exports.beforeEach = function(manager, toStart, done) {
   async.series(asyncOps, done)
 }
 
-// Helper with common operations to clean after a test
+// Common tasks to be executed after all tests
 exports.afterEach = function(toStop, done) {
   var asyncOps = []
 

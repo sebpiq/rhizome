@@ -18,8 +18,9 @@ var oscServer = new osc.Server(config)
 
 // Connects the clients, configuring blob client if necessary
 var doConnection = function(clients) {
-  return (done) => {
-    var usingBlobClient = clients.filter((c) => c.useBlobClient)
+  return function() {
+    var done = _.last(arguments)
+      , usingBlobClient = clients.filter((c) => c.useBlobClient)
     usingBlobClient.forEach((c) => {
       var args
       if (c.blobsPort) args = [c.appPort, 'blobClient', c.blobsPort]
@@ -207,23 +208,22 @@ describe('osc.Server', function() {
     it('should transmit to osc connections subscribed to that address', function(done) {
       // List of OSC clients
       var oscClients = [
-        {ip: '127.0.0.1', appPort: 9001, useBlobClient: true}, // default value should be used
-        {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445, useBlobClient: true},
-        {ip: '127.0.0.1', appPort: 9003}
-      ]
-
-      // Adding dummy clients (simulate websockets)
-      var dummyConnection = new helpers.DummyConnection(function(address, args) {
-        dummyReceived.push([address, args])
-      }), dummyReceived = []
-      dummyConnection.id = 'bla'
+          {ip: '127.0.0.1', appPort: 9001, useBlobClient: true}, // default value should be used
+          {ip: '127.0.0.1', appPort: 9002, blobsPort: 44445, useBlobClient: true},
+          {ip: '127.0.0.1', appPort: 9003}
+        ]
+        , dummyServer = new helpers.DummyServer
+        , dummyReceived = []
 
       async.waterfall([
-        manager.open.bind(manager, dummyConnection),
+        // Do OSC connection with blob clients
         doConnection(oscClients),
 
+        // Adding dummy clients (simulate websockets)
+        dummyServer.openConnection.bind(dummyServer, [ (address, args) => dummyReceived.push([address, args]), 'bla' ]),
+
         // Do subscribe
-        function(next) {
+        function(dummyConnection, next) {
           manager.subscribe(dummyConnection, '/blo')
           sendToServer.send(coreMessages.subscribeAddress, [9001, '/bla'])
           sendToServer.send(coreMessages.subscribeAddress, [9002, '/'])
