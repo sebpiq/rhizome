@@ -269,6 +269,7 @@ Changelog
 
   - websockets.Client:
     - `isSupported` moved to `websocket.Client.isSupported()`.
+    - `throttle(time, func)` changed to `throttle(func, time)`
 
   - osc.Server:
     - `appPort` must now be different than the server port.
