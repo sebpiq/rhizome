@@ -75,7 +75,7 @@ describe('websockets.Server', () => {
         { port: config.port },
         { port: config.port },
         { port: config.port }
-      ]
+      ], wsConnections
 
       async.series([
         helpers.dummyWebClients.bind(helpers, wsServer, wsClients),
@@ -83,6 +83,7 @@ describe('websockets.Server', () => {
         (next) => {
           assert.equal(manager._openConnections.length, 3)
           assert.equal(wsServer.connections.length, 3)
+          wsConnections = wsServer.connections.slice(0)
           wsServer.stop(next)
         }
 
@@ -90,6 +91,10 @@ describe('websockets.Server', () => {
         if (err) done(err)
         assert.equal(manager._openConnections.length, 0)
         assert.equal(wsServer.connections.length, 0)
+        assert.equal(wsConnections.length, 3)
+        wsConnections.forEach((connection) => {
+          connection._sockets.forEach((socket) => assert.equal(socket.readyState, WebSocket.CLOSED))
+        })
         done()
       })
     })

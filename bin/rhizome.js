@@ -139,7 +139,7 @@ if (require.main === module) {
 
   // Log errors
   allServersFlatList.forEach((server) => {
-    server.on('error', (err) => console.error(e.stack ? e.stack : e))
+    server.on('error', (err) => console.error(err.stack ? err.stack : err))
   })
 
   async.series([
