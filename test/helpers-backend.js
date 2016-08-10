@@ -85,6 +85,7 @@ var DummyConnection = exports.DummyConnection = function(args) {
 }
 _.extend(DummyConnection.prototype, coreServer.Connection.prototype, {
   namespace: 'dummy',
+  autoId: false,
   send: function(address, args) { this.callback(address, args) },
   serialize: function() { return this.testData || {} },
   deserialize: function(data) { 

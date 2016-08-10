@@ -3,32 +3,14 @@ var assert = require('assert')
   , fs = require('fs')
   , async = require('async')
   , rimraf = require('rimraf')
+  , fakeredis = require('fakeredis')
   , persistence = require('../../../lib/connections/persistence')
   , helpers = require('../../helpers-backend')
 
 describe('persistence', () => {
 
-  describe('NEDBStore', () => {
+  var testSuite = (store, connectionExists) => {
 
-    var testDbDir = '/tmp/rhizome-test-db'
-      , store = new persistence.NEDBStore(testDbDir)
-
-    var connectionExists = (connection, done) => {
-      var query = { connectionId: connection.id, namespace: connection.namespace }
-      store._connectionsCollection.findOne(query, (err, doc) => {
-        done(err, Boolean(doc))
-      })
-    }
-
-    beforeEach((done) => {
-      async.series([
-        rimraf.bind(rimraf, testDbDir),
-        fs.mkdir.bind(fs, testDbDir),
-        store.start.bind(store)
-      ], done)
-    })
-    afterEach((done) => { store.stop(done) })
-    
     describe('connectionInsertOrRestore', () => {
 
       it('should insert connections that dont exist and restore the others', (done) => {
@@ -78,14 +60,26 @@ describe('persistence', () => {
 
       })
 
-      it('should insert connections and automatically assign id if null', (done) => {
+      it('should insert connections and automatically assign id if null and autoId is true', (done) => {
         var connection = new helpers.DummyConnection([ () => {}, null ])
         connection.testData = {a: 1, b: 2}
+        connection.autoId = true
         assert.equal(connection.id, null)
         store.connectionInsertOrRestore(connection, (err, results) => {
           if (err) throw err
           assert.ok(connection.id !== null)
           assert.ok(connection.id.length > 4)
+          done()
+        })
+      })
+
+      it('should return an error when inserting, if id is null and autoId is false', (done) => {
+        var connection = new helpers.DummyConnection([ () => {}, null ])
+        connection.testData = {a: 1, b: 2}
+        connection.autoId = false
+        assert.equal(connection.id, null)
+        store.connectionInsertOrRestore(connection, (err, results) => {
+          assert.ok(err)
           done()
         })
       })
@@ -198,16 +192,68 @@ describe('persistence', () => {
         })
       })
 
-      it('shouldnt crash if manager state is missing fields or invalid', (done) => {
-        
-        async.series([
-          fs.writeFile.bind(fs, store._managerFile, JSON.stringify({})),
-          store.managerRestore.bind(store)
-        ], done)
-      })
+    })
+  }
 
+  describe('NEDBStore', () => {
+
+    var testDbDir = '/tmp/rhizome-test-db'
+      , store = new persistence.NEDBStore(testDbDir)
+
+    var connectionExists = (connection, done) => {
+      var query = { connectionId: connection.id, namespace: connection.namespace }
+      store._connectionsCollection.findOne(query, (err, doc) => {
+        done(err, !!doc)
+      })
+    }
+
+    beforeEach((done) => {
+      async.series([
+        rimraf.bind(rimraf, testDbDir),
+        fs.mkdir.bind(fs, testDbDir),
+        store.start.bind(store)
+      ], done)
+    })
+    afterEach((done) => { store.stop(done) })
+    
+    testSuite(store, connectionExists)
+
+    it('shouldnt crash if manager state is missing fields or invalid', (done) => {
+      
+      async.series([
+        fs.writeFile.bind(fs, store._managerFile, JSON.stringify({})),
+        store.managerRestore.bind(store)
+      ], done)
     })
 
+  })
+
+
+  describe('RedisStore', () => {
+
+    var store = new persistence.RedisStore()
+    // Mock-up with fakeredis
+    store._createClient = function() { return fakeredis.createClient() }
+    store.stop = function(done) { 
+      this._redisClient = null
+      done()
+    }
+
+    var connectionExists = (connection, done) => {
+      store._redisClient.get(store._makeKey(connection.namespace, connection.id), (err, value) => {
+        done(err, !!value)
+      })
+    }
+
+    beforeEach((done) => {
+      async.series([
+        (next) => store.start(next),
+        (next) => store._redisClient.flushdb(next)
+      ], done)
+    })
+    afterEach((done) => store.stop(done))
+    
+    testSuite(store, connectionExists)
   })
 
 })
