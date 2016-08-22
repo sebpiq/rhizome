@@ -40,6 +40,33 @@ describe('websockets', () => {
     helpers.afterEach([wsServer, manager], done)
   })
 
+  var _connectSameId = function(done) {
+    var results, id
+    async.waterfall([
+
+      // Create a first connection, let the server assign an id
+      helpers.dummyWebClients.bind(this, wsServer, [{ port: config.port }]),
+
+      // Create a second connection by using the same id as the first one
+      (sockets, messages, next) => {
+        results = [sockets, messages]
+        id = messages[0][1]
+        helpers.dummyWebClients(wsServer, [{ port: config.port, query: { id: id } }], next)
+      }
+
+    ], (err, sockets, messages) => {
+      if (err) return done(err)
+
+      // Check that we received the same id as for the first connection
+      messages.forEach((msg) => {
+        assert.equal(msg.length, 2)
+        assert.equal(msg[0], 0)
+        assert.equal(msg[1], id)
+        assert.ok(_.isString(msg[1]) && msg[1].length > 3)
+      })
+      done(err, results[0].concat(sockets), results[1].concat(messages))
+    })
+  }
 
   describe('Server', () => {
 
@@ -143,24 +170,16 @@ describe('websockets', () => {
       })
 
       it('shouldnt open several connections if sockets connect with same id', (done) => {
-        var dummyClients = [
-            { port: config.port, query: { id: 'qwerty' } }, 
-            { port: config.port, query: { id: 'qwerty' } }
-          ]
-          , received = []
+        var received = []
+
+        // Check that all sockets got connection accepted and id set right
+
         assert.equal(wsServer._wsServer.clients.length, 0)
         assert.equal(wsServer.connections.length, 0)
         wsServer.on('connection', () => received.push('connection'))
 
-        helpers.dummyWebClients(wsServer, dummyClients, (err, sockets, messages) => {
-          if (err) throw err
-
-          // Check that all sockets got connection accepted
-          messages.forEach((msg) => {
-            assert.equal(msg.length, 2)
-            assert.equal(msg[0], 0)
-            assert.equal(msg[1], 'qwerty')
-          })
+        _connectSameId((err, sockets, messages) => {
+          if (err) return done(err)
 
           // Check that we indeed have 2 sockets but only 1 actual connection
           assert.deepEqual(received, ['connection'])
@@ -168,6 +187,7 @@ describe('websockets', () => {
           assert.equal(wsServer.connections.length, 1)
           assert.equal(wsServer.connections[0]._sockets.length, 2)
 
+          // Clean-up
           wsServer.removeAllListeners('connection')
           done()
         })
@@ -214,15 +234,12 @@ describe('websockets', () => {
       })
 
       it('should close all sockets when connection.close is called', (done) => {
-        var dummyClients = [
-            { port: config.port, query: { id: 'qwerty' } }, 
-            { port: config.port, query: { id: 'qwerty' } }
-          ], connection
+        var connection
         assert.equal(wsServer._wsServer.clients.length, 0)
         assert.equal(wsServer.connections.length, 0)
 
         async.waterfall([
-          helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
+          _connectSameId,
 
           (sockets, messages, next) => {
             assert.equal(wsServer._wsServer.clients.length, 2)
@@ -241,15 +258,11 @@ describe('websockets', () => {
       })
 
       it('should keep the connection open if it still has active sockets', (done) => {
-        var dummyClients = [ 
-            { port: config.port, query: { id: 'abc' } }, 
-            { port: config.port, query: { id: 'abc' } }
-          ]
-          , received = [], connection1
+        var received = [], connection1
         assert.equal(wsServer._wsServer.clients.length, 0)
 
         async.waterfall([
-          helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
+          _connectSameId,
 
           (sockets, messages, next) => {
             connection1 = wsServer.connections[0]
@@ -349,14 +362,10 @@ describe('websockets', () => {
       })
 
       it('should send to all sockets associated to one connection', (done) => {
-        var dummyClients = [ 
-          { port: config.port, query: { id: 'abc' } }, 
-          { port: config.port, query: { id: 'abc' } }
-        ]      
         assert.equal(wsServer._wsServer.clients.length, 0)
 
         async.waterfall([
-          helpers.dummyWebClients.bind(helpers, wsServer, dummyClients),
+          _connectSameId,
 
           (sockets, messages, next) => {
             assert.equal(wsServer.connections.length, 1)

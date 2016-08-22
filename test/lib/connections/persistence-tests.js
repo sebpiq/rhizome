@@ -17,8 +17,8 @@ describe('persistence', () => {
         var connection1 = new helpers.DummyConnection([ () => {}, '9abc' ])
           , connection2 = new helpers.DummyConnection([ () => {}, 'fghj' ])
           , restoredConnection
-        connection1.testData = {a: 1, b: 2}
-        connection2.testData = {c: 3, d: 4}
+        connection1.testData = { a: 1, b: 2 }
+        connection2.testData = { c: 3, d: 4 }
 
         async.series([
           // Check that connections indeed dont exist
@@ -54,7 +54,7 @@ describe('persistence', () => {
           assert.equal(existed2Before, false)
           assert.equal(existed1After, true)
           assert.equal(existed2After, true)
-          assert.deepEqual(restoredConnection.restoredTestData, {a: 1, b: 2})
+          assert.deepEqual(restoredConnection.restoredTestData, { a: 1, b: 2 })
           done()
         })
 
@@ -62,7 +62,7 @@ describe('persistence', () => {
 
       it('should insert connections and automatically assign id if null and autoId is true', (done) => {
         var connection = new helpers.DummyConnection([ () => {}, null ])
-        connection.testData = {a: 1, b: 2}
+        connection.testData = { a: 1, b: 2 }
         connection.autoId = true
         assert.equal(connection.id, null)
         store.connectionInsertOrRestore(connection, (err, results) => {
@@ -75,7 +75,7 @@ describe('persistence', () => {
 
       it('should return an error when inserting, if id is null and autoId is false', (done) => {
         var connection = new helpers.DummyConnection([ () => {}, null ])
-        connection.testData = {a: 1, b: 2}
+        connection.testData = { a: 1, b: 2 }
         connection.autoId = false
         assert.equal(connection.id, null)
         store.connectionInsertOrRestore(connection, (err, results) => {
@@ -104,18 +104,18 @@ describe('persistence', () => {
       it('should update connections that exist', (done) => {
         var connection = new helpers.DummyConnection([ () => {}, '9abc' ])
           , restoredConnection = new helpers.DummyConnection([ () => {}, connection.id ])
-        connection.testData = {a: 1, b: 2}
+        connection.testData = { a: 1, b: 2 }
 
         async.series([
           store.connectionInsertOrRestore.bind(store, connection),
           (next) => {
-            connection.testData = {c: 8, d: 99}
+            connection.testData = { c: 8, d: 99 }
             store.connectionUpdate(connection, next)
           },
           store.connectionInsertOrRestore.bind(store, restoredConnection)
         ], (err, results) => {
           if (err) throw err
-          assert.deepEqual(restoredConnection.restoredTestData, {c: 8, d: 99})
+          assert.deepEqual(restoredConnection.restoredTestData, { c: 8, d: 99 })
           done()
         })
 
@@ -240,7 +240,7 @@ describe('persistence', () => {
     }
 
     var connectionExists = (connection, done) => {
-      store._redisClient.get(store._makeKey(connection.namespace, connection.id), (err, value) => {
+      store._redisClient.get(store._makeKey(connection), (err, value) => {
         done(err, !!value)
       })
     }
