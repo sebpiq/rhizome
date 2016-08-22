@@ -33,10 +33,6 @@
     "vinyl-source-stream": "^1.1.0",
     "ws": "^1.1.1"
   },
-  "optionalDependencies": {
-    "bufferutil": "^1.2.1",
-    "utf-8-validate": "^1.2.1"
-  },
   "devDependencies": {
     "body-parser": "^1.14.1",
     "fakeredis": "^1.0.3",
@@ -44,9 +40,8 @@
     "istanbul": "^0.3.14",
     "mocha": "^2.0.0",
     "ngrok": "^2.2.2",
-    "rimraf": "2.2.x",
+    "rimraf": "^2.5.4",
     "saucelabs": "^1.2.0",
-    "stats-lite": "1.0.x",
     "superagent": "^1.4.0"
   },
   "bin": {
