@@ -137,8 +137,8 @@ if (require.main === module) {
 
   allServersFlatList = _.chain(allServers).values().flatten().value()
 
-  // Log errors
-  allServersFlatList.forEach((server) => {
+  // Log errors for servers and manager
+  allServersFlatList.concat([ manager ]).forEach((server) => {
     server.on('error', (err) => console.error(err.stack ? err.stack : err))
   })
 
