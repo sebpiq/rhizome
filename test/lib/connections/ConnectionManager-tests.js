@@ -3,7 +3,6 @@ var assert = require('assert')
   , fs = require('fs')
   , _ = require('underscore')
   , async = require('async')
-  , rimraf = require('rimraf')
   , ConnectionManager = require('../../../lib/connections/ConnectionManager')
   , persistence = require('../../../lib/connections/persistence')
   , coreUtils = require('../../../lib/core/utils')
@@ -11,14 +10,8 @@ var assert = require('assert')
 
 
 describe('ConnectionManager', () => {
-
-  var testDbDir = '/tmp/rhizome-test-db'
-  beforeEach((done) => {
-    async.series([
-      rimraf.bind(rimraf, testDbDir),
-      fs.mkdir.bind(fs, testDbDir)
-    ], done)
-  })
+ 
+  beforeEach((done) => helpers.beforeEach(done))
 
   describe('start', () => {
 
@@ -41,7 +34,7 @@ describe('ConnectionManager', () => {
     })
 
     it('should restore saved state', (done) => {
-      var managerConfig = { store: testDbDir, storeWriteTime: 1 }
+      var managerConfig = { store: helpers.testDbDir, storeWriteTime: 1 }
         , manager = new ConnectionManager(managerConfig)
         , restoredManager = new ConnectionManager(managerConfig)
 
@@ -85,16 +78,16 @@ describe('ConnectionManager', () => {
   })
 
   describe('open', () => {
-    var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, storeWriteTime: 1 })
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })    
+    var store = new persistence.NEDBStore(helpers.testDbDir)
+      , manager = new ConnectionManager({ store: store, storeWriteTime: 1 })
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })    
 
     it('should open connection properly', (done) => {
       var connection = new helpers.DummyConnection([ () => {}, '1234' ])
-      connections.open(connection, (err) => {
+      manager.open(connection, (err) => {
         if (err) throw err
-        assert.deepEqual(connections._openConnections, [connection])
+        assert.deepEqual(manager._openConnections, [connection])
         done()
       })
     })
@@ -102,22 +95,22 @@ describe('ConnectionManager', () => {
   })
 
   describe('close', () => {
-    var store = new persistence.NEDBStore(testDbDir)
-      , connections = new ConnectionManager({ store: store, storeWriteTime: 1 })
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })    
+    var store = new persistence.NEDBStore(helpers.testDbDir)
+      , manager = new ConnectionManager({ store: store, storeWriteTime: 1 })
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })    
 
     it('should close connection properly', (done) => {
       var connection = new helpers.DummyConnection([ () => {}, '5678' ])
       async.series([
-        connections.open.bind(connections, connection),
+        manager.open.bind(manager, connection),
         // Wait a bit so 'open' and 'close' events are not simultaneous
         (next) => setTimeout(next.bind(this, null), 10),
-        connections.close.bind(connections, connection)
+        manager.close.bind(manager, connection)
 
       ], (err) => {
         if (err) throw err
-        assert.deepEqual(connections._openConnections, [])
+        assert.deepEqual(manager._openConnections, [])
         done()
       })
     })
@@ -126,9 +119,9 @@ describe('ConnectionManager', () => {
 
   describe('send', () => {
 
-    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })
+    var manager = new ConnectionManager({store: new persistence.NEDBStore(helpers.testDbDir)})
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })
 
     it('should send messages from subspaces', (done) => {
       var received = []
@@ -137,15 +130,15 @@ describe('ConnectionManager', () => {
           '9abc'
         ])
 
-      connections.open(connection, (err) => {
+      manager.open(connection, (err) => {
         if(err) throw err
-        connections.subscribe(connection, '/a')
-        assert.equal(connections.send('/a', [44]), null)
-        assert.equal(connections.send('/a/b', [55]), null)
-        assert.equal(connections.send('/', [66]), null)
-        assert.equal(connections.send('/c', [77]), null)
-        assert.equal(connections.send('/a/d', [88]), null)
-        assert.equal(connections.send('/a/', [99]), null)
+        manager.subscribe(connection, '/a')
+        assert.equal(manager.send('/a', [44]), null)
+        assert.equal(manager.send('/a/b', [55]), null)
+        assert.equal(manager.send('/', [66]), null)
+        assert.equal(manager.send('/c', [77]), null)
+        assert.equal(manager.send('/a/d', [88]), null)
+        assert.equal(manager.send('/a/', [99]), null)
 
         helpers.assertSameElements(received, [
           ['/a', [44]],
@@ -162,17 +155,17 @@ describe('ConnectionManager', () => {
 
   describe('subscribe', () => {
 
-    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })
+    var manager = new ConnectionManager({store: new persistence.NEDBStore(helpers.testDbDir)})
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })
 
     it('should return an error message if address in not valid', (done) => {
       var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
-      connections.open(connection, (err) => {
+      manager.open(connection, (err) => {
         if(err) throw err
-        assert.ok(_.isString(connections.subscribe(connection, '')))
-        assert.ok(_.isString(connections.subscribe(connection, 'bla')))
-        assert.ok(_.isString(connections.subscribe(connection, '/sys/bla')))
+        assert.ok(_.isString(manager.subscribe(connection, '')))
+        assert.ok(_.isString(manager.subscribe(connection, 'bla')))
+        assert.ok(_.isString(manager.subscribe(connection, '/sys/bla')))
         done()
       })
     })
@@ -181,19 +174,19 @@ describe('ConnectionManager', () => {
 
   describe('isSubscribed', () => {
 
-    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })
+    var manager = new ConnectionManager({store: new persistence.NEDBStore(helpers.testDbDir)})
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })
 
     it('should return true if connection subscribed, false otherwise', (done) => {
       var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
-      connections.open(connection, (err) => {
+      manager.open(connection, (err) => {
         if(err) return done(err)
-        assert.ok(!connections.isSubscribed(connection, '/bla'))
-        connections.subscribe(connection, '/bla')
-        assert.ok(connections.isSubscribed(connection, '/bla'))
-        assert.ok(!connections.isSubscribed(connection, '/'))
-        assert.ok(!connections.isSubscribed(connection, '/blo'))
+        assert.ok(!manager.isSubscribed(connection, '/bla'))
+        manager.subscribe(connection, '/bla')
+        assert.ok(manager.isSubscribed(connection, '/bla'))
+        assert.ok(!manager.isSubscribed(connection, '/'))
+        assert.ok(!manager.isSubscribed(connection, '/blo'))
         done()
       })
     })
@@ -202,19 +195,19 @@ describe('ConnectionManager', () => {
 
   describe('getOpenConnectionsIds', () => {
 
-    var connections = new ConnectionManager({store: new persistence.NEDBStore(testDbDir)})
-    beforeEach((done) => { connections.start(done) })
-    afterEach((done) => { connections.stop(done) })
+    var manager = new ConnectionManager({store: new persistence.NEDBStore(helpers.testDbDir)})
+    beforeEach((done) => { manager.start(done) })
+    afterEach((done) => { manager.stop(done) })
 
     it('should return an error message if address in not valid', (done) => {
       var connection = new helpers.DummyConnection([ () => {}, 'defg' ])
         , connection2 = new helpers.DummyConnection([ () => {}, 'hijk' ])
       async.series([
-        connections.open.bind(connections, connection),
-        connections.open.bind(connections, connection2)
+        manager.open.bind(manager, connection),
+        manager.open.bind(manager, connection2)
       ], (err) => {
         if(err) throw err
-        assert.deepEqual(connections.getOpenConnectionsIds('dummy'), ['defg', 'hijk'])
+        assert.deepEqual(manager.getOpenConnectionsIds('dummy'), ['defg', 'hijk'])
         done()
       })
     })

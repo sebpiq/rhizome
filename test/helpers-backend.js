@@ -5,6 +5,7 @@ var querystring = require('querystring')
   , async = require('async')
   , WebSocket = require('ws')
   , oscMin = require('osc-min')
+  , rimraf = require('rimraf')
   , oscServer = require('../lib/osc/Server')
   , oscTransport = require('../lib/osc/transport')
   , connections = require('../lib/connections')
@@ -14,6 +15,9 @@ var querystring = require('querystring')
   , utils = require('../lib/core/utils')
   , helpersEverywhere = require('./helpers-everywhere')
 _.extend(exports, helpersEverywhere)
+
+// The directory we use for storing persisted data in tests
+var testDbDir = exports.testDbDir = '/tmp/rhizome-test-db'
 
 // For testing : we need to add standard `removeEventListener` method cause `ws` doesn't implement it.
 WebSocket.prototype.removeEventListener = function(name, cb) {
@@ -103,26 +107,26 @@ _.extend(DummyServer.prototype, coreServer.Server.prototype, {
 })
 
 // Common tasks to be executed before all tests
-exports.beforeEach = function(manager, toStart, done) {
+exports.beforeEach = function(toStart, done) {
   var asyncOps = [
-    (next) => {
-      fs.exists('/tmp/connections.db', (exists) => {
-        if (exists) fs.unlink('/tmp/connections.db', next) 
-        else next()
-      })
-    },
-    manager.start.bind(manager)
-  ]
-  connections.manager = manager
+    rimraf.bind(rimraf, testDbDir),
+    fs.mkdir.bind(fs, testDbDir)
+  ], manager = _.find(toStart, (s) => s instanceof connections.ConnectionManager)
 
-  if (arguments.length === 2) {
+  if (arguments.length === 1) {
     done = toStart
     toStart = []
   }
 
-  if (toStart.length) toStart.forEach((obj) => asyncOps.push(obj.start.bind(obj)))
+  if (manager)
+    connections.manager = manager
 
-  async.series(asyncOps, done)
+  if (toStart.length) 
+    toStart.forEach((obj) => asyncOps.push(obj.start.bind(obj)))
+
+  if (asyncOps.length) 
+    async.series(asyncOps, done)
+  else done()
 }
 
 // Common tasks to be executed after all tests
@@ -149,8 +153,10 @@ exports.afterEach = function(toStop, done) {
     })
   }
 
-  if (toStop.length) toStop.forEach((obj) => asyncOps.push(obj.stop.bind(obj)))
+  if (toStop.length) 
+    toStop.forEach((obj) => asyncOps.push(obj.stop.bind(obj)))
   
-  if (asyncOps.length) async.series(asyncOps, done)
+  if (asyncOps.length) 
+    async.series(asyncOps, done)
   else done()
 }

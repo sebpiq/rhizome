@@ -197,8 +197,7 @@ describe('persistence', () => {
 
   describe('NEDBStore', () => {
 
-    var testDbDir = '/tmp/rhizome-test-db'
-      , store = new persistence.NEDBStore(testDbDir)
+    var store = new persistence.NEDBStore(helpers.testDbDir)
 
     var connectionExists = (connection, done) => {
       var query = { connectionId: connection.id, namespace: connection.namespace }
@@ -207,14 +206,8 @@ describe('persistence', () => {
       })
     }
 
-    beforeEach((done) => {
-      async.series([
-        rimraf.bind(rimraf, testDbDir),
-        fs.mkdir.bind(fs, testDbDir),
-        store.start.bind(store)
-      ], done)
-    })
-    afterEach((done) => { store.stop(done) })
+    beforeEach((done) => helpers.beforeEach([ store ], done))
+    afterEach((done) => helpers.afterEach([ store ], done))
     
     testSuite(store, connectionExists)
 
@@ -247,11 +240,11 @@ describe('persistence', () => {
 
     beforeEach((done) => {
       async.series([
-        (next) => store.start(next),
+        (next) => helpers.beforeEach([ store ], next),
         (next) => store._redisClient.flushdb(next)
       ], done)
     })
-    afterEach((done) => store.stop(done))
+    afterEach((done) => helpers.afterEach([ store ], done))
     
     testSuite(store, connectionExists)
   })

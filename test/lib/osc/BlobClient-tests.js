@@ -29,21 +29,8 @@ describe('blob-client', () => {
     store: new connections.NoStore()
   })
 
-  beforeEach((done) => {
-    connections.manager = manager
-    async.series([
-      client.start.bind(client), 
-      manager.start.bind(manager),
-      fakeServer.start.bind(fakeServer)
-    ], done)
-  })
-
-  afterEach((done) => {
-    async.series([
-      fakeServer.stop.bind(fakeServer),
-      helpers.afterEach.bind(helpers, [client, manager])
-    ], done)
-  })
+  beforeEach((done) => helpers.beforeEach([ manager, client, fakeServer ], done))
+  afterEach((done) => helpers.afterEach([ fakeServer, client, manager ], done))
 
   describe('start', () => {
 

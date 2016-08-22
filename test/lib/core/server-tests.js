@@ -13,9 +13,9 @@ describe('core.server', () => {
 
   beforeEach((done) => { 
     manager = new connections.ConnectionManager({ store: connections.NoStore() })
-    helpers.beforeEach(manager, done) 
+    helpers.beforeEach([ manager ], done) 
   })
-  afterEach((done) => { helpers.afterEach([manager], done) })
+  afterEach((done) => { helpers.afterEach([ manager ], done) })
 
   describe('Connection', () => {
 

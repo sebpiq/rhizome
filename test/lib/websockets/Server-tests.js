@@ -27,14 +27,7 @@ describe('websockets', () => {
     store: new connections.NoStore()
   })
 
-  beforeEach((done) => {
-    connections.manager = manager
-    async.series([
-      manager.start.bind(manager),
-      wsServer.start.bind(wsServer)
-    ], done)
-  })
-  
+  beforeEach((done) => helpers.beforeEach([ manager, wsServer ], done))
   afterEach((done) => {
     wsServer.removeAllListeners('error')
     helpers.afterEach([wsServer, manager], done)

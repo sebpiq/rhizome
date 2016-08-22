@@ -45,10 +45,10 @@ describe('osc', function() {
     store: new connections.NoStore()
   })
 
-  beforeEach(function(done) { helpers.beforeEach(manager, [oscServer], done) })
-  afterEach(function(done) {
+  beforeEach(function(done) { helpers.beforeEach([ manager, oscServer ], done) })
+  afterEach(function(done) { 
     oscServer.removeAllListeners('error') 
-    helpers.afterEach([oscServer, manager], done) 
+    helpers.afterEach([ oscServer, manager ], done) 
   })
 
   describe('Server', () => {
@@ -68,7 +68,7 @@ describe('osc', function() {
             {ip: '127.0.0.1', appPort: 9002},
             {ip: '127.0.0.1', appPort: 9003}
           ], conn9001
-          , store = new connections.NEDBStore('/tmp')
+          , store = new connections.NEDBStore(helpers.testDbDir)
           , manager = new connections.ConnectionManager({ store: store })
         connections.manager = manager
 
@@ -137,7 +137,7 @@ describe('osc', function() {
       })
 
       it('should always persist blob client config', function(done) {
-        var store = new connections.NEDBStore('/tmp')
+        var store = new connections.NEDBStore(helpers.testDbDir)
           , manager = new connections.ConnectionManager({ store: store })
         connections.manager = manager
 
