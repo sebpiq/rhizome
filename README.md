@@ -276,6 +276,7 @@ Changelog
 
   - ConnectionManager:
     - removed `collectStats` parameter and stats collection code
+    - redis presistence layer available
 
 - 0.7.3
   - update node-ws
