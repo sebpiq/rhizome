@@ -372,12 +372,12 @@ describe('websockets', () => {
             assert.equal(wsServer._wsServer.clients.length, 2)
 
             var onMessage = helpers.waitForAnswers(2, (received) => next(null, received))
-            sockets.forEach((socket) => socket.on('message', onMessage))
+            sockets.forEach((socket, i) => socket.on('message', onMessage))
             wsServer.connections[0].send('/bla', [1, 2, 3])
           }
 
         ], (err, received) => {
-          if (err) throw err
+          if (err) return done(err)
           assert.equal(received.length, 2)
           received.forEach((args) => {
             var message = oscMin.fromBuffer(args[0])

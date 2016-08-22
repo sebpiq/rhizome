@@ -25,7 +25,7 @@ WebSocket.prototype.removeEventListener = function(name, cb) {
 // Helper to create dummy web clients. Callack is called only when sockets all opened.
 exports.dummyWebClients = function(wsServer, clients, done) {
   var countBefore = wsServer._wsServer.clients.length 
-    , url, socket
+    , url, socket, sockets = []
   async.series(clients.map((client) => {
     return (next) => {
       _.defaults(client, { query: {} })
@@ -33,6 +33,7 @@ exports.dummyWebClients = function(wsServer, clients, done) {
       url = 'ws://localhost:' + client.port + '/?' + querystring.stringify(client.query)
       socket = new WebSocket(url)
       _dummyWebClients.push(socket)
+      sockets.push(socket)
 
       socket.on('error', (err) => {
         console.error('dummy socket error : ' + err)
@@ -49,7 +50,7 @@ exports.dummyWebClients = function(wsServer, clients, done) {
       })
     }
   }), (err, messages) => {
-    if (done) done(err, _dummyWebClients, messages)
+    if (done) done(err, sockets, messages)
   })
 }
 var _dummyWebClients = []
@@ -133,8 +134,21 @@ exports.afterEach = function(toStop, done) {
     toStop = []
   }
 
-  _dummyWebClients.forEach((socket) => socket.close())
-  _dummyWebClients = []
+  if (_dummyWebClients.length) {
+    asyncOps.push((next) => {
+      async.eachSeries(_dummyWebClients, (socket, nextSocket) => {
+        socket.removeAllListeners()
+        if (socket.readyStatus === WebSocket.OPEN) {
+          socket.close()
+          socket.once('close', nextSocket)
+        } else nextSocket()
+      }, (err) => {
+        _dummyWebClients = []
+        next(err)
+      })
+    })
+  }
+
   if (toStop.length) toStop.forEach((obj) => asyncOps.push(obj.stop.bind(obj)))
   
   if (asyncOps.length) async.series(asyncOps, done)

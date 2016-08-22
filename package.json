@@ -54,7 +54,7 @@
   },
   "scripts": {
     "test": "mocha test/bin/ test/lib/ --check-leaks --globals window,location,navigator,b --recursive --timeout 20000",
-    "coverage": "istanbul cover _mocha -- test --reporter spec --recursive --timeout 20000",
+    "coverage": "istanbul cover _mocha -- test/lib --reporter spec --recursive --timeout 20000",
     "cloc": "cloc bin/ lib/"
   }
 }

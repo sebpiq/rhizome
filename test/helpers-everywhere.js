@@ -9,7 +9,10 @@ var waitForAnswers = exports.waitForAnswers = function(expectedCount, done) {
   var received = []
   return function() {
     received.push(_.toArray(arguments))
-    if (received.length >= expectedCount) done(received)
+    if (received.length === expectedCount) done(received)
+    if (received.length > expectedCount) {
+      throw new Error('called more times than expected : ' + _.toArray(arguments))
+    }
   }
 }
 
