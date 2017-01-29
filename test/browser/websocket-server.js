@@ -50,7 +50,7 @@ _.extend(Server.prototype, {
     var getDummyWebClients = () => {
       return getOpenClients().filter((s) => {
         var query = urlparse.parse(s.upgradeReq.url, true).query
-        return query.hasOwnProperty('dummies')
+        return query.dummies !== undefined
       })
     }
 
@@ -145,6 +145,7 @@ _.extend(Server.prototype, {
     // Make space on the server by removing some dummy clients
     app.post('/server/free-up', (req, res) => {
       var socket = getDummyWebClients()[0]
+      if (!socket) throw new Error('no dummy socket was found')
       socket.once('close', () => res.end())
       socket.close()
     })
@@ -240,6 +241,6 @@ if (require.main === module) {
   var server = new Server({})
   server.start((err) => {
     if (err) throw err
-    console.log('websocket test server running on port ' + server.config.port)
+    console.log('open http://localhost:' + server.config.port + ' to run browser tests')
   })
 }

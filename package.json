@@ -12,22 +12,28 @@
     "osc",
     "websocket"
   ],
+  "scripts": {
+    "test": "mocha test/bin/ test/lib/ --check-leaks --globals window,location,navigator,b --recursive --timeout 20000",
+    "browser-test": "node test/browser/websocket-server",
+    "coverage": "istanbul cover _mocha -- test/lib --reporter spec --recursive --timeout 20000",
+    "cloc": "cloc bin/ lib/"
+  },
   "dependencies": {
-    "async": "^2.0.0",
-    "browserify": "^13.0.0",
-    "chai": "^3.2.0",
+    "async": "^2.1.4",
+    "browserify": "^14.0.0",
+    "chai": "^3.5.0",
     "cli-color": "^1.0.0",
     "commander": "^2.8.0",
     "cookies-js": "^1.2.1",
-    "debug": "^2.2.0",
+    "debug": "^2.6.0",
     "express": "^4.13.3",
     "gulp": "^3.9.0",
     "morgan": "^1.6.1",
-    "nedb": "^1.1.2",
+    "nedb": "^1.8.0",
     "osc-min": "^1.1.1",
     "redis": "^2.6.2",
     "serve-static": "^1.10.0",
-    "tmp": "^0.0.28",
+    "tmp": "^0.0.31",
     "underscore": "^1.8.0",
     "validation-pod": "x",
     "vinyl-source-stream": "^1.1.0",
@@ -51,10 +57,5 @@
   "license": "GPL-3.0",
   "engines": {
     "node": ">=4"
-  },
-  "scripts": {
-    "test": "mocha test/bin/ test/lib/ --check-leaks --globals window,location,navigator,b --recursive --timeout 20000",
-    "coverage": "istanbul cover _mocha -- test/lib --reporter spec --recursive --timeout 20000",
-    "cloc": "cloc bin/ lib/"
   }
 }

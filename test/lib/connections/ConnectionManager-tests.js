@@ -29,7 +29,7 @@ describe('ConnectionManager', () => {
       ], (err) => {
         if (err) throw err
         assert.ok(manager1._config.store instanceof persistence.NEDBStore)
-        done()
+        manager1.stop(done)
       })
     })
 
@@ -42,24 +42,24 @@ describe('ConnectionManager', () => {
       manager._nsTree.get('/bla/ho').lastMessage = ['hoho', 1, 'huhu']
       manager._nsTree.get('/blu').lastMessage = [122222.901]
 
-      // Hack to wait for next save to persistence to be executed.
-      // What happens otherwise is that there is race conditions causing tests to fail
-      var _waitNextSave = (next) => {
-        var store = manager._config.store
-        store._managerSave = store.managerSave
-        store.managerSave = function(state, done) {
-          store._managerSave(state, (err) => {
-            if (err) return done(err)
-            store.managerSave = store._managerSave
-            done()
-            next()
-          })
-        }
-      }
-
       async.series([
         manager.start.bind(manager),
-        _waitNextSave,
+
+        // Hack to wait for next save to persistence to be executed.
+        // What happens otherwise is that there is race conditions causing tests to fail
+        (next) => {
+          var store = manager._config.store
+          store._managerSave = store.managerSave
+          store.managerSave = function(state, done) {
+            store._managerSave(state, (err) => {
+              if (err) return done(err)
+              store.managerSave = store._managerSave
+              done()
+              next()
+            })
+          }
+        },
+        
         restoredManager.start.bind(restoredManager),
         (next) => {
           helpers.assertSameElements(restoredManager._nsTree.toJSON(), [

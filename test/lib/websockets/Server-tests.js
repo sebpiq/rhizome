@@ -305,7 +305,7 @@ describe('websockets', () => {
 
       it('should bubble-up socket error when socket is not opened', (done) => {
         console.log('\nDO NOT PANIC : this is just a test (should say "web socket send failed")')
-        wsServer.on('error', (err) => console.error(err))
+        wsServer.on('error', (err) => console.error(err.message))
         assert.equal(wsServer._wsServer.clients.length, 0)
 
         // Create dummy web clients, and immediately close one of them
@@ -334,7 +334,7 @@ describe('websockets', () => {
         WebSocket.Server = _WSServer
 
         var closingWsServer = new websockets.Server(config)
-        closingWsServer.on('error', (err) => console.error(err))
+        closingWsServer.on('error', (err) => console.error(err.message))
 
         async.series([
           // Close automatically started server to avoid using same port
@@ -415,7 +415,7 @@ describe('websockets', () => {
 
       it('should bubble-up error if message couldnt be decoded', (done) => {
         console.log('\nDO NOT PANIC : this is just a test (should say "invalid websocket message")')
-        wsServer.on('error', (err) => console.error(err))
+        wsServer.on('error', (err) => console.error(err.message))
 
         assert.equal(wsServer._wsServer.clients.length, 0)
         helpers.dummyWebClients(wsServer, [ { port: config.port } ], (err, sockets, messages) => {

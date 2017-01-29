@@ -320,7 +320,7 @@ describe('osc', function() {
           {ip: '127.0.0.1', appPort: 9001, blobsPort: 81, useBlobClient: true}
         ]
 
-        oscServer.on('error', (err) => console.error(err))
+        oscServer.on('error', (err) => console.error(err.message))
         console.log('\nDO NOT PANIC : this is just a test (should say "blob client refused connection")')
         
         async.waterfall([
@@ -347,7 +347,7 @@ describe('osc', function() {
     describe('sys messages', function() {
 
       it('should bubble-up error if invalid port value', function(done) {
-        oscServer.on('error', (err) => console.error(err))
+        oscServer.on('error', (err) => console.error(err.message))
         sendToServer.send(coreMessages.subscribeAddress, ['/blabla'])
         sendToServer.send(coreMessages.subscribeAddress, [-10])
         sendToServer.send(coreMessages.subscribeAddress, [10000000])
