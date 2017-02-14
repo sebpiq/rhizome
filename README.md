@@ -262,6 +262,10 @@ Then run `node test/browser/saucelabs` to start the tests.
 Changelog
 -----------
 
+- 0.8.1
+  - updated dependencies
+  - removed support for node 4 
+
 - 0.8.0
   - Now users have to create a client in web page with `new rhizome.Client()` instead of the default created client `rhizome`.
   - Errors are all bubbled up to rhizome servers and connections. Add a handler to catch them 
