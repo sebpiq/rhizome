@@ -40,7 +40,7 @@ var doConnection = function(clients) {
 
 var sendToServer = new oscTransport.createClient('localhost', config.port, 'udp')
 
-describe('osc', function() {
+describe('osc.Server', function() {
   var manager = new connections.ConnectionManager({
     store: new connections.NoStore()
   })

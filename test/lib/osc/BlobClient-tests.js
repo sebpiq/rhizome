@@ -24,7 +24,7 @@ var sendToBlobClient = new oscTransport.createClient('localhost', clientConfig.b
   , client = new BlobClient(clientConfig)
 
 
-describe('blob-client', () => {
+describe('osc.BlobClient', () => {
   var manager = new connections.ConnectionManager({
     store: new connections.NoStore()
   })

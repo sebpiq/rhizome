@@ -43,7 +43,7 @@ _.extend(Server.prototype, {
     this.httpServer = httpServer
 
     var getOpenClients = () => {
-      return wsServer._wsServer.clients
+      return Array.from(wsServer._wsServer.clients)
         .filter((s) => s.readyState === WebSocket.OPEN)
     }
 
@@ -62,7 +62,7 @@ _.extend(Server.prototype, {
 
     var getWebClient = () => {
       var dummyClients = getDummyWebClients()
-      return _.find(wsServer._wsServer.clients, (s) => {
+      return _.find(Array.from(wsServer._wsServer.clients), (s) => {
         return s.readyState === WebSocket.OPEN && !_.contains(dummyClients, s)
       })
     }

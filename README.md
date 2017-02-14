@@ -18,7 +18,7 @@ Getting started
 
 ##### 1) Install Node.js and npm
 
-You need **node 4 or more recent**. The simplest and nicest way to install it is probably by installing [nvm](https://github.com/creationix/nvm). You can also download an installer directly from [Node.js website](http://nodejs.org/download/).
+You need **node 5 or more recent**. The simplest and nicest way to install it is probably by installing [nvm](https://github.com/creationix/nvm). You can also download an installer directly from [Node.js website](http://nodejs.org/download/).
 
 
 ##### 2) Install rhizome

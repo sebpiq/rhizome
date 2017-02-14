@@ -4,7 +4,7 @@ var fs = require('fs')
   , async = require('async')
   , websockets = require('../../../lib/websockets')
 
-describe('websockets', () => {
+describe('websockets.index', () => {
 
   describe('renderClientBrowser', () => {
 

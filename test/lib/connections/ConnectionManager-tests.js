@@ -9,7 +9,7 @@ var assert = require('assert')
   , helpers = require('../../helpers-backend')
 
 
-describe('ConnectionManager', () => {
+describe('connections.ConnectionManager', () => {
  
   beforeEach((done) => helpers.beforeEach(done))
 
