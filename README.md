@@ -79,7 +79,7 @@ Rhizome feature list
 Reads and links
 -----------------
 
-Blog post on how to set-up your wireless network for use with rhizome : http://funktion.fm/#post/rhizome-interactive-performances-and-network-topologies
+Blog post on how to set-up your wireless network for use with rhizome : http://funktion.fm/news/network-topologies
 
 
 Notes about performance and scaling
