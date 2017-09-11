@@ -4,13 +4,7 @@ The metronome is controlled via osc messages sent from music applications such a
 Instructions
 --------------
 
-#open terminal and cd to this directory
-#start with...
-rhizome config.js
-
-#open a browser and go to localhost:8000
-
-#select and run one of these examples...
-metronome.scd
-metronome.maxpat
-metronome.pd
+- open terminal and cd to this directory
+- start rhizome with... `rhizome config.js`
+- open a browser and go to `localhost:8000`
+- run one of the examples `metronome.scd`, `metronome.maxpat` or `metronome.pd`
